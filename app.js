@@ -982,7 +982,7 @@ window.bk_confirmBooking = async function() {
             timeString:          time,
             status:              'Scheduled',
             source:              'client-booking',
-            bookedBy:            bk_currentUser.email,
+            bookedBy:            bk_isGuest ? ('guest:' + (bk_clientProfile.phone || '')) : (bk_currentUser?.email || ''),
             createdAt:           firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt:           firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -1063,7 +1063,7 @@ window.bk_viewMyBookings = async function() {
     listEl.innerHTML = '<div class="loading-pulse">Loading your bookings...</div>';
     try {
         const snap = await db.collection('Appointments')
-            .where('clientEmail', '==', bk_currentUser.email)
+            .where('clientEmail', '==', bk_currentUser?.email)
             .orderBy('createdAt', 'desc')
             .limit(20)
             .get();
@@ -1111,7 +1111,7 @@ window.bk_viewMyBookings = async function() {
         // Fallback: query without orderBy if index missing
         try {
             const snap2 = await db.collection('Appointments')
-                .where('clientEmail', '==', bk_currentUser.email)
+                .where('clientEmail', '==', bk_currentUser?.email)
                 .get();
             if (snap2.empty) { listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No bookings yet.</p>'; return; }
             const docs = [];
