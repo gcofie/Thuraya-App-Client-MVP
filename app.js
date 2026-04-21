@@ -838,37 +838,65 @@ function populateConfirmScreen() {
 window.bk_applyPromo = async function() {
     const btn  = document.getElementById('btnApplyBkPromo');
     const code = (document.getElementById('bk_promoCode')?.value || '').trim().toUpperCase();
-    if (!code) { bk_showPromoStatus('Enter a promo code.', false); return; }
+    if (!code) { bk_showPromoStatus('Enter a promo code first.', false); return; }
 
     setBtnLoading(btn, true);
     try {
+        // Query by code only — avoids composite index requirement.
+        // active, expiry, and usage checks are done client-side.
         const snap = await db.collection('Promos')
             .where('code', '==', code)
-            .where('active', '==', true)
-            .limit(1).get();
+            .limit(1)
+            .get();
 
-        if (snap.empty) { bk_showPromoStatus('Code not found or no longer active.', false); return; }
+        if (snap.empty) {
+            bk_showPromoStatus('Code not found. Please check and try again.', false);
+            return;
+        }
 
         const doc   = snap.docs[0];
         const promo = doc.data();
 
-        if (promo.expiresAt) {
-            const exp = promo.expiresAt.toDate ? promo.expiresAt.toDate() : new Date(promo.expiresAt);
-            if (exp < new Date()) { bk_showPromoStatus('This code has expired.', false); return; }
-        }
-        if (promo.maxUses && promo.usedCount >= promo.maxUses) {
-            bk_showPromoStatus('This code has reached its usage limit.', false); return;
+        // Active check — handle both boolean true and string "true"
+        const isActive = promo.active === true || promo.active === 'true';
+        if (!isActive) {
+            bk_showPromoStatus('This code is no longer active.', false);
+            return;
         }
 
-        bk_activePromo = { id: doc.id, code: promo.code, type: promo.type, value: parseFloat(promo.value || 0) };
+        // Expiry check
+        if (promo.expiresAt) {
+            const exp = promo.expiresAt.toDate ? promo.expiresAt.toDate() : new Date(promo.expiresAt);
+            if (exp < new Date()) {
+                bk_showPromoStatus('This code has expired.', false);
+                return;
+            }
+        }
+
+        // Usage limit check
+        if (promo.maxUses && (promo.usedCount || 0) >= promo.maxUses) {
+            bk_showPromoStatus('This code has reached its usage limit.', false);
+            return;
+        }
+
+        // All checks passed — apply
+        bk_activePromo = {
+            id:    doc.id,
+            code:  promo.code,
+            type:  promo.type  || 'percent',
+            value: parseFloat(promo.value || 0)
+        };
         document.getElementById('bk_promoId').value      = doc.id;
         document.getElementById('bk_promoCodeVal').value = promo.code;
 
-        const label = promo.type === 'percent' ? `${promo.value}% off` : `${parseFloat(promo.value).toFixed(2)} GHC off`;
-        bk_showPromoStatus(`✓ "${promo.description || code}" — ${label}`, true);
-        populateConfirmScreen(); // re-render total with discount
+        const label = promo.type === 'percent'
+            ? `${promo.value}% off`
+            : `${parseFloat(promo.value).toFixed(2)} GHC off`;
+        bk_showPromoStatus(`✓ "${promo.description || code}" applied — ${label}`, true);
+        populateConfirmScreen();
+
     } catch (e) {
-        bk_showPromoStatus('Error checking code: ' + e.message, false);
+        bk_showPromoStatus('Error: ' + e.message, false);
     } finally {
         setBtnLoading(btn, false);
     }
