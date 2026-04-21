@@ -148,6 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Returning user — go straight to services
                     loadTechs();
                     goToStep('screen-services');
+                    // sticky bar
+                    const bar = document.getElementById('bk_stickyBar');
+                    if (bar) bar.classList.add('visible');
                 } else {
                     // First-time user — show profile setup
                     document.getElementById('prof_email').value = user.email || '';
@@ -216,6 +219,8 @@ async function saveGuestProfile() {
 
         loadTechs();
         goToStep('screen-services');
+        const bar2 = document.getElementById('bk_stickyBar');
+        if (bar2) bar2.classList.add('visible');
     } catch (e) {
         toast('Could not save details: ' + e.message, 'error');
     } finally {
@@ -456,41 +461,71 @@ function updateBreakdown() {
     bk_selectedServices.forEach(s => {
         const lineTotal = s.price * (s.qty || 1);
         const lineMins  = s.dur   * (s.qty || 1);
-        subtotal   += lineTotal;
-        totalMins  += lineMins;
-        rowsHtml   += `<div class="breakdown-row"><span>${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}</span><span>${lineTotal.toFixed(2)} GHC</span></div>`;
+        subtotal  += lineTotal;
+        totalMins += lineMins;
+        rowsHtml  += `<div class="breakdown-row">
+            <span>${s.name}${s.qty > 1 ? ' <span style="color:var(--text-muted);font-size:0.78rem;">(x'+s.qty+')</span>' : ''}</span>
+            <span style="font-weight:600;">${lineTotal.toFixed(2)} GHC</span>
+        </div>`;
     });
 
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
 
-    // Tax rows
+    // Tax rows — only rendered when taxes are loaded and subtotal > 0
     let taxHtml = '';
     if (taxLines.length && subtotal > 0) {
-        taxHtml += `<div class="breakdown-row" style="color:var(--text-muted);font-size:0.8rem;"><span>Subtotal (ex. tax)</span><span>${basePrice.toFixed(2)} GHC</span></div>`;
+        taxHtml += `<div class="breakdown-row" style="color:var(--text-muted);font-size:0.78rem;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
+            <span>Subtotal (ex. tax)</span><span>${basePrice.toFixed(2)} GHC</span></div>`;
         taxLines.forEach(l => {
-            taxHtml += `<div class="breakdown-row" style="color:var(--text-muted);font-size:0.8rem;"><span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
+            taxHtml += `<div class="breakdown-row" style="color:var(--text-muted);font-size:0.78rem;">
+                <span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
         });
     }
 
-    const brkDiv  = document.getElementById('bk_breakdown');
-    const brkList = document.getElementById('bk_breakdownList');
-    const brkTax  = document.getElementById('bk_taxBreakdown');
-    const durEl   = document.getElementById('bk_totalDuration');
-    const costEl  = document.getElementById('bk_totalCost');
-    const nextBtn = document.getElementById('btnToTech');
+    // DOM elements
+    const stickyBar   = document.getElementById('bk_stickyBar');
+    const stickyEmpty = document.getElementById('bk_stickyEmpty');
+    const stickyFull  = document.getElementById('bk_stickyFull');
+    const brkList     = document.getElementById('bk_breakdownList');
+    const brkTax      = document.getElementById('bk_taxBreakdown');
+    const durEl       = document.getElementById('bk_totalDuration');
+    const costEl      = document.getElementById('bk_totalCost');
+    const nextBtn     = document.getElementById('btnToTech');
+
+    // Show/hide sticky bar (only on services screen)
+    const onServicesScreen = document.getElementById('screen-services')?.classList.contains('active');
+    if (stickyBar) stickyBar.classList.toggle('visible', onServicesScreen);
 
     if (subtotal > 0) {
-        if (brkList)  brkList.innerHTML  = rowsHtml;
-        if (brkTax)   brkTax.innerHTML   = taxHtml;
-        if (durEl)    durEl.textContent  = totalMins;
-        if (costEl)   costEl.textContent = grandTotal.toFixed(2);
-        if (brkDiv)   brkDiv.style.display = 'block';
-        if (nextBtn)  nextBtn.disabled = false;
+        if (brkList)     brkList.innerHTML    = rowsHtml;
+        if (brkTax)      brkTax.innerHTML     = taxHtml;
+        if (durEl)       durEl.textContent    = totalMins;
+        if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
+        if (stickyEmpty) stickyEmpty.style.display = 'none';
+        if (stickyFull)  stickyFull.style.display  = 'block';
+        if (nextBtn)     nextBtn.disabled = false;
     } else {
-        if (brkDiv)   brkDiv.style.display = 'none';
-        if (nextBtn)  nextBtn.disabled = true;
+        if (brkList)     brkList.innerHTML    = '';
+        if (brkTax)      brkTax.innerHTML     = '';
+        if (durEl)       durEl.textContent    = '0';
+        if (costEl)      costEl.textContent   = '0.00';
+        if (stickyEmpty) stickyEmpty.style.display = 'block';
+        if (stickyFull)  stickyFull.style.display  = 'none';
+        if (nextBtn)     nextBtn.disabled = true;
     }
 }
+
+window.bk_clearAllSelections = function() {
+    bk_selectedServices = [];
+    // Uncheck all inputs and remove selected class
+    document.querySelectorAll('#bk_serviceMenu input[type="radio"], #bk_serviceMenu input[type="checkbox"]')
+        .forEach(el => { el.checked = false; });
+    document.querySelectorAll('#bk_serviceMenu .service-card')
+        .forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('#bk_serviceMenu input[type="number"]')
+        .forEach(el => { el.value = 0; });
+    updateBreakdown();
+};
 
 window.switchDept = function(dept, btn) {
     bk_selectedDept = dept;
@@ -710,7 +745,18 @@ document.addEventListener('DOMContentLoaded', () => {
 const _origGoToStep = window.goToStep;
 window.goToStep = function(id) {
     if (id === 'screen-confirm') populateConfirmScreen();
+
+    // Hide sticky bar when leaving services screen
+    const bar = document.getElementById('bk_stickyBar');
+    if (bar) bar.classList.remove('visible');
+
     _origGoToStep(id);
+
+    // Show sticky bar when entering services screen
+    if (id === 'screen-services' && bar) {
+        bar.classList.add('visible');
+        updateBreakdown(); // re-sync state
+    }
 };
 
 function populateConfirmScreen() {

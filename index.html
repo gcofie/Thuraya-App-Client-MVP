@@ -131,7 +131,7 @@
                 <div class="step-header">
                     <div class="step-badge">Step 1 of 4</div>
                     <h2>Choose Your Services</h2>
-                    <p>Select one or more treatments for your visit.</p>
+                    <p>Select your treatments below. Your cost and time summary updates as you go.</p>
                 </div>
 
                 <div class="dept-toggle">
@@ -143,20 +143,41 @@
                     <div class="loading-pulse">Loading services...</div>
                 </div>
 
-                <div id="bk_breakdown" class="breakdown-card" style="display:none;">
-                    <div class="breakdown-title">Selected</div>
-                    <div id="bk_breakdownList"></div>
-                    <div id="bk_taxBreakdown"></div>
-                    <div class="breakdown-total">
-                        <span>Total</span>
-                        <span><span id="bk_totalDuration" class="accent-text">0</span> mins &nbsp;·&nbsp; <span id="bk_totalCost" class="accent-text">0.00</span> GHC</span>
-                    </div>
-                </div>
+                <!-- spacer so content isn't hidden behind sticky bar -->
+                <div style="height:140px;"></div>
+            </div>
 
-                <div class="step-footer">
-                    <button class="btn-primary full" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
-                        Continue
-                    </button>
+            <!-- STICKY BREAKDOWN BAR — always visible at bottom -->
+            <div id="bk_stickyBar" class="sticky-bar">
+                <div id="bk_stickyEmpty" class="sticky-empty">
+                    Tap a service above to see your price breakdown
+                </div>
+                <div id="bk_stickyFull" style="display:none;">
+                    <div class="sticky-summary">
+                        <div id="bk_breakdownList" class="sticky-line-items"></div>
+                        <div id="bk_taxBreakdown"></div>
+                        <div id="bk_discountBreakdown"></div>
+                    </div>
+                    <div class="sticky-footer">
+                        <div class="sticky-totals">
+                            <div class="sticky-total-line">
+                                <span class="sticky-total-label">⏱ Duration</span>
+                                <span class="sticky-total-value" id="bk_totalDuration">0</span>
+                                <span class="sticky-total-unit">mins</span>
+                            </div>
+                            <div class="sticky-total-line">
+                                <span class="sticky-total-label">💰 Total</span>
+                                <span class="sticky-total-value accent" id="bk_totalCost">0.00</span>
+                                <span class="sticky-total-unit">GHC</span>
+                            </div>
+                        </div>
+                        <div class="sticky-actions">
+                            <button class="sticky-clear-btn" onclick="bk_clearAllSelections()">Clear</button>
+                            <button class="btn-primary" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
+                                Continue →
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
