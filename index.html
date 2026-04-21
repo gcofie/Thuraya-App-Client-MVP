@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>THURAYA — Book Your Visit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- ── BACKGROUND TEXTURE ─────────────────────── -->
+    <div class="bg-texture"></div>
+
+    <!-- ── APP SHELL ──────────────────────────────── -->
+    <div id="app">
+
+        <!-- STEP 1: WELCOME -->
+        <div class="screen active" id="screen-welcome">
+            <div class="welcome-inner">
+                <div class="logo-block">
+                    <div class="logo-mark">T</div>
+                    <h1 class="logo-wordmark">THURAYA</h1>
+                    <p class="logo-tagline">Luxury Hand &amp; Foot Therapy</p>
+                </div>
+                <div class="welcome-copy">
+                    <p>Reserve your ritual.<br>Experience the difference.</p>
+                </div>
+                <div class="welcome-actions">
+                    <button class="btn-primary" id="btnGoogleSignIn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+                    <div class="divider"><span>or</span></div>
+                    <button class="btn-outline full" id="btnGuestSignIn" onclick="continueAsGuest()">
+                        Continue as Guest
+                    </button>
+                    <button class="btn-ghost" id="btnViewBookings" style="display:none;">View My Bookings</button>
+                </div>
+                <p id="welcomeError" class="error-text" style="display:none;"></p>
+                <p class="welcome-footnote">By booking you agree to our cancellation policy.</p>
+            </div>
+        </div>
+
+        <!-- STEP 2: PROFILE SETUP (first time only) -->
+        <div class="screen" id="screen-profile">
+            <div class="screen-inner">
+                <div class="step-header">
+                    <div class="step-badge">Welcome</div>
+                    <h2>Complete Your Profile</h2>
+                    <p>Just a few details so we can take care of you properly.</p>
+                </div>
+                <div class="form-card">
+                    <div class="form-group">
+                        <label>Full Name <span class="req">*</span></label>
+                        <input type="text" id="prof_name" placeholder="Your full name" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number <span class="req">*</span></label>
+                        <input type="tel" id="prof_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender <span class="optional">(optional)</span></label>
+                        <select id="prof_gender">
+                            <option value="" disabled selected>Select...</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Other">Other / Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="prof_email" readonly style="opacity:0.6; cursor:not-allowed;">
+                    </div>
+                    <button class="btn-primary full" id="btnSaveProfile">
+                        <span class="btn-text">Save &amp; Continue</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2b: GUEST DETAILS -->
+        <div class="screen" id="screen-guest">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Guest Booking</div>
+                    <h2>Your Details</h2>
+                    <p>We just need your name and number so we can confirm your visit.</p>
+                </div>
+                <div class="form-card">
+                    <div class="form-group">
+                        <label>Full Name <span class="req">*</span></label>
+                        <input type="text" id="guest_name" placeholder="Your full name" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number <span class="req">*</span></label>
+                        <input type="tel" id="guest_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender <span class="optional">(optional)</span></label>
+                        <select id="guest_gender">
+                            <option value="" disabled selected>Select...</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Other">Other / Prefer not to say</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary full" id="btnSaveGuest">
+                        <span class="btn-text">Continue to Book</span>
+                    </button>
+                </div>
+                <p style="text-align:center; font-size:0.78rem; color:var(--text-muted); margin-top:14px;">
+                    Want to save your details for next time?
+                    <button onclick="showScreen('screen-welcome')" style="background:none;border:none;color:var(--gold-dark);font-size:0.78rem;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline;">Sign in with Google</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- STEP 3: CHOOSE SERVICE -->
+        <div class="screen" id="screen-services">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Step 1 of 4</div>
+                    <h2>Choose Your Services</h2>
+                    <p>Select one or more treatments for your visit.</p>
+                </div>
+
+                <div class="dept-toggle">
+                    <button class="dept-btn active" data-dept="Hand" onclick="switchDept('Hand', this)">✋ Hand Therapy</button>
+                    <button class="dept-btn" data-dept="Foot" onclick="switchDept('Foot', this)">🦶 Foot Therapy</button>
+                </div>
+
+                <div id="bk_serviceMenu">
+                    <div class="loading-pulse">Loading services...</div>
+                </div>
+
+                <div id="bk_breakdown" class="breakdown-card" style="display:none;">
+                    <div class="breakdown-title">Selected</div>
+                    <div id="bk_breakdownList"></div>
+                    <div id="bk_taxBreakdown"></div>
+                    <div class="breakdown-total">
+                        <span>Total</span>
+                        <span><span id="bk_totalDuration" class="accent-text">0</span> mins &nbsp;·&nbsp; <span id="bk_totalCost" class="accent-text">0.00</span> GHC</span>
+                    </div>
+                </div>
+
+                <div class="step-footer">
+                    <button class="btn-primary full" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: TECHNICIAN -->
+        <div class="screen" id="screen-technician">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Step 2 of 4</div>
+                    <h2>Your Technician</h2>
+                    <p>Choose who takes care of you, or let us decide.</p>
+                </div>
+
+                <div class="tech-option-cards">
+                    <div class="tech-option-card selected" id="techCard_any" onclick="selectTechOption('any')">
+                        <div class="tech-option-icon">✨</div>
+                        <div>
+                            <strong>Any Available</strong>
+                            <span>We'll assign the best available technician for your time</span>
+                        </div>
+                        <div class="tech-option-check" id="techCheck_any">✓</div>
+                    </div>
+                    <div class="tech-option-card" id="techCard_specific" onclick="selectTechOption('specific')">
+                        <div class="tech-option-icon">👩‍🔧</div>
+                        <div>
+                            <strong>Choose Technician</strong>
+                            <span>Select your preferred team member</span>
+                        </div>
+                        <div class="tech-option-check" id="techCheck_specific" style="opacity:0;">✓</div>
+                    </div>
+                </div>
+
+                <div id="techSelectPanel" style="display:none;">
+                    <div class="tech-list" id="bk_techList">
+                        <div class="loading-pulse">Loading team...</div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="bk_techEmail" value="">
+                <input type="hidden" id="bk_techName" value="">
+                <input type="hidden" id="bk_techMode" value="any">
+
+                <div class="step-footer">
+                    <button class="btn-primary full" id="btnToDateTime" onclick="goToStep('screen-datetime')">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5: DATE & TIME -->
+        <div class="screen" id="screen-datetime">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Step 3 of 4</div>
+                    <h2>Pick a Date &amp; Time</h2>
+                    <p>Choose when you'd like to visit us.</p>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-group">
+                        <label>Date <span class="req">*</span></label>
+                        <input type="date" id="bk_date" onchange="bk_generateSlots()">
+                    </div>
+                </div>
+
+                <div id="bk_slotsContainer" class="slots-container" style="display:none;">
+                    <label class="slots-label">Available Times</label>
+                    <div id="bk_slots" class="slots-grid"></div>
+                </div>
+
+                <input type="hidden" id="bk_time" value="">
+
+                <div class="step-footer">
+                    <button class="btn-primary full" id="btnToConfirm" onclick="goToStep('screen-confirm')" disabled>
+                        Review Booking
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 6: CONFIRM -->
+        <div class="screen" id="screen-confirm">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Step 4 of 4</div>
+                    <h2>Review &amp; Confirm</h2>
+                    <p>Please check your booking details below.</p>
+                </div>
+
+                <div class="confirm-card">
+                    <div class="confirm-row">
+                        <span class="confirm-label">Services</span>
+                        <span class="confirm-value" id="conf_services">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Technician</span>
+                        <span class="confirm-value" id="conf_tech">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Date</span>
+                        <span class="confirm-value" id="conf_date">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Time</span>
+                        <span class="confirm-value" id="conf_time">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Duration</span>
+                        <span class="confirm-value" id="conf_duration">—</span>
+                    </div>
+                    <div class="confirm-divider"></div>
+                    <div id="conf_priceBreakdown"></div>
+                    <div class="confirm-row total-row">
+                        <span class="confirm-label">Total</span>
+                        <span class="confirm-value accent-text" id="conf_total">—</span>
+                    </div>
+                </div>
+
+                <!-- Promo code -->
+                <div class="promo-block">
+                    <div class="promo-row" id="promoInputRow">
+                        <input type="text" id="bk_promoCode" placeholder="Promo code"
+                               style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+                        <button class="btn-outline btn-sm" id="btnApplyBkPromo" onclick="bk_applyPromo()">Apply</button>
+                    </div>
+                    <p id="bk_promoStatus" style="display:none; font-size:0.82rem; margin-top:6px;"></p>
+                    <input type="hidden" id="bk_promoId" value="">
+                    <input type="hidden" id="bk_promoCodeVal" value="">
+                    <input type="hidden" id="bk_discountAmount" value="0">
+                </div>
+
+                <div class="step-footer">
+                    <button class="btn-primary full" id="btnConfirmBooking" onclick="bk_confirmBooking()">
+                        <span class="btn-text">Confirm Booking</span>
+                    </button>
+                    <p class="confirm-note">Free cancellation up to 24 hours before your appointment.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 7: SUCCESS -->
+        <div class="screen" id="screen-success">
+            <div class="screen-inner success-inner">
+                <div class="success-icon">✦</div>
+                <h2 class="success-title">Booking Confirmed</h2>
+                <p class="success-sub">We look forward to seeing you.</p>
+
+                <div class="confirm-card" style="margin-top:28px;">
+                    <div class="confirm-row">
+                        <span class="confirm-label">Services</span>
+                        <span class="confirm-value" id="suc_services">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Technician</span>
+                        <span class="confirm-value" id="suc_tech">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Date &amp; Time</span>
+                        <span class="confirm-value" id="suc_datetime">—</span>
+                    </div>
+                    <div class="confirm-row total-row">
+                        <span class="confirm-label">Total</span>
+                        <span class="confirm-value accent-text" id="suc_total">—</span>
+                    </div>
+                </div>
+
+                <div class="success-actions">
+                    <button class="btn-primary full" id="btnAddToCalendar" onclick="bk_addToCalendar()">
+                        📅 Add to Calendar
+                    </button>
+                    <button class="btn-outline full" onclick="bk_viewMyBookings()">
+                        View My Bookings
+                    </button>
+                    <button class="btn-ghost full" onclick="bk_bookAgain()">
+                        Book Another Visit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MY BOOKINGS -->
+        <div class="screen" id="screen-mybookings">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">My Account</div>
+                    <h2>My Bookings</h2>
+                    <p>Your upcoming and past appointments.</p>
+                </div>
+                <div id="myBookingsList">
+                    <div class="loading-pulse">Loading your bookings...</div>
+                </div>
+                <div class="step-footer" style="margin-top:24px;">
+                    <button class="btn-primary full" onclick="goToStep('screen-services')">
+                        Book a New Visit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /#app -->
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
