@@ -618,7 +618,6 @@ input:focus, select:focus {
 .confirm-row.total-row .confirm-value { font-size: 1.1rem; }
 .confirm-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
-/* ── PROMO BLOCK ────────────────────────────────────── */
 .promo-block {
     margin-top: 14px;
     background: var(--cream-dark);
@@ -626,8 +625,20 @@ input:focus, select:focus {
     padding: 14px;
     border: 1px solid var(--border);
 }
-.promo-row { display: flex; gap: 8px; }
-.promo-row input { flex: 1; font-size: 0.875rem; font-weight: 700; letter-spacing: 1px; }
+.promo-toggle-btn {
+    background: none;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gold-dark);
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+}
+.promo-toggle-btn:hover { color: var(--primary); }
 
 /* ── STEP FOOTER ────────────────────────────────────── */
 .step-footer {

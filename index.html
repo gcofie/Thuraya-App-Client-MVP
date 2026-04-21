@@ -267,13 +267,20 @@
                 </div>
 
                 <!-- Promo code -->
+                <!-- Promo code — collapsed by default, opt-in -->
                 <div class="promo-block">
-                    <div class="promo-row" id="promoInputRow">
-                        <input type="text" id="bk_promoCode" placeholder="Promo code"
-                               style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
-                        <button class="btn-outline btn-sm" id="btnApplyBkPromo" onclick="bk_applyPromo()">Apply</button>
+                    <button class="promo-toggle-btn" id="btnTogglePromo" onclick="bk_togglePromoInput()">
+                        🎟 I have a promo code
+                    </button>
+                    <div id="promoInputPanel" style="display:none; margin-top:12px;">
+                        <div class="promo-row">
+                            <input type="text" id="bk_promoCode" placeholder="Enter code"
+                                   style="text-transform:uppercase; letter-spacing:2px; font-weight:700;"
+                                   oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+                            <button class="btn-outline btn-sm" id="btnApplyBkPromo" onclick="bk_applyPromo()">Apply</button>
+                        </div>
+                        <p id="bk_promoStatus" style="display:none; font-size:0.82rem; margin-top:6px;"></p>
                     </div>
-                    <p id="bk_promoStatus" style="display:none; font-size:0.82rem; margin-top:6px;"></p>
                     <input type="hidden" id="bk_promoId" value="">
                     <input type="hidden" id="bk_promoCodeVal" value="">
                     <input type="hidden" id="bk_discountAmount" value="0">

@@ -835,6 +835,30 @@ function populateConfirmScreen() {
 
 // ── Promo code on confirm screen ──────────────────────────
 
+window.bk_togglePromoInput = function() {
+    const panel  = document.getElementById('promoInputPanel');
+    const btn    = document.getElementById('btnTogglePromo');
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) {
+        // Collapse and clear
+        panel.style.display = 'none';
+        btn.textContent = '🎟 I have a promo code';
+        // Clear any applied promo
+        bk_activePromo = null;
+        document.getElementById('bk_promoCode').value    = '';
+        document.getElementById('bk_promoId').value      = '';
+        document.getElementById('bk_promoCodeVal').value = '';
+        document.getElementById('bk_discountAmount').value = '0';
+        const statusEl = document.getElementById('bk_promoStatus');
+        if (statusEl) statusEl.style.display = 'none';
+        populateConfirmScreen();
+    } else {
+        panel.style.display = 'block';
+        btn.textContent = '✕ Remove promo code';
+        document.getElementById('bk_promoCode').focus();
+    }
+};
+
 window.bk_applyPromo = async function() {
     const btn  = document.getElementById('btnApplyBkPromo');
     const code = (document.getElementById('bk_promoCode')?.value || '').trim().toUpperCase();
