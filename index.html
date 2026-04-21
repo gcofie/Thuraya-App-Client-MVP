@@ -144,41 +144,7 @@
                 </div>
 
                 <!-- spacer so content isn't hidden behind sticky bar -->
-                <div style="height:140px;"></div>
-            </div>
-
-            <!-- STICKY BREAKDOWN BAR — always visible at bottom -->
-            <div id="bk_stickyBar" class="sticky-bar">
-                <div id="bk_stickyEmpty" class="sticky-empty">
-                    Tap a service above to see your price breakdown
-                </div>
-                <div id="bk_stickyFull" style="display:none;">
-                    <div class="sticky-summary">
-                        <div id="bk_breakdownList" class="sticky-line-items"></div>
-                        <div id="bk_taxBreakdown"></div>
-                        <div id="bk_discountBreakdown"></div>
-                    </div>
-                    <div class="sticky-footer">
-                        <div class="sticky-totals">
-                            <div class="sticky-total-line">
-                                <span class="sticky-total-label">⏱ Duration</span>
-                                <span class="sticky-total-value" id="bk_totalDuration">0</span>
-                                <span class="sticky-total-unit">mins</span>
-                            </div>
-                            <div class="sticky-total-line">
-                                <span class="sticky-total-label">💰 Total</span>
-                                <span class="sticky-total-value accent" id="bk_totalCost">0.00</span>
-                                <span class="sticky-total-unit">GHC</span>
-                            </div>
-                        </div>
-                        <div class="sticky-actions">
-                            <button class="sticky-clear-btn" onclick="bk_clearAllSelections()">Clear</button>
-                            <button class="btn-primary" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
-                                Continue →
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <div style="height:160px;"></div>
             </div>
         </div>
 
@@ -383,6 +349,39 @@
         </div>
 
     </div><!-- /#app -->
+
+    <!-- STICKY BREAKDOWN BAR — lives outside screens so fixed positioning always works -->
+    <div id="bk_stickyBar" class="sticky-bar" style="display:none;">
+        <div id="bk_stickyEmpty" class="sticky-empty">
+            Tap a service above to see your price breakdown
+        </div>
+        <div id="bk_stickyFull" style="display:none;">
+            <div class="sticky-summary">
+                <div id="bk_breakdownList" class="sticky-line-items"></div>
+                <div id="bk_taxBreakdown"></div>
+            </div>
+            <div class="sticky-footer">
+                <div class="sticky-totals">
+                    <div class="sticky-total-line">
+                        <span class="sticky-total-label">⏱ Duration</span>
+                        <span class="sticky-total-value" id="bk_totalDuration">0</span>
+                        <span class="sticky-total-unit">mins</span>
+                    </div>
+                    <div class="sticky-total-line">
+                        <span class="sticky-total-label">💰 Total</span>
+                        <span class="sticky-total-value accent" id="bk_totalCost">0.00</span>
+                        <span class="sticky-total-unit">GHC</span>
+                    </div>
+                </div>
+                <div class="sticky-actions">
+                    <button class="sticky-clear-btn" onclick="bk_clearAllSelections()">Clear</button>
+                    <button class="btn-primary" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
+                        Continue →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>

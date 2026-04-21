@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     goToStep('screen-services');
                     // sticky bar
                     const bar = document.getElementById('bk_stickyBar');
-                    if (bar) bar.classList.add('visible');
+                    if (bar) bar.style.display = 'block';
                 } else {
                     // First-time user — show profile setup
                     document.getElementById('prof_email').value = user.email || '';
@@ -220,7 +220,7 @@ async function saveGuestProfile() {
         loadTechs();
         goToStep('screen-services');
         const bar2 = document.getElementById('bk_stickyBar');
-        if (bar2) bar2.classList.add('visible');
+        if (bar2) bar2.style.display = 'block';
     } catch (e) {
         toast('Could not save details: ' + e.message, 'error');
     } finally {
@@ -276,107 +276,133 @@ function loadTaxConfig() {
     });
 }
 
-// ── Load Menu ─────────────────────────────────────────────
 
-async function loadMenu() {
-    try {
-        const snap = await db.collection('Menu_Services').where('status', '==', 'Active').get();
-        bk_menuServices = [];
-        snap.forEach(doc => bk_menuServices.push({ id: doc.id, ...doc.data() }));
-        bk_menuServices.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
-        renderMenuForDept(bk_selectedDept);
-    } catch (e) {
-        document.getElementById('bk_serviceMenu').innerHTML =
-            '<p style="color:var(--error);text-align:center;padding:20px;">Could not load services. Please refresh.</p>';
-    }
-}
+// ── Load Menu (mirrors staff OS fetchLiveMenu exactly) ────
+//  Collection:  Menu_Services
+//  Key fields:  department, category, inputType, name,
+//               duration, price, desc, tag, status
 
-// ── Render Service Menu ───────────────────────────────────
-
-const CATEGORY_ALIASES = { 'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS' };
+const CATEGORY_ALIASES = {
+    'I. HAND THERAPIES':  'I. HAND THERAPY RITUALS',
+    'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
+};
 const TYPE_ORDER = { radio: 0, checkbox: 1, counter: 2 };
+
+function loadMenu() {
+    // onSnapshot keeps menu live — any Manager update in staff OS reflects here instantly
+    db.collection('Menu_Services').onSnapshot(snap => {
+        const container = document.getElementById('bk_serviceMenu');
+        if (snap.empty) {
+            if (container) container.innerHTML =
+                '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
+            return;
+        }
+        let services = [];
+        snap.forEach(doc => services.push({ id: doc.id, ...doc.data() }));
+        // Primary sort by category (matches staff OS)
+        services.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+        // Client-facing: only show Active services
+        services = services.filter(s => !s.status || s.status === 'Active');
+        bk_menuServices = services;
+        renderMenuForDept(bk_selectedDept);
+    }, err => {
+        const c = document.getElementById('bk_serviceMenu');
+        if (c) c.innerHTML =
+            `<p style="color:var(--error);text-align:center;padding:20px;">Could not load menu: ${err.message}</p>`;
+    });
+}
 
 function renderMenuForDept(dept) {
     const container = document.getElementById('bk_serviceMenu');
     if (!container) return;
 
-    const services = bk_menuServices.filter(s =>
-        s.department === dept || s.department === 'Both'
+    // Group into dbData[dept][cat] — same logic as staff OS fetchLiveMenu
+    const dbData = { Hand: {}, Foot: {} };
+    bk_menuServices.forEach(s => {
+        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
+        cat = CATEGORY_ALIASES[cat] ?? CATEGORY_ALIASES[cat.toUpperCase()] ?? cat;
+        if (s.department === 'Both') {
+            ['Hand','Foot'].forEach(d => {
+                if (!dbData[d][cat]) dbData[d][cat] = [];
+                dbData[d][cat].push(s);
+            });
+        } else {
+            const d = s.department || 'Hand';
+            if (!dbData[d]) dbData[d] = {};
+            if (!dbData[d][cat]) dbData[d][cat] = [];
+            dbData[d][cat].push(s);
+        }
+    });
+
+    // Sort within each category: radio first, then checkbox, then counter
+    Object.values(dbData).forEach(dObj =>
+        Object.values(dObj).forEach(arr =>
+            arr.sort((a, b) => (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1))
+        )
     );
 
-    if (!services.length) {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
+    // Sort categories: numbered/roman first; radio-dominant before multi
+    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
+        const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
+        const aNum = numRe.test(aU), bNum = numRe.test(bU);
+        if (aNum && !bNum) return -1;
+        if (!aNum && bNum) return  1;
+        const aR = (dbData[dept][a][0]?.inputType || 'checkbox') === 'radio';
+        const bR = (dbData[dept][b][0]?.inputType || 'checkbox') === 'radio';
+        if (aR && !bR) return -1;
+        if (!aR && bR) return  1;
+        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    if (!sortedCats.length) {
+        container.innerHTML =
+            '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available for this category.</p>';
+        updateBreakdown();
         return;
     }
 
-    // Group by normalised category
-    const groups = {};
-    services.forEach(s => {
-        let cat = ((s.category || 'Other').trim().replace(/\s+/g, ' '));
-        cat = CATEGORY_ALIASES[cat] ?? CATEGORY_ALIASES[cat.toUpperCase()] ?? cat;
-        if (!groups[cat]) groups[cat] = [];
-        groups[cat].push(s);
-    });
-
-    // Sort within each group: radio → checkbox → counter
-    Object.values(groups).forEach(arr =>
-        arr.sort((a, b) => (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1))
-    );
-
-    // Sort categories: numbered first, then radio-dominant first among ties
-    const numRe = /^(\d+|I{1,3}|IV|V|VI)\./i;
-    const sortedCats = Object.keys(groups).sort((a, b) => {
-        const aNum = numRe.test(a), bNum = numRe.test(b);
-        if (aNum && !bNum) return -1;
-        if (!aNum && bNum) return 1;
-        const aR = (groups[a][0]?.inputType || 'checkbox') === 'radio';
-        const bR = (groups[b][0]?.inputType || 'checkbox') === 'radio';
-        if (aR && !bR) return -1;
-        if (!aR && bR) return 1;
-        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-    });
-
     let html = '';
     sortedCats.forEach(cat => {
-        const items   = groups[cat];
+        const items   = dbData[dept][cat];
         const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
         const multis  = items.filter(s => (s.inputType || 'radio') !== 'radio');
 
-        html += `<div class="menu-section">`;
-        html += `<div class="menu-section-heading">${cat}</div>`;
+        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
 
         if (singles.length && multis.length) {
-            html += `<div class="menu-subgroup-label">Choose your ritual &nbsp;<span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">Select one</span></div>`;
-            singles.forEach(s => { html += buildServiceCard(s, dept); });
+            html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
+            singles.forEach(s => { html += _buildCard(s, dept); });
             html += `<div class="menu-subgroup-divider"></div>`;
-            html += `<div class="menu-subgroup-label">Enhancements &nbsp;<span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">Select any</span></div>`;
-            multis.forEach(s => { html += buildServiceCard(s, dept); });
+            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
+            multis.forEach(s => { html += _buildCard(s, dept); });
         } else {
-            items.forEach(s => { html += buildServiceCard(s, dept); });
+            items.forEach(s => { html += _buildCard(s, dept); });
         }
 
         html += `</div>`;
     });
 
     container.innerHTML = html;
-    // Restore selections visually
+
+    // Restore visual state for already-selected services
     bk_selectedServices.forEach(sel => {
-        const cb = document.getElementById('bk_cb_' + sel.id);
-        if (cb) { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
+        const cb  = document.getElementById('bk_cb_'  + sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
-        if (qty) qty.value = sel.qty || 1;
+        if (cb)  { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
+        if (qty) { qty.value  = sel.qty || 1; }
     });
     updateBreakdown();
 }
 
-function buildServiceCard(s, dept) {
+function _buildCard(s, dept) {
     const type     = s.inputType || 'radio';
     const name     = s.name      || 'Service';
-    const dur      = s.duration  || 0;
-    const price    = s.price     || 0;
+    const dur      = Number(s.duration) || 0;
+    const price    = Number(s.price)    || 0;
     const descHtml = s.desc ? `<div class="service-card-desc">${s.desc}</div>` : '';
     const tagHtml  = (s.tag && s.tag !== 'None') ? `<span class="hl-tag">${s.tag}</span>` : '';
-    const priceTag = `<span class="service-price-pill">${dur > 0 ? dur + ' mins | ' : ''}${price} GHC</span>`;
+    const priceTag = `<span class="service-price-pill">${dur > 0 ? dur + ' mins &nbsp;|&nbsp; ' : ''}${price} GHC</span>`;
 
     if (type === 'counter') {
         return `
@@ -388,7 +414,7 @@ function buildServiceCard(s, dept) {
                 <div class="counter-box">
                     <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',-1)">−</button>
                     <input type="number" id="bk_qty_${s.id}" value="0" min="0" readonly
-                           style="width:44px;text-align:center;padding:5px 4px;font-weight:700;">
+                        style="width:44px;height:36px;text-align:center;padding:4px;font-weight:700;border:1px solid var(--border);border-radius:6px;">
                     <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',1)">+</button>
                 </div>
             </div>`;
@@ -396,8 +422,10 @@ function buildServiceCard(s, dept) {
 
     const groupName = type === 'radio' ? `bk_base_${dept}` : `bk_cb_${s.id}`;
     const inputEl   = type === 'radio'
-        ? `<input type="radio" name="${groupName}" id="bk_cb_${s.id}" style="pointer-events:none;">`
-        : `<input type="checkbox" id="bk_cb_${s.id}" style="pointer-events:none;">`;
+        ? `<input type="radio"    name="${groupName}" id="bk_cb_${s.id}"
+               style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`
+        : `<input type="checkbox"                    id="bk_cb_${s.id}"
+               style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`;
 
     return `
         <div class="service-card" onclick="bk_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${name}')">
@@ -408,6 +436,7 @@ function buildServiceCard(s, dept) {
             </div>
         </div>`;
 }
+
 
 window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, name) {
     event.preventDefault();
@@ -492,9 +521,9 @@ function updateBreakdown() {
     const costEl      = document.getElementById('bk_totalCost');
     const nextBtn     = document.getElementById('btnToTech');
 
-    // Show/hide sticky bar (only on services screen)
+    // Show sticky bar when on services screen, hide on all other screens
     const onServicesScreen = document.getElementById('screen-services')?.classList.contains('active');
-    if (stickyBar) stickyBar.classList.toggle('visible', onServicesScreen);
+    if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
 
     if (subtotal > 0) {
         if (brkList)     brkList.innerHTML    = rowsHtml;
@@ -745,18 +774,11 @@ document.addEventListener('DOMContentLoaded', () => {
 const _origGoToStep = window.goToStep;
 window.goToStep = function(id) {
     if (id === 'screen-confirm') populateConfirmScreen();
-
-    // Hide sticky bar when leaving services screen
-    const bar = document.getElementById('bk_stickyBar');
-    if (bar) bar.classList.remove('visible');
-
     _origGoToStep(id);
-
-    // Show sticky bar when entering services screen
-    if (id === 'screen-services' && bar) {
-        bar.classList.add('visible');
-        updateBreakdown(); // re-sync state
-    }
+    // Show sticky bar only on services screen
+    const bar = document.getElementById('bk_stickyBar');
+    if (bar) bar.style.display = (id === 'screen-services') ? 'block' : 'none';
+    if (id === 'screen-services') updateBreakdown();
 };
 
 function populateConfirmScreen() {

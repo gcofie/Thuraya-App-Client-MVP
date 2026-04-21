@@ -720,18 +720,9 @@ input:focus, select:focus {
     border-top: 2px solid var(--gold);
     box-shadow: 0 -4px 24px rgba(44,38,28,0.12);
     z-index: 100;
-    padding: 12px 16px 16px;
-    max-width: 520px;
-    margin: 0 auto;
-    /* only visible when screen-services is active */
-    display: none;
+    padding: 12px 16px 20px;
+    /* JS sets display:block when services screen is active */
 }
-#screen-services.active .sticky-bar,
-#screen-services.active ~ .sticky-bar {
-    display: block;
-}
-/* simpler: always show when screen is active — controlled via JS */
-.sticky-bar.visible { display: block; }
 
 .sticky-empty {
     text-align: center;
