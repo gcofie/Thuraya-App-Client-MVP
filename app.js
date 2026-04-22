@@ -1,5 +1,5 @@
 // ============================================================
-//  THURAYA — CLIENT SELF-BOOKING   booking.js
+//  THURAYA — CLIENT SELF-BOOKING   app.js
 //  Same Firebase backend as the Staff OS.
 //  Collections read:  Menu_Services, Users (techs),
 //                     Appointments, Tax_Settings, Promos,
@@ -23,17 +23,17 @@ const db   = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // ── State ─────────────────────────────────────────────────
-let bk_currentUser    = null;   // Firebase auth user
-let bk_clientProfile  = null;   // Client_Users doc data
-let bk_isGuest        = false;  // true when booking without Google sign-in
-let bk_menuServices   = [];     // all Menu_Services docs
-let bk_liveTaxes      = [];     // Tax_Settings rates
-let bk_taxInclusive   = false;  // inclusive flag
-let bk_techs          = [];     // available technicians
-let bk_selectedDept   = 'Hand'; // active dept tab
-let bk_selectedServices = [];   // [{ id, name, duration, price, type }]
-let bk_activePromo    = null;   // validated promo object
-let bk_confirmedAppt  = null;   // written appointment data (for success screen)
+let bk_currentUser    = null;
+let bk_clientProfile  = null;
+let bk_isGuest        = false;
+let bk_menuServices   = [];
+let bk_liveTaxes      = [];
+let bk_taxInclusive   = false;
+let bk_techs          = [];
+let bk_selectedDept   = 'Hand';
+let bk_selectedServices = [];
+let bk_activePromo    = null;
+let bk_confirmedAppt  = null;
 let _screenHistory    = ['screen-welcome'];
 const todayStr        = (() => {
     const n = new Date();
@@ -128,31 +128,25 @@ function applyTaxes(listedTotal) {
 // ── Init & Auth ───────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Set date minimum
     const dateEl = document.getElementById('bk_date');
     if (dateEl) dateEl.min = todayStr;
 
-    // Load tax config and menu immediately (not behind auth wall)
     loadTaxConfig();
     loadMenu();
 
-    // Auth state
     auth.onAuthStateChanged(async user => {
         if (user) {
             bk_currentUser = user;
-            // Check Client_Users profile
             try {
                 const doc = await db.collection('Client_Users').doc(user.email.toLowerCase()).get();
                 if (doc.exists) {
                     bk_clientProfile = doc.data();
-                    // Returning user — go straight to services
+                    // ── EDIT 1: send returning users to mode select, not straight to services ──
                     loadTechs();
-                    goToStep('screen-services');
-                    // sticky bar
+                    goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
-                    if (bar) bar.style.display = 'block';
+                    if (bar) bar.style.display = 'none';
                 } else {
-                    // First-time user — show profile setup
                     document.getElementById('prof_email').value = user.email || '';
                     document.getElementById('prof_name').value  = user.displayName || '';
                     goToStep('screen-profile');
@@ -167,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Wire buttons
     document.getElementById('btnGoogleSignIn').addEventListener('click', signInWithGoogle);
     document.getElementById('btnSaveProfile').addEventListener('click', saveProfile);
     document.getElementById('btnSaveGuest').addEventListener('click', saveGuestProfile);
@@ -205,10 +198,8 @@ async function saveGuestProfile() {
 
     setBtnLoading(btn, true, 'Continue to Book');
     try {
-        // Build a guest profile — no Firebase auth user, no email
         bk_clientProfile = { name, phone, gender, email: '', isGuest: true };
 
-        // Save/merge into Clients so FOH can find them by phone
         await db.collection('Clients').doc(phone).set({
             Forename:     name.split(' ')[0] || name,
             Surname:      name.split(' ').slice(1).join(' ') || '',
@@ -218,9 +209,10 @@ async function saveGuestProfile() {
         }, { merge: true });
 
         loadTechs();
-        goToStep('screen-services');
+        // ── EDIT 2: guests go to mode select after saving details ──
+        goToStep('screen-booking-mode');
         const bar2 = document.getElementById('bk_stickyBar');
-        if (bar2) bar2.style.display = 'block';
+        if (bar2) bar2.style.display = 'none';
     } catch (e) {
         toast('Could not save details: ' + e.message, 'error');
     } finally {
@@ -247,7 +239,6 @@ async function saveProfile() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await db.collection('Client_Users').doc(email).set(profile, { merge: true });
-        // Also create/update the Clients record so FOH can find them
         await db.collection('Clients').doc(phone).set({
             Forename:    name.split(' ')[0] || name,
             Surname:     name.split(' ').slice(1).join(' ') || '',
@@ -258,7 +249,8 @@ async function saveProfile() {
         }, { merge: true });
         bk_clientProfile = profile;
         loadTechs();
-        goToStep('screen-services');
+        // ── EDIT 3: new users go to mode select after profile save ──
+        goToStep('screen-booking-mode');
     } catch (e) {
         toast('Could not save profile: ' + e.message, 'error');
     } finally {
@@ -276,11 +268,7 @@ function loadTaxConfig() {
     });
 }
 
-
-// ── Load Menu (mirrors staff OS fetchLiveMenu exactly) ────
-//  Collection:  Menu_Services
-//  Key fields:  department, category, inputType, name,
-//               duration, price, desc, tag, status
+// ── Load Menu ────────────────────────────────────────────
 
 const CATEGORY_ALIASES = {
     'I. HAND THERAPIES':  'I. HAND THERAPY RITUALS',
@@ -289,7 +277,6 @@ const CATEGORY_ALIASES = {
 const TYPE_ORDER = { radio: 0, checkbox: 1, counter: 2 };
 
 function loadMenu() {
-    // onSnapshot keeps menu live — any Manager update in staff OS reflects here instantly
     db.collection('Menu_Services').onSnapshot(snap => {
         const container = document.getElementById('bk_serviceMenu');
         if (snap.empty) {
@@ -299,9 +286,7 @@ function loadMenu() {
         }
         let services = [];
         snap.forEach(doc => services.push({ id: doc.id, ...doc.data() }));
-        // Primary sort by category (matches staff OS)
         services.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
-        // Client-facing: only show Active services
         services = services.filter(s => !s.status || s.status === 'Active');
         bk_menuServices = services;
         renderMenuForDept(bk_selectedDept);
@@ -316,7 +301,6 @@ function renderMenuForDept(dept) {
     const container = document.getElementById('bk_serviceMenu');
     if (!container) return;
 
-    // Group into dbData[dept][cat] — same logic as staff OS fetchLiveMenu
     const dbData = { Hand: {}, Foot: {} };
     bk_menuServices.forEach(s => {
         let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
@@ -334,14 +318,12 @@ function renderMenuForDept(dept) {
         }
     });
 
-    // Sort within each category: radio first, then checkbox, then counter
     Object.values(dbData).forEach(dObj =>
         Object.values(dObj).forEach(arr =>
             arr.sort((a, b) => (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1))
         )
     );
 
-    // Sort categories: numbered/roman first; radio-dominant before multi
     const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
     const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
         const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
@@ -385,7 +367,6 @@ function renderMenuForDept(dept) {
 
     container.innerHTML = html;
 
-    // Restore visual state for already-selected services
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
@@ -437,14 +418,12 @@ function _buildCard(s, dept) {
         </div>`;
 }
 
-
 window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, name) {
     event.preventDefault();
     const input = document.getElementById('bk_cb_' + id);
     if (!input) return;
 
     if (type === 'radio') {
-        // Deselect all in the same group first — also remove from bk_selectedServices
         document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
             r.checked = false;
             r.closest('.service-card')?.classList.remove('selected');
@@ -454,7 +433,6 @@ window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, na
             if (!el) return true;
             return el.getAttribute('name') !== groupName && !(el.type === 'radio' && el.name === groupName);
         });
-        // Check if already selected (deselect toggle)
         const wasSelected = input.checked;
         if (!wasSelected) {
             input.checked = true;
@@ -500,7 +478,6 @@ function updateBreakdown() {
 
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
 
-    // Tax rows — only rendered when taxes are loaded and subtotal > 0
     let taxHtml = '';
     if (taxLines.length && subtotal > 0) {
         taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
@@ -511,7 +488,6 @@ function updateBreakdown() {
         });
     }
 
-    // DOM elements
     const stickyBar   = document.getElementById('bk_stickyBar');
     const stickyEmpty = document.getElementById('bk_stickyEmpty');
     const stickyFull  = document.getElementById('bk_stickyFull');
@@ -521,7 +497,6 @@ function updateBreakdown() {
     const costEl      = document.getElementById('bk_totalCost');
     const nextBtn     = document.getElementById('btnToTech');
 
-    // Show sticky bar when on services screen, hide on all other screens
     const onServicesScreen = document.getElementById('screen-services')?.classList.contains('active');
     if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
 
@@ -546,7 +521,6 @@ function updateBreakdown() {
 
 window.bk_clearAllSelections = function() {
     bk_selectedServices = [];
-    // Uncheck all inputs and remove selected class
     document.querySelectorAll('#bk_serviceMenu input[type="radio"], #bk_serviceMenu input[type="checkbox"]')
         .forEach(el => { el.checked = false; });
     document.querySelectorAll('#bk_serviceMenu .service-card')
@@ -659,7 +633,6 @@ window.bk_generateSlots = async function() {
         return;
     }
 
-    // Determine which tech(s) to check
     const mode = document.getElementById('bk_techMode').value;
     const specificEmail = document.getElementById('bk_techEmail').value;
     const techsToCheck = mode === 'specific' && specificEmail
@@ -681,7 +654,6 @@ window.bk_generateSlots = async function() {
             .where('status', 'in', ['Scheduled', 'Arrived'])
             .get();
 
-        // Build busy blocks per tech
         const busyByTech = {};
         snap.forEach(doc => {
             const a = doc.data();
@@ -697,8 +669,7 @@ window.bk_generateSlots = async function() {
         const curMins = now.getHours() * 60 + now.getMinutes();
         const isToday = date === todayStr;
 
-        // For each slot, check if at least one tech is free
-        const slotMap = {}; // time → [available tech emails]
+        const slotMap = {};
         for (let t = openTime; t + totalMins <= closeTime; t += interval) {
             if (isToday && t <= curMins) continue;
             const slotEnd = t + totalMins;
@@ -724,7 +695,6 @@ window.bk_generateSlots = async function() {
             const h12  = hrs % 12 || 12;
             const mm   = String(mins).padStart(2, '0');
             const t24  = `${String(hrs).padStart(2,'0')}:${mm}`;
-            // Store available techs as data attribute for auto-assign
             const techList = JSON.stringify(slotMap[t]);
             return `<button class="slot-btn" data-time="${t24}" data-techs='${techList}'
                         onclick="bk_selectSlot('${t24}', this)">${h12}:${mm} ${ampm}</button>`;
@@ -746,7 +716,6 @@ window.bk_selectSlot = function(time, btn) {
     btn.classList.add('selected');
     document.getElementById('bk_time').value = time;
 
-    // Auto-assign tech for "any" mode — pick first available from slot's tech list
     const mode = document.getElementById('bk_techMode').value;
     if (mode === 'any') {
         try {
@@ -763,19 +732,15 @@ window.bk_selectSlot = function(time, btn) {
     document.getElementById('btnToConfirm').disabled = false;
 };
 
-// ── Confirm screen population ─────────────────────────────
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Intercept goToStep for confirm screen to populate summary
-    const origGoToStep = window.goToStep;
-});
-
-// Override goToStep to populate confirm screen
-const _origGoToStep = window.goToStep;
+// ── goToStep override — confirm screen + sticky bar ───────
+// NOTE: group-booking.js further wraps this to handle group confirm screen
 window.goToStep = function(id) {
     if (id === 'screen-confirm') populateConfirmScreen();
-    _origGoToStep(id);
-    // Show sticky bar only on services screen
+    // Call the base navigation
+    _screenHistory.push(id);
+    showScreen(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Show sticky bar only on solo services screen
     const bar = document.getElementById('bk_stickyBar');
     if (bar) bar.style.display = (id === 'screen-services') ? 'block' : 'none';
     if (id === 'screen-services') updateBreakdown();
@@ -791,11 +756,9 @@ function populateConfirmScreen() {
     const subtotal  = bk_selectedServices.reduce((s, x) => s + (x.price * (x.qty || 1)), 0);
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
 
-    // Format date
     let dateFormatted = date;
     try { dateFormatted = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); } catch(e) {}
 
-    // Format time
     let timeFormatted = time;
     try {
         const [h, m] = time.split(':').map(Number);
@@ -809,7 +772,6 @@ function populateConfirmScreen() {
     document.getElementById('conf_time').textContent     = timeFormatted;
     document.getElementById('conf_duration').textContent = totalMins + ' mins';
 
-    // Price breakdown
     let priceHtml = '';
     if (taxLines.length) {
         priceHtml += `<div class="confirm-row"><span class="confirm-label">Subtotal (ex. tax)</span><span class="confirm-value">${basePrice.toFixed(2)} GHC</span></div>`;
@@ -818,7 +780,6 @@ function populateConfirmScreen() {
         });
     }
 
-    // Re-apply promo if active
     let finalTotal = grandTotal;
     if (bk_activePromo) {
         const disc = bk_activePromo.type === 'percent'
@@ -833,17 +794,15 @@ function populateConfirmScreen() {
     document.getElementById('conf_total').textContent = finalTotal.toFixed(2) + ' GHC';
 }
 
-// ── Promo code on confirm screen ──────────────────────────
+// ── Promo code ────────────────────────────────────────────
 
 window.bk_togglePromoInput = function() {
     const panel  = document.getElementById('promoInputPanel');
     const btn    = document.getElementById('btnTogglePromo');
     const isOpen = panel.style.display !== 'none';
     if (isOpen) {
-        // Collapse and clear
         panel.style.display = 'none';
         btn.textContent = '🎟 I have a promo code';
-        // Clear any applied promo
         bk_activePromo = null;
         document.getElementById('bk_promoCode').value    = '';
         document.getElementById('bk_promoId').value      = '';
@@ -866,56 +825,33 @@ window.bk_applyPromo = async function() {
 
     setBtnLoading(btn, true);
     try {
-        // Query by code only — avoids composite index requirement.
-        // active, expiry, and usage checks are done client-side.
         const snap = await db.collection('Promos')
             .where('code', '==', code)
             .limit(1)
             .get();
 
-        if (snap.empty) {
-            bk_showPromoStatus('Code not found. Please check and try again.', false);
-            return;
-        }
+        if (snap.empty) { bk_showPromoStatus('Code not found. Please check and try again.', false); return; }
 
         const doc   = snap.docs[0];
         const promo = doc.data();
 
-        // Active check — handle both boolean true and string "true"
         const isActive = promo.active === true || promo.active === 'true';
-        if (!isActive) {
-            bk_showPromoStatus('This code is no longer active.', false);
-            return;
-        }
+        if (!isActive) { bk_showPromoStatus('This code is no longer active.', false); return; }
 
-        // Expiry check
         if (promo.expiresAt) {
             const exp = promo.expiresAt.toDate ? promo.expiresAt.toDate() : new Date(promo.expiresAt);
-            if (exp < new Date()) {
-                bk_showPromoStatus('This code has expired.', false);
-                return;
-            }
+            if (exp < new Date()) { bk_showPromoStatus('This code has expired.', false); return; }
         }
 
-        // Usage limit check
         if (promo.maxUses && (promo.usedCount || 0) >= promo.maxUses) {
-            bk_showPromoStatus('This code has reached its usage limit.', false);
-            return;
+            bk_showPromoStatus('This code has reached its usage limit.', false); return;
         }
 
-        // All checks passed — apply
-        bk_activePromo = {
-            id:    doc.id,
-            code:  promo.code,
-            type:  promo.type  || 'percent',
-            value: parseFloat(promo.value || 0)
-        };
+        bk_activePromo = { id: doc.id, code: promo.code, type: promo.type || 'percent', value: parseFloat(promo.value || 0) };
         document.getElementById('bk_promoId').value      = doc.id;
         document.getElementById('bk_promoCodeVal').value = promo.code;
 
-        const label = promo.type === 'percent'
-            ? `${promo.value}% off`
-            : `${parseFloat(promo.value).toFixed(2)} GHC off`;
+        const label = promo.type === 'percent' ? `${promo.value}% off` : `${parseFloat(promo.value).toFixed(2)} GHC off`;
         bk_showPromoStatus(`✓ "${promo.description || code}" applied — ${label}`, true);
         populateConfirmScreen();
 
@@ -939,9 +875,7 @@ function bk_showPromoStatus(msg, success) {
 window.bk_confirmBooking = async function() {
     const btn = document.getElementById('btnConfirmBooking');
 
-    if (!bk_clientProfile) {
-        toast('Please complete your details before booking.', 'error'); return;
-    }
+    if (!bk_clientProfile) { toast('Please complete your details before booking.', 'error'); return; }
 
     const techEmail = document.getElementById('bk_techEmail').value;
     const techName  = document.getElementById('bk_techName').value  || 'To be assigned';
@@ -961,7 +895,6 @@ window.bk_confirmBooking = async function() {
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
         const batch = db.batch();
-
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
             clientPhone:         bk_clientProfile.phone  || '',
@@ -988,7 +921,6 @@ window.bk_confirmBooking = async function() {
         };
         batch.set(apptRef, apptData);
 
-        // Increment promo usedCount if applied
         const promoId = document.getElementById('bk_promoId').value;
         if (promoId) {
             batch.update(db.collection('Promos').doc(promoId), {
@@ -999,14 +931,12 @@ window.bk_confirmBooking = async function() {
         await batch.commit();
         bk_confirmedAppt = { ...apptData, id: apptRef.id };
 
-        // Populate success screen
         populateSuccessScreen(bk_confirmedAppt);
 
-        // Guests can't view past bookings — hide that button
         const viewBtn = document.querySelector('#screen-success .btn-outline');
         if (viewBtn) viewBtn.style.display = bk_isGuest ? 'none' : '';
 
-        _screenHistory = ['screen-welcome', 'screen-services'];
+        _screenHistory = ['screen-welcome', 'screen-booking-mode'];
         goToStep('screen-success');
 
     } catch (e) {
@@ -1018,12 +948,8 @@ window.bk_confirmBooking = async function() {
 
 function populateSuccessScreen(appt) {
     document.getElementById('suc_services').textContent = appt.bookedService || '—';
-
-    const techDisplay = appt.assignedTechName && appt.assignedTechEmail
-        ? appt.assignedTechName
-        : 'To be assigned';
+    const techDisplay = appt.assignedTechName && appt.assignedTechEmail ? appt.assignedTechName : 'To be assigned';
     document.getElementById('suc_tech').textContent = techDisplay;
-
     let dateFormatted = appt.dateString;
     try { dateFormatted = new Date(appt.dateString + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }); } catch(e) {}
     let timeFormatted = appt.timeString;
@@ -1044,7 +970,6 @@ window.bk_addToCalendar = function() {
     const [h, m] = a.timeString.split(':').map(Number);
     const start = new Date(year, month - 1, day, h, m);
     const end   = new Date(start.getTime() + a.bookedDuration * 60000);
-
     const fmt = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
         + `&text=${encodeURIComponent('THURAYA — ' + a.bookedService)}`
@@ -1093,7 +1018,6 @@ window.bk_viewMyBookings = async function() {
                 const [hh, mm] = a.timeString.split(':').map(Number);
                 timeFormatted = `${hh % 12 || 12}:${String(mm).padStart(2,'0')} ${hh >= 12 ? 'PM' : 'AM'}`;
             } catch(e) {}
-
             const s = statusLabels[a.status] || { label: a.status, cls: 'status-scheduled' };
             html += `
                 <div class="booking-item">
@@ -1108,11 +1032,8 @@ window.bk_viewMyBookings = async function() {
         listEl.innerHTML = html;
 
     } catch (e) {
-        // Fallback: query without orderBy if index missing
         try {
-            const snap2 = await db.collection('Appointments')
-                .where('clientEmail', '==', bk_currentUser?.email)
-                .get();
+            const snap2 = await db.collection('Appointments').where('clientEmail', '==', bk_currentUser?.email).get();
             if (snap2.empty) { listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No bookings yet.</p>'; return; }
             const docs = [];
             snap2.forEach(d => docs.push({ id: d.id, ...d.data() }));
@@ -1126,29 +1047,24 @@ window.bk_viewMyBookings = async function() {
     }
 };
 
+// ── EDIT 4: bk_bookAgain goes to mode select ─────────────
 window.bk_bookAgain = function() {
-    // Keep the client profile and auth state — just reset the booking selections
     bk_selectedServices = [];
     bk_activePromo      = null;
     bk_confirmedAppt    = null;
-    // Reset booking form fields
     const timeEl = document.getElementById('bk_time');
     const dateEl = document.getElementById('bk_date');
     if (timeEl) timeEl.value = '';
     if (dateEl) dateEl.value = '';
     const slotsContainer = document.getElementById('bk_slotsContainer');
     if (slotsContainer) slotsContainer.style.display = 'none';
-    // Reset technician selection to "any"
     selectTechOption('any');
-    // Clear service menu selections
     bk_clearAllSelections();
-    // Go straight to services — profile is already set
     _screenHistory = ['screen-welcome'];
-    goToStep('screen-services');
+    goToStep('screen-booking-mode');
 };
 
 window.bk_exitBooking = function() {
-    // Full reset — no confirmation needed since booking is already confirmed
     bk_selectedServices = [];
     bk_activePromo      = null;
     bk_confirmedAppt    = null;

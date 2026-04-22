@@ -17,7 +17,7 @@
     <!-- ── APP SHELL ──────────────────────────────── -->
     <div id="app">
 
-        <!-- STEP 1: WELCOME -->
+        <!-- WELCOME -->
         <div class="screen active" id="screen-welcome">
             <div class="welcome-inner">
                 <div class="logo-block">
@@ -49,7 +49,39 @@
             </div>
         </div>
 
-        <!-- STEP 2: PROFILE SETUP (first time only) -->
+        <!-- ── BOOKING MODE SELECT (new) ─────────────────────── -->
+        <div class="screen" id="screen-booking-mode">
+            <div class="screen-inner">
+                <div class="step-header">
+                    <div class="step-badge">New Booking</div>
+                    <h2>How are you visiting?</h2>
+                    <p>Book for yourself or bring a group along.</p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
+                    <button class="mode-card" onclick="grp_soloMode()">
+                        <div class="mode-card-icon">🪑</div>
+                        <div class="mode-card-body">
+                            <strong>Just Me</strong>
+                            <span>Single appointment, standard flow</span>
+                        </div>
+                        <div class="mode-card-arrow">›</div>
+                    </button>
+                    <button class="mode-card mode-card--highlight" onclick="goToStep('screen-group-size')">
+                        <div class="mode-card-icon">👥</div>
+                        <div class="mode-card-body">
+                            <strong>
+                                Book for a Group
+                                <span class="mode-badge">New</span>
+                            </strong>
+                            <span>Everyone picks their service — one shared time</span>
+                        </div>
+                        <div class="mode-card-arrow" style="color:var(--gold);">›</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROFILE SETUP (first time only) -->
         <div class="screen" id="screen-profile">
             <div class="screen-inner">
                 <div class="step-header">
@@ -86,7 +118,7 @@
             </div>
         </div>
 
-        <!-- STEP 2b: GUEST DETAILS -->
+        <!-- GUEST DETAILS -->
         <div class="screen" id="screen-guest">
             <div class="screen-inner">
                 <button class="back-btn" onclick="goBack()">← Back</button>
@@ -124,7 +156,7 @@
             </div>
         </div>
 
-        <!-- STEP 3: CHOOSE SERVICE -->
+        <!-- STEP 1 OF 4: CHOOSE SERVICE -->
         <div class="screen" id="screen-services">
             <div class="screen-inner">
                 <button class="back-btn" onclick="goBack()">← Back</button>
@@ -133,22 +165,18 @@
                     <h2>Choose Your Services</h2>
                     <p>Select your treatments below. Your cost and time summary updates as you go.</p>
                 </div>
-
                 <div class="dept-toggle">
                     <button class="dept-btn active" data-dept="Hand" onclick="switchDept('Hand', this)">✋ Hand Therapy</button>
                     <button class="dept-btn" data-dept="Foot" onclick="switchDept('Foot', this)">🦶 Foot Therapy</button>
                 </div>
-
                 <div id="bk_serviceMenu">
                     <div class="loading-pulse">Loading services...</div>
                 </div>
-
-                <!-- spacer so content isn't hidden behind sticky bar -->
                 <div style="height:160px;"></div>
             </div>
         </div>
 
-        <!-- STEP 4: TECHNICIAN -->
+        <!-- STEP 2 OF 4: TECHNICIAN -->
         <div class="screen" id="screen-technician">
             <div class="screen-inner">
                 <button class="back-btn" onclick="goBack()">← Back</button>
@@ -157,7 +185,6 @@
                     <h2>Your Technician</h2>
                     <p>Choose who takes care of you, or let us decide.</p>
                 </div>
-
                 <div class="tech-option-cards">
                     <div class="tech-option-card selected" id="techCard_any" onclick="selectTechOption('any')">
                         <div class="tech-option-icon">✨</div>
@@ -176,17 +203,14 @@
                         <div class="tech-option-check" id="techCheck_specific" style="opacity:0;">✓</div>
                     </div>
                 </div>
-
                 <div id="techSelectPanel" style="display:none;">
                     <div class="tech-list" id="bk_techList">
                         <div class="loading-pulse">Loading team...</div>
                     </div>
                 </div>
-
                 <input type="hidden" id="bk_techEmail" value="">
                 <input type="hidden" id="bk_techName" value="">
                 <input type="hidden" id="bk_techMode" value="any">
-
                 <div class="step-footer">
                     <button class="btn-primary full" id="btnToDateTime" onclick="goToStep('screen-datetime')">
                         Continue
@@ -195,7 +219,7 @@
             </div>
         </div>
 
-        <!-- STEP 5: DATE & TIME -->
+        <!-- STEP 3 OF 4: DATE & TIME -->
         <div class="screen" id="screen-datetime">
             <div class="screen-inner">
                 <button class="back-btn" onclick="goBack()">← Back</button>
@@ -204,21 +228,17 @@
                     <h2>Pick a Date &amp; Time</h2>
                     <p>Choose when you'd like to visit us.</p>
                 </div>
-
                 <div class="form-card">
                     <div class="form-group">
                         <label>Date <span class="req">*</span></label>
                         <input type="date" id="bk_date" onchange="bk_generateSlots()">
                     </div>
                 </div>
-
                 <div id="bk_slotsContainer" class="slots-container" style="display:none;">
                     <label class="slots-label">Available Times</label>
                     <div id="bk_slots" class="slots-grid"></div>
                 </div>
-
                 <input type="hidden" id="bk_time" value="">
-
                 <div class="step-footer">
                     <button class="btn-primary full" id="btnToConfirm" onclick="goToStep('screen-confirm')" disabled>
                         Review Booking
@@ -227,7 +247,7 @@
             </div>
         </div>
 
-        <!-- STEP 6: CONFIRM -->
+        <!-- STEP 4 OF 4: CONFIRM -->
         <div class="screen" id="screen-confirm">
             <div class="screen-inner">
                 <button class="back-btn" onclick="goBack()">← Back</button>
@@ -236,7 +256,6 @@
                     <h2>Review &amp; Confirm</h2>
                     <p>Please check your booking details below.</p>
                 </div>
-
                 <div class="confirm-card">
                     <div class="confirm-row">
                         <span class="confirm-label">Services</span>
@@ -265,9 +284,6 @@
                         <span class="confirm-value accent-text" id="conf_total">—</span>
                     </div>
                 </div>
-
-                <!-- Promo code -->
-                <!-- Promo code — collapsed by default, opt-in -->
                 <div class="promo-block">
                     <button class="promo-toggle-btn" id="btnTogglePromo" onclick="bk_togglePromoInput()">
                         🎟 I have a promo code
@@ -285,7 +301,6 @@
                     <input type="hidden" id="bk_promoCodeVal" value="">
                     <input type="hidden" id="bk_discountAmount" value="0">
                 </div>
-
                 <div class="step-footer">
                     <button class="btn-primary full" id="btnConfirmBooking" onclick="bk_confirmBooking()">
                         <span class="btn-text">Confirm Booking</span>
@@ -295,13 +310,12 @@
             </div>
         </div>
 
-        <!-- STEP 7: SUCCESS -->
+        <!-- SUCCESS -->
         <div class="screen" id="screen-success">
             <div class="screen-inner success-inner">
                 <div class="success-icon">✦</div>
                 <h2 class="success-title">Booking Confirmed</h2>
                 <p class="success-sub">We look forward to seeing you.</p>
-
                 <div class="confirm-card" style="margin-top:28px;">
                     <div class="confirm-row">
                         <span class="confirm-label">Services</span>
@@ -320,7 +334,6 @@
                         <span class="confirm-value accent-text" id="suc_total">—</span>
                     </div>
                 </div>
-
                 <div class="success-actions">
                     <button class="btn-primary full" id="btnAddToCalendar" onclick="bk_addToCalendar()">
                         📅 Add to Calendar
@@ -351,16 +364,171 @@
                     <div class="loading-pulse">Loading your bookings...</div>
                 </div>
                 <div class="step-footer" style="margin-top:24px;">
-                    <button class="btn-primary full" onclick="goToStep('screen-services')">
+                    <button class="btn-primary full" onclick="goToStep('screen-booking-mode')">
                         Book a New Visit
                     </button>
                 </div>
             </div>
         </div>
 
+        <!-- ── GROUP BOOKING SCREENS ──────────────────────────── -->
+
+        <!-- Group Size -->
+        <div class="screen" id="screen-group-size">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Group Booking · Step 1</div>
+                    <h2>How many people?</h2>
+                    <p>You can add up to 6 people in one booking.</p>
+                </div>
+                <div class="grp-size-picker">
+                    <button class="grp-size-btn" onclick="grp_changeSize(-1)">−</button>
+                    <div class="grp-size-display">
+                        <span id="grp_sizeNumber">2</span>
+                        <small>people</small>
+                    </div>
+                    <button class="grp-size-btn" onclick="grp_changeSize(1)">+</button>
+                </div>
+                <div class="step-footer">
+                    <button class="btn-primary full" onclick="grp_initMembers()">Continue →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Services -->
+        <div class="screen" id="screen-group-services">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Group Booking · Step 2</div>
+                    <h2>Choose Services</h2>
+                    <p>Select one treatment per person.</p>
+                </div>
+                <div class="grp-tabs" id="grp_personTabs"></div>
+                <div class="form-card" style="margin-bottom:14px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label id="grp_nameLabel">Your name</label>
+                        <input type="text" id="grp_activeName" placeholder="Enter name…" oninput="grp_saveName(this.value)">
+                    </div>
+                </div>
+                <div class="dept-toggle" id="grp_deptToggle">
+                    <button class="dept-btn active" data-dept="Hand" onclick="grp_switchDept('Hand', this)">✋ Hand Therapy</button>
+                    <button class="dept-btn" data-dept="Foot" onclick="grp_switchDept('Foot', this)">🦶 Foot Therapy</button>
+                </div>
+                <div id="grp_serviceList" style="margin-top:16px;"></div>
+                <div class="grp-progress-row">
+                    <span id="grp_progressText">0 of 2 selected</span>
+                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()"
+                        style="background:none;border:none;color:var(--gold-dark);font-size:0.85rem;cursor:pointer;font-family:inherit;display:none;">
+                        Next person →
+                    </button>
+                </div>
+                <div class="step-footer">
+                    <button class="btn-primary full" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
+                        Choose a Time →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Date & Time -->
+        <div class="screen" id="screen-group-datetime">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Group Booking · Step 3</div>
+                    <h2>Pick a Date &amp; Time</h2>
+                    <p id="grp_datetimeSubtitle">Showing slots where all members can be seen at once.</p>
+                </div>
+                <div class="form-card">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Date <span class="req">*</span></label>
+                        <input type="date" id="grp_date" onchange="grp_generateSlots()">
+                    </div>
+                </div>
+                <div id="grp_slotsContainer" class="slots-container" style="display:none;">
+                    <label class="slots-label">Available Times</label>
+                    <div id="grp_slots" class="slots-grid"></div>
+                </div>
+                <input type="hidden" id="grp_time" value="">
+                <div class="step-footer">
+                    <button class="btn-primary full" id="grp_toConfirmBtn" onclick="goToStep('screen-group-confirm')" disabled>
+                        Review Booking →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Confirm -->
+        <div class="screen" id="screen-group-confirm">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Group Booking · Step 4</div>
+                    <h2>Review &amp; Confirm</h2>
+                    <p>Check your group's details before confirming.</p>
+                </div>
+                <div class="confirm-card" style="margin-bottom:14px;">
+                    <div class="confirm-row">
+                        <span class="confirm-label">Date</span>
+                        <span class="confirm-value" id="grp_conf_date">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Time</span>
+                        <span class="confirm-value" id="grp_conf_time">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Group size</span>
+                        <span class="confirm-value" id="grp_conf_size">—</span>
+                    </div>
+                </div>
+                <div id="grp_conf_members" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+                <div class="grp-info-box">
+                    <span style="font-size:1rem;">ℹ️</span>
+                    <p>All services run at the same time. The session ends when the longest treatment is complete. One confirmation covers the whole group.</p>
+                </div>
+                <div class="step-footer">
+                    <button class="btn-primary full" id="grp_btnConfirm" onclick="grp_confirmBooking()">
+                        <span class="btn-text">Confirm Group Booking</span>
+                    </button>
+                    <p class="confirm-note">Free cancellation up to 24 hours before your appointment.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Success -->
+        <div class="screen" id="screen-group-success">
+            <div class="screen-inner success-inner">
+                <div class="success-icon">✦</div>
+                <h2 class="success-title">Group Booking Confirmed</h2>
+                <p class="success-sub">We look forward to seeing your group.</p>
+                <div class="confirm-card" style="margin-top:28px;">
+                    <div class="confirm-row">
+                        <span class="confirm-label">Date &amp; Time</span>
+                        <span class="confirm-value" id="grp_suc_datetime">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Group size</span>
+                        <span class="confirm-value" id="grp_suc_size">—</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Ref</span>
+                        <span class="confirm-value" id="grp_suc_ref" style="font-size:0.8rem;letter-spacing:1px;">—</span>
+                    </div>
+                </div>
+                <div id="grp_suc_members" style="display:flex;flex-direction:column;gap:8px;margin-top:14px;"></div>
+                <div class="success-actions" style="margin-top:28px;">
+                    <button class="btn-primary full" onclick="grp_bookAgain()">Book Another Visit</button>
+                    <button class="btn-outline full" onclick="bk_viewMyBookings()">View My Bookings</button>
+                    <button class="btn-ghost full" style="color:var(--error);border-color:var(--error);" onclick="bk_exitBooking()">Exit</button>
+                </div>
+            </div>
+        </div>
+
     </div><!-- /#app -->
 
-    <!-- STICKY BREAKDOWN BAR — lives outside screens so fixed positioning always works -->
+    <!-- STICKY BREAKDOWN BAR -->
     <div id="bk_stickyBar" class="sticky-bar" style="display:none;">
         <div id="bk_stickyEmpty" class="sticky-empty">
             Tap a service above to see your price breakdown
@@ -398,5 +566,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="app.js"></script>
+    <script src="group-booking.js"></script>
 </body>
 </html>
