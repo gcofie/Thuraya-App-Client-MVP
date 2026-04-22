@@ -43,14 +43,12 @@ window.grp_changeSize = function(delta) {
 };
 
 window.grp_initMembers = function() {
-    // Build member array — first member is always the lead booker
+    // Each member stores the same shape as bk_selectedServices
+    // selectedServices: [{ id, type, price, dur, name, qty }]
     grp_members = Array.from({ length: grp_groupSize }, (_, i) => ({
-        name:            i === 0 ? (bk_clientProfile?.name || '') : '',
-        serviceId:       '',
-        serviceName:     '',
-        serviceDuration: 0,
-        servicePrice:    0,
-        dept:            'Hand'
+        name:             i === 0 ? (bk_clientProfile?.name || '') : '',
+        selectedServices: [],
+        dept:             'Hand'
     }));
     grp_activeMember = 0;
     grp_renderMemberTab(0);
@@ -63,7 +61,7 @@ function grp_renderTabs() {
     const container = document.getElementById('grp_personTabs');
     if (!container) return;
     container.innerHTML = grp_members.map((m, i) => {
-        const done   = !!m.serviceId;
+        const done   = m.selectedServices && m.selectedServices.length > 0;
         const active = i === grp_activeMember;
         return `<button
             class="grp-tab ${active ? 'grp-tab--active' : ''} ${done && !active ? 'grp-tab--done' : ''}"
@@ -112,68 +110,189 @@ window.grp_switchDept = function(dept, btn) {
 
 
 // ── Service list for active member ───────────────────────────
+// Mirrors _buildCard() / renderMenuForDept() from app.js exactly —
+// same radio, checkbox, counter logic, same category groupings.
 function grp_renderServiceList() {
     const container = document.getElementById('grp_serviceList');
     if (!container) return;
 
     const member = grp_members[grp_activeMember];
     const dept   = member.dept || 'Hand';
+    const sel    = member.selectedServices || [];
 
-    // Filter active services for this dept — radio/single selection only
-    // (group bookings use one service per person for clean slot calculation)
-    const services = bk_menuServices.filter(s =>
-        (s.department === dept || s.department === 'Both') &&
-        (!s.status || s.status === 'Active') &&
-        (s.inputType === 'radio' || s.inputType === 'checkbox' || !s.inputType)
+    // ── Build dbData the same way renderMenuForDept does ──────
+    const ALIASES = {
+        'I. HAND THERAPIES':  'I. HAND THERAPY RITUALS',
+        'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
+    };
+    const T_ORDER = { radio: 0, checkbox: 1, counter: 2 };
+
+    const dbData = { Hand: {}, Foot: {} };
+    bk_menuServices.forEach(s => {
+        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
+        cat = ALIASES[cat] ?? ALIASES[cat.toUpperCase()] ?? cat;
+        if (s.department === 'Both') {
+            ['Hand','Foot'].forEach(d => {
+                if (!dbData[d][cat]) dbData[d][cat] = [];
+                dbData[d][cat].push(s);
+            });
+        } else {
+            const d = s.department || 'Hand';
+            if (!dbData[d]) dbData[d] = {};
+            if (!dbData[d][cat]) dbData[d][cat] = [];
+            dbData[d][cat].push(s);
+        }
+    });
+
+    Object.values(dbData).forEach(dObj =>
+        Object.values(dObj).forEach(arr =>
+            arr.sort((a, b) => (T_ORDER[a.inputType] ?? 1) - (T_ORDER[b.inputType] ?? 1))
+        )
     );
 
-    if (!services.length) {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:24px 0;">No services available.</p>';
+    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
+        const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
+        const aNum = numRe.test(aU), bNum = numRe.test(bU);
+        if (aNum && !bNum) return -1;
+        if (!aNum && bNum) return  1;
+        const aR = (dbData[dept][a][0]?.inputType || 'checkbox') === 'radio';
+        const bR = (dbData[dept][b][0]?.inputType || 'checkbox') === 'radio';
+        if (aR && !bR) return -1;
+        if (!aR && bR) return  1;
+        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    if (!sortedCats.length) {
+        container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:24px 0;">No services available for this category.</p>';
         return;
     }
 
-    // Group by category
-    const cats = {};
-    services.forEach(s => {
-        const cat = (s.category || 'Services').trim();
-        if (!cats[cat]) cats[cat] = [];
-        cats[cat].push(s);
-    });
-
+    // ── Render using _grp_buildCard (mirrors _buildCard) ──────
     let html = '';
-    Object.entries(cats).forEach(([cat, items]) => {
-        html += `<p class="service-category-label">${cat}</p>`;
-        items.forEach(s => {
-            const price   = parseFloat(s.price) || 0;
-            const dur     = parseInt(s.duration) || 0;
-            const name    = s.name || 'Service';
-            const selected = member.serviceId === s.id;
-            const desc    = s.desc ? `<div class="service-card-desc">${s.desc}</div>` : '';
-            html += `
-            <div class="service-card ${selected ? 'selected' : ''}"
-                onclick="grp_selectService('${s.id}','${name.replace(/'/g,"\\'")}',${dur},${price})">
-                <input type="radio" style="width:18px;height:18px;min-width:18px;flex-shrink:0;
-                    pointer-events:none;accent-color:var(--gold);margin-top:2px;"
-                    ${selected ? 'checked' : ''}>
-                <div class="service-card-body">
-                    <div class="service-card-name">${name}</div>
-                    ${desc}
-                    <div class="service-card-price">${dur} mins &nbsp;|&nbsp; ${price.toFixed(0)} GHC</div>
-                </div>
-            </div>`;
-        });
+    sortedCats.forEach(cat => {
+        const items   = dbData[dept][cat];
+        const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
+        const multis  = items.filter(s => (s.inputType || 'radio') !== 'radio');
+
+        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
+
+        if (singles.length && multis.length) {
+            html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
+            singles.forEach(s => { html += _grp_buildCard(s, dept, sel); });
+            html += `<div class="menu-subgroup-divider"></div>`;
+            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
+            multis.forEach(s => { html += _grp_buildCard(s, dept, sel); });
+        } else {
+            items.forEach(s => { html += _grp_buildCard(s, dept, sel); });
+        }
+
+        html += `</div>`;
     });
 
     container.innerHTML = html;
+
+    // Restore counter values
+    sel.filter(s => s.type === 'counter').forEach(s => {
+        const el = document.getElementById('grp_qty_' + s.id);
+        if (el) el.value = s.qty || 0;
+    });
 }
 
-window.grp_selectService = function(id, name, duration, price) {
+// ── Mirrors _buildCard() exactly, scoped to group member ─────
+function _grp_buildCard(s, dept, sel) {
+    const type     = s.inputType || 'radio';
+    const name     = s.name      || 'Service';
+    const dur      = Number(s.duration) || 0;
+    const price    = Number(s.price)    || 0;
+    const descHtml = s.desc ? `<div class="service-card-desc">${s.desc}</div>` : '';
+    const tagHtml  = (s.tag && s.tag !== 'None') ? `<span class="hl-tag">${s.tag}</span>` : '';
+    const priceTag = `<span class="service-price-pill">${dur > 0 ? dur + ' mins &nbsp;|&nbsp; ' : ''}${price} GHC</span>`;
+    const safeName = name.replace(/'/g, "\\'");
+
+    if (type === 'counter') {
+        const qty = sel.find(x => x.id === s.id)?.qty || 0;
+        return `
+            <div class="service-card" style="align-items:center;">
+                <div class="service-card-body" style="pointer-events:none;">
+                    <div class="service-card-name">${name} ${tagHtml}</div>
+                    ${descHtml}${priceTag}
+                </div>
+                <div class="counter-box">
+                    <button class="counter-btn" onclick="grp_updateCounter('${s.id}',${price},${dur},'${safeName}',-1)">−</button>
+                    <input type="number" id="grp_qty_${s.id}" value="${qty}" min="0" readonly
+                        style="width:44px;height:36px;text-align:center;padding:4px;font-weight:700;border:1px solid var(--border);border-radius:6px;">
+                    <button class="counter-btn" onclick="grp_updateCounter('${s.id}',${price},${dur},'${safeName}',1)">+</button>
+                </div>
+            </div>`;
+    }
+
+    const groupName = type === 'radio' ? `grp_base_${dept}_${grp_activeMember}` : `grp_cb_${s.id}`;
+    const isSelected = sel.some(x => x.id === s.id);
+    const inputEl = type === 'radio'
+        ? `<input type="radio" name="${groupName}" id="grp_cb_${s.id}"
+               style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;"
+               ${isSelected ? 'checked' : ''}>`
+        : `<input type="checkbox" id="grp_cb_${s.id}"
+               style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;"
+               ${isSelected ? 'checked' : ''}>`;
+
+    return `
+        <div class="service-card ${isSelected ? 'selected' : ''}"
+            onclick="grp_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${safeName}')">
+            ${inputEl}
+            <div class="service-card-body">
+                <div class="service-card-name">${name} ${tagHtml}</div>
+                ${descHtml}${priceTag}
+            </div>
+        </div>`;
+}
+
+// ── Toggle card — mirrors bk_toggleCard scoped to member ─────
+window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, name) {
+    event.preventDefault();
     const member = grp_members[grp_activeMember];
-    member.serviceId       = id;
-    member.serviceName     = name;
-    member.serviceDuration = duration;
-    member.servicePrice    = price;
-    grp_renderServiceList();
+    const input  = document.getElementById('grp_cb_' + id);
+    if (!input) return;
+
+    if (type === 'radio') {
+        // Deselect all in group, remove from member selections
+        document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
+            r.checked = false;
+            r.closest('.service-card')?.classList.remove('selected');
+        });
+        member.selectedServices = member.selectedServices.filter(s => {
+            const el = document.getElementById('grp_cb_' + s.id);
+            return !el || el.name !== groupName;
+        });
+        const wasSelected = input.checked;
+        if (!wasSelected) {
+            input.checked = true;
+            card.classList.add('selected');
+            member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
+        }
+    } else {
+        input.checked = !input.checked;
+        card.classList.toggle('selected', input.checked);
+        if (input.checked) {
+            member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
+        } else {
+            member.selectedServices = member.selectedServices.filter(s => s.id !== id);
+        }
+    }
+    grp_renderTabs();
+    grp_updateProgress();
+};
+
+// ── Counter — mirrors bk_updateCounter scoped to member ──────
+window.grp_updateCounter = function(id, price, dur, name, delta) {
+    const input  = document.getElementById('grp_qty_' + id);
+    const member = grp_members[grp_activeMember];
+    if (!input) return;
+    let val = Math.max(0, (parseInt(input.value) || 0) + delta);
+    input.value = val;
+    member.selectedServices = member.selectedServices.filter(s => s.id !== id);
+    if (val > 0) member.selectedServices.push({ id, type: 'counter', price, dur, name, qty: val });
     grp_renderTabs();
     grp_updateProgress();
 };
@@ -181,7 +300,7 @@ window.grp_selectService = function(id, name, duration, price) {
 
 // ── Progress bar & continue button ───────────────────────────
 function grp_updateProgress() {
-    const done    = grp_members.filter(m => m.serviceId).length;
+    const done    = grp_members.filter(m => m.selectedServices && m.selectedServices.length > 0).length;
     const total   = grp_members.length;
     const allDone = done === total;
 
@@ -191,8 +310,8 @@ function grp_updateProgress() {
 
     if (progressEl) progressEl.textContent = `${done} of ${total} selected`;
 
-    // Show "Next person" nudge if current member is done but not the last
-    const currentDone = !!grp_members[grp_activeMember].serviceId;
+    // Show "Next person" nudge if current member has selections but is not the last
+    const currentDone = grp_members[grp_activeMember].selectedServices?.length > 0;
     const isLast      = grp_activeMember === total - 1;
     if (nextBtn) nextBtn.style.display = (currentDone && !isLast) ? 'inline' : 'none';
 
@@ -285,7 +404,9 @@ window.grp_generateSlots = async function() {
         // enough non-conflicting tech slots for all services simultaneously.
         // Simplified: slot is "available" if it's not past 5pm minus
         // the longest service duration, and within business hours.
-        const maxDuration = Math.max(...grp_members.map(m => m.serviceDuration || 60));
+        const maxDuration = Math.max(...grp_members.map(m =>
+            (m.selectedServices || []).reduce((sum, s) => sum + (s.dur * (s.qty || 1)), 0) || 60
+        ));
         const closingMins = 18 * 60; // 6pm hard close
 
         let html = '';
@@ -375,16 +496,21 @@ function grp_populateConfirm() {
 
     const membersEl = document.getElementById('grp_conf_members');
     if (membersEl) {
-        membersEl.innerHTML = grp_members.map((m, i) => `
+        membersEl.innerHTML = grp_members.map((m, i) => {
+            const services  = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
+            const totalMins = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur * (s.qty || 1)), 0);
+            const totalPrice= (m.selectedServices || []).reduce((sum, s) => sum + (s.price * (s.qty || 1)), 0);
+            return `
             <div class="grp-member-card">
                 <div class="grp-member-index">${i + 1}</div>
                 <div class="grp-member-info">
                     <strong>${m.name || (i === 0 ? 'You' : 'Person ' + (i + 1))}
                         ${i === 0 ? '<span class="grp-lead-badge">Lead booker</span>' : ''}
                     </strong>
-                    <span>${m.serviceName} · ${m.serviceDuration} mins · ${m.servicePrice.toFixed(0)} GHC</span>
+                    <span>${services || '—'} · ${totalMins} mins · ${totalPrice.toFixed(0)} GHC</span>
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 }
 
@@ -404,7 +530,10 @@ window.grp_confirmBooking = async function() {
         const batch = db.batch();
 
         grp_members.forEach((m, i) => {
-            const ref = db.collection('Appointments').doc();
+            const ref        = db.collection('Appointments').doc();
+            const services   = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
+            const totalMins  = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur  * (s.qty || 1)), 0);
+            const totalPrice = (m.selectedServices || []).reduce((sum, s) => sum + (s.price * (s.qty || 1)), 0);
             batch.set(ref, {
                 groupId:           grp_groupId,
                 groupSize:         grp_members.length,
@@ -413,10 +542,10 @@ window.grp_confirmBooking = async function() {
                 clientName:        m.name || (i === 0 ? (bk_clientProfile?.name || '') : ''),
                 clientEmail:       i === 0 ? (bk_currentUser?.email || '') : '',
                 clientPhone:       i === 0 ? (bk_clientProfile?.phone || '') : '',
-                bookedService:     m.serviceName,
-                bookedDuration:    m.serviceDuration,
-                bookedPrice:       m.servicePrice,
-                grandTotal:        m.servicePrice,
+                bookedService:     services,
+                bookedDuration:    totalMins,
+                bookedPrice:       totalPrice,
+                grandTotal:        totalPrice,
                 dateString:        dateStr,
                 timeString:        timeStr,
                 status:            'Scheduled',
@@ -464,19 +593,22 @@ function grp_populateSuccess(dateStr, timeStr) {
 
     const membersEl = document.getElementById('grp_suc_members');
     if (membersEl) {
-        membersEl.innerHTML = grp_members.map((m, i) => `
+        membersEl.innerHTML = grp_members.map((m, i) => {
+            const services  = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
+            const totalMins = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur * (s.qty || 1)), 0);
+            return `
             <div class="grp-member-card">
                 <div class="grp-member-index">${i + 1}</div>
                 <div class="grp-member-info">
                     <strong>${m.name || (i === 0 ? 'You' : 'Person ' + (i + 1))}</strong>
-                    <span>${m.serviceName} · ${m.serviceDuration} mins</span>
+                    <span>${services || '—'} · ${totalMins} mins</span>
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 }
 
 
-// ── Reset & book again ────────────────────────────────────────
 window.grp_bookAgain = function() {
     grp_groupSize    = 2;
     grp_activeMember = 0;
