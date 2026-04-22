@@ -57,15 +57,12 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
 
     // ── Fetch all 3 layers in parallel ───────────────────────
     const [schedSnap, leaveSnap, apptSnap] = await Promise.all([
-        // Layer 1: schedules for these techs
-        db.collection('Staff_Schedules')
-            .where(firebase.firestore.FieldPath.documentId(), 'in', techEmails)
-            .get(),
+        // Layer 1: fetch ALL schedules — tiny collection, no index needed
+        db.collection('Staff_Schedules').get(),
 
-        // Layer 2: approved leave covering this date
+        // Layer 2: approved leave — single where, filter dates client-side
         db.collection('Staff_Leave')
             .where('status', '==', 'Approved')
-            .where('startDate', '<=', dateStr)
             .get(),
 
         // Layer 3: existing appointments on this date
@@ -98,7 +95,8 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     const onLeave = new Set();
     leaveSnap.forEach(doc => {
         const l = doc.data();
-        if (l.endDate >= dateStr && l.techEmail) {
+        // Filter client-side: leave must cover dateStr
+        if (l.startDate <= dateStr && l.endDate >= dateStr && l.techEmail) {
             onLeave.add(l.techEmail);
         }
     });
