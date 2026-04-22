@@ -290,9 +290,6 @@
                     <button class="btn-primary full" id="btnConfirmBooking" onclick="bk_confirmBooking()">
                         <span class="btn-text">Confirm Booking</span>
                     </button>
-                    <button class="btn-ghost full" onclick="bk_exitBooking()">
-                        Exit Booking
-                    </button>
                     <p class="confirm-note">Free cancellation up to 24 hours before your appointment.</p>
                 </div>
             </div>
@@ -333,6 +330,9 @@
                     </button>
                     <button class="btn-ghost full" onclick="bk_bookAgain()">
                         Book Another Visit
+                    </button>
+                    <button class="btn-ghost full" style="color:var(--error); border-color:var(--error);" onclick="bk_exitBooking()">
+                        Exit
                     </button>
                 </div>
             </div>

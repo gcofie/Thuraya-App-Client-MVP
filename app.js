@@ -1147,13 +1147,8 @@ window.bk_bookAgain = function() {
     goToStep('screen-services');
 };
 
-window.bk_exitBooking = async function() {
-    const ok = await new Promise(resolve => {
-        if (!window.confirm) { resolve(true); return; }
-        resolve(window.confirm('Exit this booking? Your selections will be cleared.'));
-    });
-    if (!ok) return;
-    // Full reset
+window.bk_exitBooking = function() {
+    // Full reset — no confirmation needed since booking is already confirmed
     bk_selectedServices = [];
     bk_activePromo      = null;
     bk_confirmedAppt    = null;
@@ -1162,7 +1157,6 @@ window.bk_exitBooking = async function() {
     if (timeEl) timeEl.value = '';
     if (dateEl) dateEl.value = '';
     bk_clearAllSelections();
-    // Hide sticky bar
     const bar = document.getElementById('bk_stickyBar');
     if (bar) bar.style.display = 'none';
     _screenHistory = ['screen-welcome'];
