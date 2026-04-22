@@ -541,16 +541,42 @@ window.switchDept = function(dept, btn) {
 
 async function loadTechs() {
     try {
-        const snap = await db.collection('Users').get();
+        const today = (() => {
+            const n = new Date();
+            return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+        })();
+
+        // Fetch users and calendar blocks in parallel
+        const [usersSnap, blocksSnap] = await Promise.all([
+            db.collection('Users').get(),
+            // Get date_range and tech_specific blocks that cover today
+            db.collection('Calendar_Blocks')
+                .where('type', 'in', ['date_range', 'tech_specific'])
+                .get()
+        ]);
+
+        // Build set of tech emails blocked today
+        const blockedToday = new Set();
+        blocksSnap.forEach(doc => {
+            const b = doc.data();
+            if (!b.techEmail) return; // no tech = all techs, handled in availability engine
+            if (b.type === 'tech_specific' && b.dateString === today) {
+                blockedToday.add(b.techEmail);
+            } else if (b.type === 'date_range' && b.rangeStart <= today && b.rangeEnd >= today) {
+                blockedToday.add(b.techEmail);
+            }
+        });
+
         bk_techs = [];
-        snap.forEach(doc => {
+        usersSnap.forEach(doc => {
             const d = doc.data();
             const roles = (Array.isArray(d.roles) ? d.roles : [d.role || '']).map(r => (r || '').toLowerCase());
             const isTech = roles.some(r => r.includes('tech'));
             if (!isTech) return;
-            // Only show techs marked visible to clients
-            // visibleToClients defaults to true if field not set
+            // Hide techs marked invisible to clients
             if (d.visibleToClients === false) return;
+            // Hide techs with an active calendar block today
+            if (blockedToday.has(doc.id)) return;
             bk_techs.push({ email: doc.id, name: d.name || doc.id });
         });
     } catch (e) { bk_techs = []; }
