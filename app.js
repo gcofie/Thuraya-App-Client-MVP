@@ -1127,15 +1127,44 @@ window.bk_viewMyBookings = async function() {
 };
 
 window.bk_bookAgain = function() {
+    // Keep the client profile and auth state — just reset the booking selections
     bk_selectedServices = [];
-    bk_activePromo  = null;
-    bk_confirmedAppt = null;
-    bk_isGuest      = false;
-    bk_clientProfile = null;
-    document.getElementById('bk_time').value = '';
-    document.getElementById('bk_date').value = '';
+    bk_activePromo      = null;
+    bk_confirmedAppt    = null;
+    // Reset booking form fields
+    const timeEl = document.getElementById('bk_time');
+    const dateEl = document.getElementById('bk_date');
+    if (timeEl) timeEl.value = '';
+    if (dateEl) dateEl.value = '';
     const slotsContainer = document.getElementById('bk_slotsContainer');
     if (slotsContainer) slotsContainer.style.display = 'none';
+    // Reset technician selection to "any"
+    selectTechOption('any');
+    // Clear service menu selections
+    bk_clearAllSelections();
+    // Go straight to services — profile is already set
     _screenHistory = ['screen-welcome'];
     goToStep('screen-services');
+};
+
+window.bk_exitBooking = async function() {
+    const ok = await new Promise(resolve => {
+        if (!window.confirm) { resolve(true); return; }
+        resolve(window.confirm('Exit this booking? Your selections will be cleared.'));
+    });
+    if (!ok) return;
+    // Full reset
+    bk_selectedServices = [];
+    bk_activePromo      = null;
+    bk_confirmedAppt    = null;
+    const timeEl = document.getElementById('bk_time');
+    const dateEl = document.getElementById('bk_date');
+    if (timeEl) timeEl.value = '';
+    if (dateEl) dateEl.value = '';
+    bk_clearAllSelections();
+    // Hide sticky bar
+    const bar = document.getElementById('bk_stickyBar');
+    if (bar) bar.style.display = 'none';
+    _screenHistory = ['screen-welcome'];
+    showScreen('screen-welcome');
 };
