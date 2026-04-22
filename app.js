@@ -503,10 +503,10 @@ function updateBreakdown() {
     // Tax rows — only rendered when taxes are loaded and subtotal > 0
     let taxHtml = '';
     if (taxLines.length && subtotal > 0) {
-        taxHtml += `<div class="breakdown-row" style="color:var(--text-muted);font-size:0.78rem;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
+        taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
             <span>Subtotal (ex. tax)</span><span>${basePrice.toFixed(2)} GHC</span></div>`;
         taxLines.forEach(l => {
-            taxHtml += `<div class="breakdown-row" style="color:var(--text-muted);font-size:0.78rem;">
+            taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;">
                 <span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
         });
     }

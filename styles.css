@@ -737,17 +737,21 @@ input:focus, select:focus {
 
 .sticky-empty {
     text-align: center;
-    font-size: 0.82rem;
-    color: var(--text-muted);
+    font-size: 0.875rem;
+    color: var(--primary);
+    font-weight: 600;
     padding: 8px 0 4px;
-    font-style: italic;
 }
 
 .sticky-summary {
     margin-bottom: 8px;
 }
 .sticky-line-items { }
-.sticky-line-items .breakdown-row { font-size: 0.82rem; }
+.sticky-line-items .breakdown-row {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+}
 
 .sticky-footer {
     display: flex;
@@ -768,10 +772,10 @@ input:focus, select:focus {
     align-items: baseline;
     gap: 5px;
 }
-.sticky-total-label { font-size: 0.72rem; color: var(--text-muted); min-width: 72px; }
-.sticky-total-value { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
-.sticky-total-value.accent { color: var(--gold-dark); }
-.sticky-total-unit  { font-size: 0.72rem; color: var(--text-muted); }
+.sticky-total-label { font-size: 0.8rem; color: var(--primary); font-weight: 600; min-width: 72px; }
+.sticky-total-value { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+.sticky-total-value.accent { color: var(--gold-dark); font-size: 1.25rem; }
+.sticky-total-unit  { font-size: 0.78rem; color: var(--primary); font-weight: 600; }
 
 .sticky-actions {
     display: flex;
