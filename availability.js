@@ -61,17 +61,10 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     const nowMins  = isToday ? (new Date().getHours() * 60 + new Date().getMinutes()) : -1;
 
     // ── Fetch all 4 layers in parallel ───────────────────────
-    const [blockSnapSingle, blockSnapRange, schedSnap, leaveSnap, apptSnap] = await Promise.all([
-        // Layer 0a: single-date blocks (full_day, time_range, tech_specific)
+    const [blockSnap, schedSnap, leaveSnap, apptSnap] = await Promise.all([
+        // Layer 0: calendar blocks for this date
         db.collection('Calendar_Blocks')
             .where('dateString', '==', dateStr)
-            .get(),
-
-        // Layer 0b: date_range blocks where rangeStart <= dateStr
-        // (filter rangeEnd >= dateStr client-side)
-        db.collection('Calendar_Blocks')
-            .where('type', '==', 'date_range')
-            .where('rangeStart', '<=', dateStr)
             .get(),
 
         // Layer 1: fetch ALL schedules — tiny collection, no index needed
@@ -89,31 +82,22 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
             .get()
     ]);
 
-    // Merge both block snaps
-    const blockSnap = { forEach: (fn) => { blockSnapSingle.forEach(fn); blockSnapRange.forEach(fn); } };
-
     // ── Layer 0: parse calendar blocks ───────────────────────
-    let fullDayBlock  = false;
-    const techBlocked = new Set();
-    const timeBlocks  = [];
+    let fullDayBlock  = false;           // blocks ALL techs all day
+    const techBlocked = new Set();       // techs blocked all day
+    const timeBlocks  = [];              // [{ startMins, endMins, techEmail }] — '' = all
 
     blockSnap.forEach(doc => {
         const b = doc.data();
         if (b.type === 'full_day') {
             fullDayBlock = true;
-        } else if (b.type === 'date_range') {
-            // rangeStart <= dateStr already filtered by query
-            // check rangeEnd >= dateStr client-side
-            if ((b.rangeEnd || '') >= dateStr) {
-                fullDayBlock = true; // date_range blocks entire day
-            }
         } else if (b.type === 'tech_specific' && b.techEmail) {
             techBlocked.add(b.techEmail);
         } else if (b.type === 'time_range') {
             timeBlocks.push({
                 startMins: av_toMins(b.startTime),
                 endMins:   av_toMins(b.endTime),
-                techEmail: b.techEmail || ''
+                techEmail: b.techEmail || ''   // '' means all techs
             });
         }
     });
