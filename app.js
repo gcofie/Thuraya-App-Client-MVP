@@ -547,7 +547,11 @@ async function loadTechs() {
             const d = doc.data();
             const roles = (Array.isArray(d.roles) ? d.roles : [d.role || '']).map(r => (r || '').toLowerCase());
             const isTech = roles.some(r => r.includes('tech'));
-            if (isTech) bk_techs.push({ email: doc.id, name: d.name || doc.id });
+            if (!isTech) return;
+            // Only show techs marked visible to clients
+            // visibleToClients defaults to true if field not set
+            if (d.visibleToClients === false) return;
+            bk_techs.push({ email: doc.id, name: d.name || doc.id });
         });
     } catch (e) { bk_techs = []; }
 }

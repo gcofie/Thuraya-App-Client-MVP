@@ -47,16 +47,26 @@ function av_renderSlots(slotMap, container, onSelect) {
 
 // ============================================================
 //  CORE ENGINE
-//  Fetches all 3 layers in parallel and returns a slotMap:
+//  Fetches all 4 layers in parallel and returns a slotMap:
 //  { minutesSinceMidnight: [availableTechEmail, ...] }
+//
+//  Layer 0 — Calendar_Blocks: full day / time range / tech blocks
+//  Layer 1 — Staff_Schedules: working days + hours
+//  Layer 2 — Staff_Leave:     approved leave
+//  Layer 3 — Appointments:    existing bookings
 // ============================================================
 async function av_getSlotMap(dateStr, techEmails, totalMins) {
     const dayAbbr  = av_dayAbbr(dateStr);
     const isToday  = dateStr === todayStr;
     const nowMins  = isToday ? (new Date().getHours() * 60 + new Date().getMinutes()) : -1;
 
-    // ── Fetch all 3 layers in parallel ───────────────────────
-    const [schedSnap, leaveSnap, apptSnap] = await Promise.all([
+    // ── Fetch all 4 layers in parallel ───────────────────────
+    const [blockSnap, schedSnap, leaveSnap, apptSnap] = await Promise.all([
+        // Layer 0: calendar blocks for this date
+        db.collection('Calendar_Blocks')
+            .where('dateString', '==', dateStr)
+            .get(),
+
         // Layer 1: fetch ALL schedules — tiny collection, no index needed
         db.collection('Staff_Schedules').get(),
 
@@ -71,6 +81,29 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
             .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress'])
             .get()
     ]);
+
+    // ── Layer 0: parse calendar blocks ───────────────────────
+    let fullDayBlock  = false;           // blocks ALL techs all day
+    const techBlocked = new Set();       // techs blocked all day
+    const timeBlocks  = [];              // [{ startMins, endMins, techEmail }] — '' = all
+
+    blockSnap.forEach(doc => {
+        const b = doc.data();
+        if (b.type === 'full_day') {
+            fullDayBlock = true;
+        } else if (b.type === 'tech_specific' && b.techEmail) {
+            techBlocked.add(b.techEmail);
+        } else if (b.type === 'time_range') {
+            timeBlocks.push({
+                startMins: av_toMins(b.startTime),
+                endMins:   av_toMins(b.endTime),
+                techEmail: b.techEmail || ''   // '' means all techs
+            });
+        }
+    });
+
+    // If full day block — return empty slot map immediately
+    if (fullDayBlock) return {};
 
     // ── Build schedule map: techEmail → { startMins, endMins, worksToday } ──
     const scheduleMap = {};
@@ -126,15 +159,26 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         // Layer 2: skip if on approved leave
         if (onLeave.has(email)) return;
 
-        const busy     = busyMap[email] || [];
-        const openTime = sched.startMins;
-        const closeTime= sched.endMins;
+        // Layer 0a: skip if tech is blocked all day
+        if (techBlocked.has(email)) return;
+
+        const busy      = busyMap[email] || [];
+        const openTime  = sched.startMins;
+        const closeTime = sched.endMins;
 
         for (let t = openTime; t + totalMins <= closeTime; t += 30) {
             // Skip past slots for today
             if (isToday && t <= nowMins) continue;
 
             const slotEnd = t + totalMins;
+
+            // Layer 0b: skip if any time range block covers this slot
+            const blockedByTimeRange = timeBlocks.some(b => {
+                const appliesToTech = b.techEmail === '' || b.techEmail === email;
+                const overlaps      = slotEnd > b.startMins && t < b.endMins;
+                return appliesToTech && overlaps;
+            });
+            if (blockedByTimeRange) continue;
 
             // Layer 3: check no appointment conflict
             const free = busy.every(b => slotEnd <= b.start || t >= b.end);
