@@ -983,14 +983,18 @@ window.bk_addToCalendar = function() {
 window.bk_viewMyBookings = async function() {
     goToStep('screen-mybookings');
     const listEl = document.getElementById('myBookingsList');
-    if (!bk_currentUser) return;
+    if (!bk_currentUser) {
+        listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">Please sign in to view bookings.</p>';
+        return;
+    }
 
     listEl.innerHTML = '<div class="loading-pulse">Loading your bookings...</div>';
+
+    // Single where clause only — no orderBy — avoids composite index requirement.
+    // Sort client-side by dateString + timeString instead.
     try {
         const snap = await db.collection('Appointments')
-            .where('clientEmail', '==', bk_currentUser?.email)
-            .orderBy('createdAt', 'desc')
-            .limit(20)
+            .where('clientEmail', '==', bk_currentUser.email)
             .get();
 
         if (snap.empty) {
@@ -999,51 +1003,49 @@ window.bk_viewMyBookings = async function() {
         }
 
         const statusLabels = {
-            'Scheduled':        { label: 'Scheduled',  cls: 'status-scheduled' },
-            'Arrived':          { label: 'Arrived',    cls: 'status-arrived'   },
-            'In Progress':      { label: 'In Progress',cls: 'status-arrived'   },
-            'Ready for Payment':{ label: 'Completing', cls: 'status-arrived'   },
-            'Closed':           { label: 'Completed',  cls: 'status-closed'    },
-            'Cancelled':        { label: 'Cancelled',  cls: 'status-cancelled' },
-            'No Show':          { label: 'No Show',    cls: 'status-noshow'    },
+            'Scheduled':         { label: 'Scheduled',   cls: 'status-scheduled' },
+            'Arrived':           { label: 'Arrived',     cls: 'status-arrived'   },
+            'In Progress':       { label: 'In Progress', cls: 'status-arrived'   },
+            'Ready for Payment': { label: 'Completing',  cls: 'status-arrived'   },
+            'Closed':            { label: 'Completed',   cls: 'status-closed'    },
+            'Cancelled':         { label: 'Cancelled',   cls: 'status-cancelled' },
+            'No Show':           { label: 'No Show',     cls: 'status-noshow'    },
         };
 
-        let html = '';
-        snap.forEach(doc => {
-            const a = doc.data();
-            let dateFormatted = a.dateString;
+        // Build array and sort newest first by date then time
+        const docs = [];
+        snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => {
+            const aKey = (a.dateString || '') + (a.timeString || '');
+            const bKey = (b.dateString || '') + (b.timeString || '');
+            return bKey.localeCompare(aKey);
+        });
+
+        const html = docs.slice(0, 20).map(a => {
+            let dateFormatted = a.dateString || '—';
             try { dateFormatted = new Date(a.dateString + 'T00:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); } catch(e) {}
-            let timeFormatted = a.timeString;
+            let timeFormatted = a.timeString || '';
             try {
                 const [hh, mm] = a.timeString.split(':').map(Number);
                 timeFormatted = `${hh % 12 || 12}:${String(mm).padStart(2,'0')} ${hh >= 12 ? 'PM' : 'AM'}`;
             } catch(e) {}
-            const s = statusLabels[a.status] || { label: a.status, cls: 'status-scheduled' };
-            html += `
+            const s = statusLabels[a.status] || { label: a.status || 'Unknown', cls: 'status-scheduled' };
+            const isGroup = a.isGroupBooking ? ' 👥' : '';
+            return `
                 <div class="booking-item">
                     <div class="booking-item-header">
                         <strong>${dateFormatted} · ${timeFormatted}</strong>
                         <span class="booking-status-badge ${s.cls}">${s.label}</span>
                     </div>
-                    <p>💅 ${a.bookedService || 'N/A'}</p>
+                    <p>💅 ${a.bookedService || 'N/A'}${isGroup}</p>
                     <p>👩‍🔧 ${a.assignedTechName || 'To be assigned'} · ${parseFloat(a.grandTotal || 0).toFixed(2)} GHC</p>
                 </div>`;
-        });
-        listEl.innerHTML = html;
+        }).join('');
+
+        listEl.innerHTML = html || '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No bookings yet.</p>';
 
     } catch (e) {
-        try {
-            const snap2 = await db.collection('Appointments').where('clientEmail', '==', bk_currentUser?.email).get();
-            if (snap2.empty) { listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No bookings yet.</p>'; return; }
-            const docs = [];
-            snap2.forEach(d => docs.push({ id: d.id, ...d.data() }));
-            docs.sort((a, b) => (b.dateString || '').localeCompare(a.dateString || ''));
-            listEl.innerHTML = docs.slice(0, 20).map(a => {
-                let dateFormatted = a.dateString;
-                try { dateFormatted = new Date(a.dateString + 'T00:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); } catch(e) {}
-                return `<div class="booking-item"><strong>${dateFormatted}</strong><p>💅 ${a.bookedService || 'N/A'}</p><p>${parseFloat(a.grandTotal||0).toFixed(2)} GHC · ${a.status}</p></div>`;
-            }).join('');
-        } catch(e2) { listEl.innerHTML = `<p style="color:var(--error);">Could not load bookings.</p>`; }
+        listEl.innerHTML = `<p style="color:var(--error);text-align:center;padding:24px 0;">Could not load bookings: ${e.message}</p>`;
     }
 };
 
