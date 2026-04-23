@@ -1,12 +1,7 @@
 // ============================================================
 //  THURAYA — Firebase Environment Config
-//  Place this file in the ROOT of BOTH app repos.
-//  Load it BEFORE app.js in index.html.
-//
-//  How it works:
-//  - Staging index.html has <meta name="thuraya-env" content="staging">
-//  - Production index.html does NOT have that meta tag
-//  - This file auto-selects the correct Firebase project
+//  Detects staging by URL hostname — no meta tag needed.
+//  Place in ROOT of both repos on BOTH branches.
 // ============================================================
 (function() {
 
@@ -28,9 +23,15 @@
         appId:             "1:649346361608:web:20c42de70c6f7c75e0e4bd"
     };
 
-    const isStaging = !!document.querySelector('meta[name="thuraya-env"][content="staging"]');
-    const activeConfig = isStaging ? STAGING_CONFIG : PROD_CONFIG;
+    // Detect staging by hostname — works for any staging URL
+    const hostname = window.location.hostname;
+    const isStaging = (
+        hostname.includes('staging') ||
+        hostname.includes('localhost') ||
+        hostname === '127.0.0.1'
+    );
 
+    const activeConfig = isStaging ? STAGING_CONFIG : PROD_CONFIG;
     window.THURAYA_CONFIG = activeConfig;
     window.THURAYA_ENV    = isStaging ? 'staging' : 'production';
 
@@ -45,4 +46,6 @@
     }
 
     console.log('🔧 Thuraya ENV:', window.THURAYA_ENV, '| Project:', activeConfig.projectId);
+    console.log('🌐 Hostname:', hostname);
 })();
+
