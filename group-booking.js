@@ -525,14 +525,38 @@ window.grp_confirmBooking = async function() {
 
     setBtnLoading(btn, true, 'Confirm Group Booking');
     try {
-        grp_groupId = db.collection('Appointments').doc().id; // shared group ref
+        grp_groupId = db.collection('Appointments').doc().id;
+
+        // FIX: ensure bk_techs is loaded before assigning techs
+        if (typeof bk_techs === 'undefined' || bk_techs.length === 0) {
+            try { await loadTechs(); } catch(e) {}
+        }
+
+        // If still empty after load, fetch directly
+        let availableTechs = (typeof bk_techs !== 'undefined' && bk_techs.length > 0)
+            ? bk_techs
+            : [];
+
+        if (!availableTechs.length) {
+            // Last resort — load techs directly from Firestore
+            try {
+                const snap = await db.collection('Users').get();
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const roles = (Array.isArray(d.roles) ? d.roles : [d.role||'']).map(r=>(r||'').toLowerCase());
+                    if (roles.some(r => r.includes('tech')) && d.visibleToClients !== false) {
+                        availableTechs.push({ email: doc.id, name: d.name || doc.id });
+                    }
+                });
+            } catch(e) {}
+        }
+
+        // Final fallback
+        if (!availableTechs.length) {
+            availableTechs = [{ email: '', name: 'To be assigned' }];
+        }
 
         const batch = db.batch();
-
-        // Assign available techs to each member round-robin from bk_techs
-        const availableTechs = (typeof bk_techs !== 'undefined' && bk_techs.length > 0)
-            ? bk_techs
-            : [{ email: '', name: 'To be assigned' }];
 
         grp_members.forEach((m, i) => {
             const ref        = db.collection('Appointments').doc();
@@ -540,7 +564,7 @@ window.grp_confirmBooking = async function() {
             const totalMins  = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur  * (s.qty || 1)), 0);
             const totalPrice = (m.selectedServices || []).reduce((sum, s) => sum + (s.price * (s.qty || 1)), 0);
 
-            // Assign tech round-robin — each member gets a different tech if possible
+            // Round-robin tech assignment
             const tech = availableTechs[i % availableTechs.length];
 
             batch.set(ref, {
@@ -571,7 +595,6 @@ window.grp_confirmBooking = async function() {
 
         await batch.commit();
 
-        // Populate success screen
         grp_populateSuccess(dateStr, timeStr);
         _screenHistory = ['screen-welcome', 'screen-booking-mode'];
         goToStep('screen-group-success');
