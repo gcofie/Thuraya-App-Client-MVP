@@ -386,8 +386,15 @@ window.grp_generateSlots = async function() {
             });
             // Update global bk_techs
             if (typeof bk_techs !== 'undefined') bk_techs = techList;
-        } catch(e) {}
+        } catch(e) { console.error('Tech load error:', e); }
     }
+
+    // Debug — log what we have
+    console.log('🔧 grp_generateSlots — techList:', techList.length, techList.map(t=>t.name));
+    console.log('🔧 grp_members count:', grp_members.length);
+
+    // Safety fallback — if no techs found at all, assume enough techs for any slot
+    const techCountForSlots = techList.length > 0 ? techList.length : grp_members.length;
 
     try {
         // Fetch all appointments for this date once
@@ -453,7 +460,7 @@ window.grp_generateSlots = async function() {
             ).length;
 
             // Available if fewer conflicts than total techs
-            const totalTechs   = Math.max(techList.length, 1);
+            const totalTechs   = Math.max(techCountForSlots, 1);
             const neededTechs  = grp_members.length;
             const freeTechs    = totalTechs - conflictsInWindow;
             const available    = freeTechs >= neededTechs;
