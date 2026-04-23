@@ -527,54 +527,98 @@ window.grp_confirmBooking = async function() {
     try {
         grp_groupId = db.collection('Appointments').doc().id;
 
-        // FIX: ensure bk_techs is loaded before assigning techs
-        if (typeof bk_techs === 'undefined' || bk_techs.length === 0) {
-            try { await loadTechs(); } catch(e) {}
+        // ── Step 1: Ensure we have a full tech list ──────────────
+        let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
+
+        if (!techList.length) {
+            try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
         }
 
-        // If still empty after load, fetch directly
-        let availableTechs = (typeof bk_techs !== 'undefined' && bk_techs.length > 0)
-            ? bk_techs
-            : [];
-
-        if (!availableTechs.length) {
-            // Last resort — load techs directly from Firestore
+        if (!techList.length) {
+            // Direct Firestore fallback
             try {
                 const snap = await db.collection('Users').get();
                 snap.forEach(doc => {
                     const d = doc.data();
                     const roles = (Array.isArray(d.roles) ? d.roles : [d.role||'']).map(r=>(r||'').toLowerCase());
                     if (roles.some(r => r.includes('tech')) && d.visibleToClients !== false) {
-                        availableTechs.push({ email: doc.id, name: d.name || doc.id });
+                        techList.push({ email: doc.id, name: d.name || doc.id });
                     }
                 });
             } catch(e) {}
         }
 
-        // Final fallback
-        if (!availableTechs.length) {
-            availableTechs = [{ email: '', name: 'To be assigned' }];
-        }
+        // ── Step 2: Find which techs are already booked at this slot ──
+        const [hh, mm]   = timeStr.split(':').map(Number);
+        const slotStart  = hh * 60 + mm;
 
+        // Fetch existing appointments at this date/time
+        const existingSnap = await db.collection('Appointments')
+            .where('dateString', '==', dateStr)
+            .where('status', 'in', ['Scheduled','Arrived','In Progress'])
+            .get();
+
+        // Build a set of techs already busy during this group's slot window
+        const maxDuration = Math.max(...grp_members.map(m =>
+            (m.selectedServices||[]).reduce((s,sv) => s + (sv.dur*(sv.qty||1)), 0) || 60
+        ));
+        const slotEnd = slotStart + maxDuration;
+
+        const busyTechEmails = new Set();
+        existingSnap.forEach(doc => {
+            const d = doc.data();
+            if (!d.timeString || !d.assignedTechEmail) return;
+            const [eh, em] = d.timeString.split(':').map(Number);
+            const eStart   = eh * 60 + em;
+            const eEnd     = eStart + (parseInt(d.bookedDuration) || 60);
+            // Overlaps if the existing appointment overlaps our slot window
+            if (eStart < slotEnd && eEnd > slotStart) {
+                busyTechEmails.add(d.assignedTechEmail);
+            }
+        });
+
+        // ── Step 3: Build a pool of FREE techs for this slot ─────
+        const freeTechs = techList.filter(t => t.email && !busyTechEmails.has(t.email));
+
+        // If not enough free techs, use all techs as fallback (manager will resolve)
+        const assignPool = freeTechs.length >= grp_members.length
+            ? freeTechs
+            : techList.length > 0
+                ? techList
+                : [{ email: '', name: 'To be assigned' }];
+
+        // ── Step 4: Assign one unique tech per member where possible ──
+        // Track which techs have been assigned in this booking to avoid duplicates
+        const assignedInThisBooking = new Set();
+        const assignedTechs = grp_members.map((m, i) => {
+            // Try to find a tech not yet assigned in this booking
+            const uniqueTech = assignPool.find(t => !assignedInThisBooking.has(t.email));
+            if (uniqueTech) {
+                assignedInThisBooking.add(uniqueTech.email);
+                return uniqueTech;
+            }
+            // If all techs are used, wrap round-robin
+            return assignPool[i % assignPool.length];
+        });
+
+        // ── Step 5: Write appointments ────────────────────────────
         const batch = db.batch();
 
         grp_members.forEach((m, i) => {
             const ref        = db.collection('Appointments').doc();
-            const services   = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
-            const totalMins  = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur  * (s.qty || 1)), 0);
-            const totalPrice = (m.selectedServices || []).reduce((sum, s) => sum + (s.price * (s.qty || 1)), 0);
-
-            // Round-robin tech assignment
-            const tech = availableTechs[i % availableTechs.length];
+            const services   = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
+            const totalMins  = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
+            const totalPrice = (m.selectedServices||[]).reduce((sum,s) => sum+(s.price*(s.qty||1)), 0);
+            const tech       = assignedTechs[i];
 
             batch.set(ref, {
                 groupId:           grp_groupId,
                 groupSize:         grp_members.length,
                 isGroupBooking:    true,
                 isLeadBooker:      i === 0,
-                clientName:        m.name || (i === 0 ? (bk_clientProfile?.name || '') : ''),
-                clientEmail:       i === 0 ? (bk_currentUser?.email || '') : '',
-                clientPhone:       i === 0 ? (bk_clientProfile?.phone || '') : '',
+                clientName:        m.name || (i === 0 ? (bk_clientProfile?.name||'') : ''),
+                clientEmail:       i === 0 ? (bk_currentUser?.email||'') : '',
+                clientPhone:       i === 0 ? (bk_clientProfile?.phone||'') : '',
                 bookedService:     services,
                 bookedDuration:    totalMins,
                 bookedPrice:       totalPrice,
@@ -584,8 +628,8 @@ window.grp_confirmBooking = async function() {
                 status:            'Scheduled',
                 source:            'client-group-booking',
                 bookedBy:          bk_isGuest
-                                    ? ('guest:' + (bk_clientProfile?.phone || ''))
-                                    : (bk_currentUser?.email || ''),
+                                    ? ('guest:'+(bk_clientProfile?.phone||''))
+                                    : (bk_currentUser?.email||''),
                 assignedTechName:  tech.name  || 'To be assigned',
                 assignedTechEmail: tech.email || '',
                 createdAt:         firebase.firestore.FieldValue.serverTimestamp(),
