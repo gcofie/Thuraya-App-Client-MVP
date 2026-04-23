@@ -471,10 +471,85 @@ window.grp_selectSlot = function(timeStr, btn) {
 // ── Populate & navigate to confirm screen ─────────────────────
 // Override goToStep for screen-group-confirm to populate first
 const _origGoToStep = goToStep;
-window.goToStep = function(id) {
+window.goToStep = async function(id) {
+    if (id === 'screen-group-confirm') await grp_preAssignTechs();
     if (id === 'screen-group-confirm') grp_populateConfirm();
     _origGoToStep(id);
 };
+
+// ── Pre-assign techs before confirm screen ────────────────────
+async function grp_preAssignTechs() {
+    const dateStr = document.getElementById('grp_date')?.value || '';
+    const timeStr = document.getElementById('grp_time')?.value || '';
+
+    // Get full tech list
+    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
+    if (!techList.length) {
+        try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
+    }
+    if (!techList.length) {
+        try {
+            const snap = await db.collection('Users').get();
+            snap.forEach(doc => {
+                const d = doc.data();
+                const roles = (Array.isArray(d.roles) ? d.roles : [d.role||'']).map(r=>(r||'').toLowerCase());
+                if (roles.some(r => r.includes('tech')) && d.visibleToClients !== false) {
+                    techList.push({ email: doc.id, name: d.name || doc.id });
+                }
+            });
+        } catch(e) {}
+    }
+
+    // Find busy techs at this slot
+    const busyTechEmails = new Set();
+    if (dateStr && timeStr) {
+        try {
+            const [hh, mm] = timeStr.split(':').map(Number);
+            const slotStart = hh * 60 + mm;
+            const maxDuration = Math.max(...grp_members.map(m =>
+                (m.selectedServices||[]).reduce((s,sv) => s+(sv.dur*(sv.qty||1)), 0) || 60
+            ));
+            const slotEnd = slotStart + maxDuration;
+
+            const existingSnap = await db.collection('Appointments')
+                .where('dateString', '==', dateStr)
+                .where('status', 'in', ['Scheduled','Arrived','In Progress'])
+                .get();
+
+            existingSnap.forEach(doc => {
+                const d = doc.data();
+                if (!d.timeString || !d.assignedTechEmail) return;
+                const [eh, em] = d.timeString.split(':').map(Number);
+                const eStart = eh * 60 + em;
+                const eEnd   = eStart + (parseInt(d.bookedDuration) || 60);
+                if (eStart < slotEnd && eEnd > slotStart) busyTechEmails.add(d.assignedTechEmail);
+            });
+        } catch(e) {}
+    }
+
+    // Build free tech pool
+    const freeTechs  = techList.filter(t => t.email && !busyTechEmails.has(t.email));
+    const assignPool = freeTechs.length >= grp_members.length
+        ? freeTechs
+        : techList.length > 0
+            ? techList
+            : [{ email: '', name: 'To be assigned' }];
+
+    // Assign unique tech per member and store on grp_members
+    const assignedInThisBooking = new Set();
+    grp_members.forEach((m, i) => {
+        const uniqueTech = assignPool.find(t => !assignedInThisBooking.has(t.email));
+        if (uniqueTech) {
+            assignedInThisBooking.add(uniqueTech.email);
+            m.assignedTechName  = uniqueTech.name;
+            m.assignedTechEmail = uniqueTech.email;
+        } else {
+            const fallback = assignPool[i % assignPool.length];
+            m.assignedTechName  = fallback.name  || 'To be assigned';
+            m.assignedTechEmail = fallback.email || '';
+        }
+    });
+}
 
 function grp_populateConfirm() {
     const dateStr = document.getElementById('grp_date')?.value || '';
@@ -497,9 +572,10 @@ function grp_populateConfirm() {
     const membersEl = document.getElementById('grp_conf_members');
     if (membersEl) {
         membersEl.innerHTML = grp_members.map((m, i) => {
-            const services  = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
-            const totalMins = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur * (s.qty || 1)), 0);
-            const totalPrice= (m.selectedServices || []).reduce((sum, s) => sum + (s.price * (s.qty || 1)), 0);
+            const services   = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
+            const totalMins  = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
+            const totalPrice = (m.selectedServices||[]).reduce((sum,s) => sum+(s.price*(s.qty||1)), 0);
+            const techName   = m.assignedTechName || 'To be assigned';
             return `
             <div class="grp-member-card">
                 <div class="grp-member-index">${i + 1}</div>
@@ -508,6 +584,9 @@ function grp_populateConfirm() {
                         ${i === 0 ? '<span class="grp-lead-badge">Lead booker</span>' : ''}
                     </strong>
                     <span>${services || '—'} · ${totalMins} mins · ${totalPrice.toFixed(0)} GHC</span>
+                    <span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">
+                        👩‍🔧 Technician: <strong>${techName}</strong>
+                    </span>
                 </div>
             </div>`;
         }).join('');
@@ -527,81 +606,8 @@ window.grp_confirmBooking = async function() {
     try {
         grp_groupId = db.collection('Appointments').doc().id;
 
-        // ── Step 1: Ensure we have a full tech list ──────────────
-        let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
-
-        if (!techList.length) {
-            try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
-        }
-
-        if (!techList.length) {
-            // Direct Firestore fallback
-            try {
-                const snap = await db.collection('Users').get();
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const roles = (Array.isArray(d.roles) ? d.roles : [d.role||'']).map(r=>(r||'').toLowerCase());
-                    if (roles.some(r => r.includes('tech')) && d.visibleToClients !== false) {
-                        techList.push({ email: doc.id, name: d.name || doc.id });
-                    }
-                });
-            } catch(e) {}
-        }
-
-        // ── Step 2: Find which techs are already booked at this slot ──
-        const [hh, mm]   = timeStr.split(':').map(Number);
-        const slotStart  = hh * 60 + mm;
-
-        // Fetch existing appointments at this date/time
-        const existingSnap = await db.collection('Appointments')
-            .where('dateString', '==', dateStr)
-            .where('status', 'in', ['Scheduled','Arrived','In Progress'])
-            .get();
-
-        // Build a set of techs already busy during this group's slot window
-        const maxDuration = Math.max(...grp_members.map(m =>
-            (m.selectedServices||[]).reduce((s,sv) => s + (sv.dur*(sv.qty||1)), 0) || 60
-        ));
-        const slotEnd = slotStart + maxDuration;
-
-        const busyTechEmails = new Set();
-        existingSnap.forEach(doc => {
-            const d = doc.data();
-            if (!d.timeString || !d.assignedTechEmail) return;
-            const [eh, em] = d.timeString.split(':').map(Number);
-            const eStart   = eh * 60 + em;
-            const eEnd     = eStart + (parseInt(d.bookedDuration) || 60);
-            // Overlaps if the existing appointment overlaps our slot window
-            if (eStart < slotEnd && eEnd > slotStart) {
-                busyTechEmails.add(d.assignedTechEmail);
-            }
-        });
-
-        // ── Step 3: Build a pool of FREE techs for this slot ─────
-        const freeTechs = techList.filter(t => t.email && !busyTechEmails.has(t.email));
-
-        // If not enough free techs, use all techs as fallback (manager will resolve)
-        const assignPool = freeTechs.length >= grp_members.length
-            ? freeTechs
-            : techList.length > 0
-                ? techList
-                : [{ email: '', name: 'To be assigned' }];
-
-        // ── Step 4: Assign one unique tech per member where possible ──
-        // Track which techs have been assigned in this booking to avoid duplicates
-        const assignedInThisBooking = new Set();
-        const assignedTechs = grp_members.map((m, i) => {
-            // Try to find a tech not yet assigned in this booking
-            const uniqueTech = assignPool.find(t => !assignedInThisBooking.has(t.email));
-            if (uniqueTech) {
-                assignedInThisBooking.add(uniqueTech.email);
-                return uniqueTech;
-            }
-            // If all techs are used, wrap round-robin
-            return assignPool[i % assignPool.length];
-        });
-
-        // ── Step 5: Write appointments ────────────────────────────
+        // Tech assignments already calculated in grp_preAssignTechs()
+        // when the confirm screen was shown — just use them directly
         const batch = db.batch();
 
         grp_members.forEach((m, i) => {
@@ -609,7 +615,6 @@ window.grp_confirmBooking = async function() {
             const services   = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
             const totalMins  = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
             const totalPrice = (m.selectedServices||[]).reduce((sum,s) => sum+(s.price*(s.qty||1)), 0);
-            const tech       = assignedTechs[i];
 
             batch.set(ref, {
                 groupId:           grp_groupId,
@@ -630,8 +635,8 @@ window.grp_confirmBooking = async function() {
                 bookedBy:          bk_isGuest
                                     ? ('guest:'+(bk_clientProfile?.phone||''))
                                     : (bk_currentUser?.email||''),
-                assignedTechName:  tech.name  || 'To be assigned',
-                assignedTechEmail: tech.email || '',
+                assignedTechName:  m.assignedTechName  || 'To be assigned',
+                assignedTechEmail: m.assignedTechEmail || '',
                 createdAt:         firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt:         firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -670,14 +675,18 @@ function grp_populateSuccess(dateStr, timeStr) {
     const membersEl = document.getElementById('grp_suc_members');
     if (membersEl) {
         membersEl.innerHTML = grp_members.map((m, i) => {
-            const services  = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
-            const totalMins = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur * (s.qty || 1)), 0);
+            const services  = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
+            const totalMins = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
+            const techName  = m.assignedTechName || 'To be assigned';
             return `
             <div class="grp-member-card">
                 <div class="grp-member-index">${i + 1}</div>
                 <div class="grp-member-info">
                     <strong>${m.name || (i === 0 ? 'You' : 'Person ' + (i + 1))}</strong>
                     <span>${services || '—'} · ${totalMins} mins</span>
+                    <span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">
+                        👩‍🔧 <strong>${techName}</strong>
+                    </span>
                 </div>
             </div>`;
         }).join('');
