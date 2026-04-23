@@ -529,11 +529,20 @@ window.grp_confirmBooking = async function() {
 
         const batch = db.batch();
 
+        // Assign available techs to each member round-robin from bk_techs
+        const availableTechs = (typeof bk_techs !== 'undefined' && bk_techs.length > 0)
+            ? bk_techs
+            : [{ email: '', name: 'To be assigned' }];
+
         grp_members.forEach((m, i) => {
             const ref        = db.collection('Appointments').doc();
             const services   = (m.selectedServices || []).map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
             const totalMins  = (m.selectedServices || []).reduce((sum, s) => sum + (s.dur  * (s.qty || 1)), 0);
             const totalPrice = (m.selectedServices || []).reduce((sum, s) => sum + (s.price * (s.qty || 1)), 0);
+
+            // Assign tech round-robin — each member gets a different tech if possible
+            const tech = availableTechs[i % availableTechs.length];
+
             batch.set(ref, {
                 groupId:           grp_groupId,
                 groupSize:         grp_members.length,
@@ -553,8 +562,8 @@ window.grp_confirmBooking = async function() {
                 bookedBy:          bk_isGuest
                                     ? ('guest:' + (bk_clientProfile?.phone || ''))
                                     : (bk_currentUser?.email || ''),
-                assignedTechName:  '',
-                assignedTechEmail: '',
+                assignedTechName:  tech.name  || 'To be assigned',
+                assignedTechEmail: tech.email || '',
                 createdAt:         firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt:         firebase.firestore.FieldValue.serverTimestamp()
             });
