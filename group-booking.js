@@ -370,6 +370,25 @@ window.grp_generateSlots = async function() {
     const confirmBtn = document.getElementById('grp_toConfirmBtn');
     if (confirmBtn) confirmBtn.disabled = true;
 
+    // FIX: ensure bk_techs is loaded before generating slots
+    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
+    if (!techList.length) {
+        try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
+    }
+    if (!techList.length) {
+        try {
+            const snap = await db.collection('Users').get();
+            snap.forEach(doc => {
+                const d = doc.data();
+                const roles = (Array.isArray(d.roles)?d.roles:[d.role||'']).map(r=>(r||'').toLowerCase());
+                if (roles.some(r=>r.includes('tech')) && d.visibleToClients!==false)
+                    techList.push({ email: doc.id, name: d.name||doc.id });
+            });
+            // Update global bk_techs
+            if (typeof bk_techs !== 'undefined') bk_techs = techList;
+        } catch(e) {}
+    }
+
     try {
         // Fetch all appointments for this date once
         const snap = await db.collection('Appointments')
@@ -433,8 +452,8 @@ window.grp_generateSlots = async function() {
                 b.startMins < windowEnd && b.endMins > startMins
             ).length;
 
-            // Available if fewer conflicts than total techs (bk_techs loaded at login)
-            const totalTechs   = Math.max(bk_techs.length, 1);
+            // Available if fewer conflicts than total techs
+            const totalTechs   = Math.max(techList.length, 1);
             const neededTechs  = grp_members.length;
             const freeTechs    = totalTechs - conflictsInWindow;
             const available    = freeTechs >= neededTechs;
