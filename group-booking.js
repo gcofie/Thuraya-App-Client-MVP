@@ -812,3 +812,102 @@ window.goToStep = function(id) {
     }
     grp_baseGoToStep(id);
 };
+
+
+// ============================================================
+// GROUP SLOT FIX — hard override, must remain at the VERY BOTTOM.
+// Purpose: never show a dead-end "No slots available" message for
+// group bookings. If same-time capacity is not available, show
+// full-group alternative + client-controlled split options.
+// Version: group-split-fix-20260424
+// ============================================================
+console.log('✅ group-booking.js loaded: group-split-fix-20260424');
+
+window.grp_generateSlots = async function() {
+    const dateEl = document.getElementById('grp_date');
+    const dateStr = dateEl?.value || '';
+    const container = document.getElementById('grp_slotsContainer');
+    const grid = document.getElementById('grp_slots');
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+
+    if (!dateStr || !container || !grid) return;
+
+    if (dateStr < grp_todayString()) {
+        container.style.display = 'block';
+        grid.innerHTML = '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">Cannot book in the past.</p>';
+        return;
+    }
+
+    grp_selectedPlan = { type: 'same', dateStr, timeStr: '', subgroups: [] };
+
+    if (confirmBtn) confirmBtn.disabled = true;
+    const hiddenTime = document.getElementById('grp_time');
+    if (hiddenTime) hiddenTime.value = '';
+
+    container.style.display = 'block';
+    grid.innerHTML = '<div class="loading-pulse" style="grid-column:1/-1;">Checking group availability…</div>';
+
+    try {
+        await grp_ensureTechs();
+
+        const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
+        const booked = await grp_getBookedSlots(dateStr);
+        const group = grp_groupTotals();
+
+        const duration = Math.max(60, group.totalMinsMax || 60);
+        const needed = Math.max(2, grp_members.length || grp_groupSize || 2);
+        const close = 20 * 60;
+        const slotMap = {};
+        let maxFreeOnDay = 0;
+
+        grp_candidateSlots().forEach(start => {
+            if (grp_isPastSlot(dateStr, start)) return;
+            if (start + duration > close) return;
+
+            const free = grp_getFreeTechsAt(techs, booked, start, duration);
+            maxFreeOnDay = Math.max(maxFreeOnDay, free.length);
+
+            if (free.length >= needed) {
+                slotMap[start] = free.slice(0, needed);
+            }
+        });
+
+        const sameSlots = Object.keys(slotMap).map(Number).sort((a, b) => a - b);
+
+        if (sameSlots.length) {
+            grid.innerHTML = sameSlots.map(t => {
+                const t24 = grp_minsToTime(t);
+                return `<button type="button" class="slot-btn" data-time="${t24}" onclick="grp_selectSameSlot('${t24}', this)">${grp_formatTime(t24)}</button>`;
+            }).join('');
+            return;
+        }
+
+        // IMPORTANT: group booking never dead-ends here.
+        // If no full-group same-time slot exists, render split choices.
+        grp_renderCapacityOptions(dateStr, maxFreeOnDay, techs.length);
+
+    } catch (e) {
+        console.error('Group availability error:', e);
+        grid.innerHTML = `
+            <div class="group-capacity-panel warn" style="grid-column:1/-1;">
+                <h3>We could not check full-group availability</h3>
+                <p>You can still choose a split option below.</p>
+                <button type="button" class="btn-primary full" onclick="grp_renderCapacityOptions('${dateStr}', 1, 1)">
+                    Show split options
+                </button>
+            </div>`;
+    }
+};
+
+// Also defend against older loaded scripts by replacing exact old message after render.
+setInterval(() => {
+    const grid = document.getElementById('grp_slots');
+    if (!grid) return;
+    const txt = (grid.textContent || '').trim();
+    if (txt.includes('No slots available for your group on this date')) {
+        const dateStr = document.getElementById('grp_date')?.value || grp_todayString();
+        console.warn('Replacing old group no-slots dead-end with split options.');
+        grp_renderCapacityOptions(dateStr, 1, (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs.length : 1);
+    }
+}, 600);
+
