@@ -538,3 +538,152 @@ body {
     border-radius: 10px; margin-bottom: 20px;
 }
 .grp-info-box p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+
+/* ============================================================
+   GROUP BOOKING FULL FLOW — client-controlled split options
+   ============================================================ */
+.group-capacity-panel,
+.group-split-panel,
+.group-billing-panel {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 12px;
+}
+.group-capacity-panel.warn {
+    background: rgba(201,168,76,0.08);
+    border-color: rgba(201,168,76,0.45);
+}
+.group-capacity-panel h3,
+.group-split-panel h3,
+.group-billing-panel h3 {
+    font-family: var(--font-serif);
+    color: var(--primary);
+    font-size: 1.25rem;
+    margin-bottom: 6px;
+}
+.group-capacity-panel p,
+.group-split-panel p,
+.group-billing-panel p {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+.group-option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.group-option-card,
+.group-billing-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 14px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.15s ease;
+}
+.group-option-card:hover,
+.group-billing-card:hover {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.05);
+}
+.group-option-card.selected,
+.group-billing-card.selected {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+}
+.group-option-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(201,168,76,0.14);
+    color: var(--gold-dark);
+    font-weight: 700;
+}
+.group-option-body {
+    flex: 1;
+    min-width: 0;
+}
+.group-option-body strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+.group-option-body span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+.group-recommended-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--gold);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.group-subslot-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.group-subslot-card strong {
+    color: var(--primary);
+    font-size: 0.88rem;
+}
+.group-subslot-card p {
+    font-size: 0.78rem;
+    margin: 4px 0 0;
+    color: var(--text-muted);
+}
+.group-billing-card input[type="radio"] {
+    margin-top: 3px;
+    accent-color: var(--gold);
+    flex-shrink: 0;
+}
+.group-billing-card .amount-pill {
+    display: inline-block;
+    margin-top: 4px;
+    background: rgba(201,168,76,0.1);
+    color: var(--gold-dark);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.grp-info-box.split {
+    background: rgba(41,128,185,0.06);
+    border-color: rgba(41,128,185,0.18);
+}
+@media (max-width: 520px) {
+    .group-option-card,
+    .group-billing-card {
+        padding: 12px;
+    }
+    .group-option-icon {
+        width: 28px;
+        height: 28px;
+    }
+}
