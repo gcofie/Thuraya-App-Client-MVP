@@ -687,3 +687,170 @@ body {
         height: 28px;
     }
 }
+
+
+/* ============================================================
+   GROUP MANUAL SPLIT PLANNER UI
+   Version: manual-split-planner-20260424
+   ============================================================ */
+.group-manual-planner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.group-manual-planner-head,
+.group-manual-subgroup-card,
+.grp-timeline-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.group-manual-planner-head h3,
+.group-manual-subgroup-card strong,
+.grp-timeline-card strong {
+    color: var(--primary);
+}
+
+.group-manual-planner-head p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 6px 0 12px;
+}
+
+.group-manual-subgroup-title {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 12px;
+}
+
+.group-manual-subgroup-title span {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.grp-manual-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grp-manual-slot-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 58px;
+    align-items: center;
+    justify-content: center;
+}
+
+.grp-manual-slot-btn span {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    line-height: 1.25;
+}
+
+.grp-manual-slot-btn.selected span,
+.grp-manual-slot-btn.active span {
+    color: var(--gold-dark);
+}
+
+.grp-no-slots {
+    grid-column: 1 / -1;
+    color: var(--error);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    background: rgba(192,57,43,0.06);
+    border: 1px solid rgba(192,57,43,0.18);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.grp-timeline-empty {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.grp-timeline-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.grp-timeline-head span {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.grp-timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.grp-timeline-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.grp-timeline-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.16);
+    color: var(--gold-dark);
+    border: 1px solid rgba(201,168,76,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.grp-timeline-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.grp-timeline-body span,
+.grp-timeline-body small {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.grp-timeline-ready {
+    margin-top: 12px;
+    color: var(--success);
+    background: rgba(39,174,96,0.08);
+    border: 1px solid rgba(39,174,96,0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+#grp_manualContinueBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+    .grp-manual-slots {
+        grid-template-columns: 1fr;
+    }
+}
+

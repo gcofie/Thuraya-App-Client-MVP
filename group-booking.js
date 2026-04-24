@@ -911,3 +911,434 @@ setInterval(() => {
     }
 }, 600);
 
+
+// ============================================================
+// MANUAL SPLIT PLANNER UPGRADE
+// - Lead chooses date/time for each sub-group
+// - Prevents overlapping tech reuse
+// - Shows recommended best sequence
+// - Shows timeline preview
+// Version: manual-split-planner-20260424
+// ============================================================
+console.log('✅ group-booking.js upgrade loaded: manual-split-planner-20260424');
+
+function grp_splitPlannerDateInputId(index) {
+    return `grp_manual_sg_date_${index}`;
+}
+
+function grp_splitPlannerSlotsId(index) {
+    return `grp_manual_sg_slots_${index}`;
+}
+
+function grp_splitPlannerTimelineId() {
+    return 'grp_manualTimelinePreview';
+}
+
+function grp_getManualLocks(exceptIndex = -1) {
+    const locks = [];
+    if (!grp_selectedPlan || !Array.isArray(grp_selectedPlan.subgroups)) return locks;
+
+    grp_selectedPlan.subgroups.forEach((sg, idx) => {
+        if (idx === exceptIndex) return;
+        if (!sg.dateStr || !sg.timeStr || !Array.isArray(sg.techs)) return;
+        sg.techs.forEach(t => {
+            if (t && t.email) {
+                locks.push({
+                    dateStr: sg.dateStr,
+                    timeStr: sg.timeStr,
+                    email: t.email,
+                    subGroupIndex: sg.index || (idx + 1)
+                });
+            }
+        });
+    });
+
+    return locks;
+}
+
+function grp_durationForSubgroup(sg) {
+    return Math.max(60, ...(sg.memberIndexes || []).map(i => grp_memberTotals(grp_members[i]).totalMins || 60));
+}
+
+function grp_freeTechsRespectingManualLocks(techs, booked, dateStr, startMins, duration, exceptIndex = -1) {
+    let free = grp_getFreeTechsAt(techs, booked, startMins, duration);
+    const timeStr = grp_minsToTime(startMins);
+    const locks = grp_getManualLocks(exceptIndex);
+    const lockedAtSameTime = new Set(
+        locks
+            .filter(l => l.dateStr === dateStr && l.timeStr === timeStr)
+            .map(l => l.email)
+    );
+    return free.filter(t => !lockedAtSameTime.has(t.email));
+}
+
+async function grp_getAvailableSlotsForSubgroup(index, dateStr) {
+    const sg = grp_selectedPlan.subgroups[index];
+    if (!sg) return [];
+
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const duration = grp_durationForSubgroup(sg);
+    const close = 20 * 60;
+    const out = [];
+
+    grp_candidateSlots().forEach(start => {
+        if (grp_isPastSlot(dateStr, start)) return;
+        if (start + duration > close) return;
+
+        const free = grp_freeTechsRespectingManualLocks(techs, booked, dateStr, start, duration, index);
+        if (free.length >= sg.size) {
+            out.push({
+                timeStr: grp_minsToTime(start),
+                startMins: start,
+                duration,
+                techs: free.slice(0, sg.size)
+            });
+        }
+    });
+
+    return out;
+}
+
+async function grp_findBestManualPlan(dateStr, split) {
+    const plan = grp_allocateMembersBySplit(split);
+    const chosen = [];
+
+    for (let i = 0; i < plan.length; i++) {
+        const sg = plan[i];
+        const techs = await grp_ensureTechs();
+        const booked = await grp_getBookedSlots(dateStr);
+        const duration = grp_durationForSubgroup(sg);
+        const close = 20 * 60;
+        let best = null;
+
+        for (const start of grp_candidateSlots()) {
+            if (grp_isPastSlot(dateStr, start)) continue;
+            if (start + duration > close) continue;
+
+            let free = grp_getFreeTechsAt(techs, booked, start, duration);
+
+            const timeStr = grp_minsToTime(start);
+            const lockedAtSameTime = new Set();
+            chosen.forEach(prev => {
+                if (prev.dateStr === dateStr && prev.timeStr === timeStr) {
+                    (prev.techs || []).forEach(t => lockedAtSameTime.add(t.email));
+                }
+            });
+            free = free.filter(t => !lockedAtSameTime.has(t.email));
+
+            if (free.length >= sg.size) {
+                best = {
+                    dateStr,
+                    timeStr,
+                    techs: free.slice(0, sg.size),
+                    startMins: start,
+                    duration
+                };
+                break;
+            }
+        }
+
+        if (!best) return null;
+
+        sg.dateStr = best.dateStr;
+        sg.timeStr = best.timeStr;
+        sg.techs = best.techs;
+        chosen.push({ ...best, index: sg.index });
+    }
+
+    return plan;
+}
+
+function grp_renderTimelinePreview() {
+    const el = document.getElementById(grp_splitPlannerTimelineId());
+    if (!el) return;
+
+    if (!grp_selectedPlan || !Array.isArray(grp_selectedPlan.subgroups)) {
+        el.innerHTML = '';
+        return;
+    }
+
+    const subgroups = [...grp_selectedPlan.subgroups];
+    const selectedCount = subgroups.filter(sg => sg.dateStr && sg.timeStr).length;
+    const allSelected = selectedCount === subgroups.length;
+
+    const sorted = subgroups
+        .filter(sg => sg.dateStr && sg.timeStr)
+        .sort((a, b) => ((a.dateStr || '') + (a.timeStr || '')).localeCompare((b.dateStr || '') + (b.timeStr || '')));
+
+    if (!sorted.length) {
+        el.innerHTML = `
+            <div class="grp-timeline-empty">
+                Select times for each sub-group to build the timeline.
+            </div>`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="grp-timeline-card">
+            <div class="grp-timeline-head">
+                <strong>Timeline preview</strong>
+                <span>${selectedCount} of ${subgroups.length} selected</span>
+            </div>
+            <div class="grp-timeline-list">
+                ${sorted.map((sg, idx) => {
+                    const names = (sg.memberIndexes || []).map(grp_memberLabel).join(', ');
+                    const techNames = (sg.techs || []).map(t => t.name || t.email).join(', ') || 'To be assigned';
+                    const duration = grp_durationForSubgroup(sg);
+                    return `
+                        <div class="grp-timeline-item">
+                            <div class="grp-timeline-dot">${idx + 1}</div>
+                            <div class="grp-timeline-body">
+                                <strong>Sub-group ${sg.index}: ${sg.size} ${sg.size === 1 ? 'person' : 'people'}</strong>
+                                <span>${grp_formatDate(sg.dateStr)} at ${grp_formatTime(sg.timeStr)} · ${duration} mins</span>
+                                <small>${names}</small>
+                                <small>Technicians: ${techNames}</small>
+                            </div>
+                        </div>`;
+                }).join('')}
+            </div>
+            ${allSelected ? '<div class="grp-timeline-ready">✓ All sub-groups scheduled. You can continue to confirmation.</div>' : ''}
+        </div>
+    `;
+
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = !allSelected;
+}
+
+async function grp_loadManualSubgroupSlots(index, dateStr) {
+    const slotBox = document.getElementById(grp_splitPlannerSlotsId(index));
+    if (!slotBox) return;
+
+    slotBox.innerHTML = '<div class="loading-pulse">Checking available times…</div>';
+
+    const sg = grp_selectedPlan.subgroups[index];
+    if (!sg) return;
+
+    sg.dateStr = dateStr;
+    sg.timeStr = '';
+    sg.techs = [];
+
+    const slots = await grp_getAvailableSlotsForSubgroup(index, dateStr);
+
+    if (!slots.length) {
+        slotBox.innerHTML = `
+            <p class="grp-no-slots">
+                No suitable time found for this sub-group on this date. Try another date.
+            </p>`;
+        grp_renderTimelinePreview();
+        return;
+    }
+
+    slotBox.innerHTML = slots.map(slot => {
+        const techNames = slot.techs.map(t => t.name || t.email).join(', ');
+        return `
+            <button type="button" class="slot-btn grp-manual-slot-btn"
+                data-time="${slot.timeStr}"
+                onclick="grp_selectManualSubgroupTime(${index}, '${slot.timeStr}', this)">
+                <strong>${grp_formatTime(slot.timeStr)}</strong>
+                <span>${techNames}</span>
+            </button>`;
+    }).join('');
+
+    grp_renderTimelinePreview();
+}
+
+window.grp_updateManualSubgroupDate = async function(index, dateStr) {
+    if (!dateStr) return;
+    if (dateStr < grp_todayString()) {
+        toast('Cannot book in the past.', 'warning');
+        const input = document.getElementById(grp_splitPlannerDateInputId(index));
+        if (input) input.value = grp_todayString();
+        dateStr = grp_todayString();
+    }
+    await grp_loadManualSubgroupSlots(index, dateStr);
+};
+
+window.grp_selectManualSubgroupTime = async function(index, timeStr, btn) {
+    const sg = grp_selectedPlan.subgroups[index];
+    if (!sg) return;
+
+    const dateStr = sg.dateStr || document.getElementById(grp_splitPlannerDateInputId(index))?.value || grp_selectedPlan.dateStr;
+    const start = grp_timeToMins(timeStr);
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const duration = grp_durationForSubgroup(sg);
+    const free = grp_freeTechsRespectingManualLocks(techs, booked, dateStr, start, duration, index);
+
+    if (free.length < sg.size) {
+        toast('That time is no longer available. Please choose another.', 'warning');
+        await grp_loadManualSubgroupSlots(index, dateStr);
+        return;
+    }
+
+    sg.dateStr = dateStr;
+    sg.timeStr = timeStr;
+    sg.techs = free.slice(0, sg.size);
+
+    (sg.memberIndexes || []).forEach((mi, idx) => {
+        const m = grp_members[mi];
+        const tech = sg.techs[idx] || {};
+        if (!m) return;
+        m.assignedTechEmail = tech.email || '';
+        m.assignedTechName = tech.name || 'To be assigned';
+        m.splitDateStr = sg.dateStr;
+        m.splitTimeStr = sg.timeStr;
+        m.subGroupIndex = sg.index;
+    });
+
+    const grid = btn?.parentElement;
+    if (grid) grid.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected', 'active'));
+    if (btn) btn.classList.add('selected', 'active');
+
+    // Refresh other sub-group slot lists so conflict prevention is visible immediately.
+    for (let i = 0; i < grp_selectedPlan.subgroups.length; i++) {
+        if (i === index) continue;
+        const other = grp_selectedPlan.subgroups[i];
+        const otherDate = other.dateStr || document.getElementById(grp_splitPlannerDateInputId(i))?.value;
+        if (otherDate && !other.timeStr) {
+            await grp_loadManualSubgroupSlots(i, otherDate);
+        }
+    }
+
+    grp_renderTimelinePreview();
+};
+
+window.grp_applyRecommendedManualPlan = async function() {
+    const dateStr = grp_selectedPlan.dateStr || document.getElementById('grp_date')?.value || grp_todayString();
+    const split = (grp_selectedPlan.subgroups || []).map(sg => sg.size);
+    const btn = document.getElementById('grp_applyRecommendedBtn');
+
+    setBtnLoading(btn, true, 'Use Recommended Schedule');
+    try {
+        const plan = await grp_findBestManualPlan(dateStr, split);
+        if (!plan) {
+            toast('Could not build a recommended sequence for this date. Please choose times manually.', 'warning');
+            return;
+        }
+
+        grp_selectedPlan = { type: 'split', dateStr, timeStr: 'SPLIT', subgroups: plan };
+        const timeEl = document.getElementById('grp_time');
+        if (timeEl) timeEl.value = 'SPLIT';
+
+        plan.forEach((sg, i) => {
+            const input = document.getElementById(grp_splitPlannerDateInputId(i));
+            if (input) input.value = sg.dateStr;
+            (sg.memberIndexes || []).forEach((mi, idx) => {
+                const m = grp_members[mi];
+                const tech = sg.techs[idx] || {};
+                if (!m) return;
+                m.assignedTechEmail = tech.email || '';
+                m.assignedTechName = tech.name || 'To be assigned';
+                m.splitDateStr = sg.dateStr;
+                m.splitTimeStr = sg.timeStr;
+                m.subGroupIndex = sg.index;
+            });
+        });
+
+        for (let i = 0; i < plan.length; i++) {
+            await grp_loadManualSubgroupSlots(i, plan[i].dateStr);
+            const grid = document.getElementById(grp_splitPlannerSlotsId(i));
+            const btnToSelect = grid?.querySelector(`[data-time="${plan[i].timeStr}"]`);
+            if (btnToSelect) btnToSelect.classList.add('selected', 'active');
+        }
+
+        grp_renderTimelinePreview();
+        toast('Recommended schedule applied.', 'success');
+    } finally {
+        setBtnLoading(btn, false, 'Use Recommended Schedule');
+    }
+};
+
+function grp_renderManualSplitPlanner(dateStr, split) {
+    const grid = document.getElementById('grp_slots');
+    if (!grid) return;
+
+    const subgroups = grp_allocateMembersBySplit(split);
+    grp_selectedPlan = {
+        type: 'split',
+        dateStr,
+        timeStr: 'SPLIT',
+        subgroups
+    };
+
+    const timeEl = document.getElementById('grp_time');
+    if (timeEl) timeEl.value = 'SPLIT';
+
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    grid.innerHTML = `
+        <div class="group-manual-planner" style="grid-column:1/-1;">
+            <div class="group-manual-planner-head">
+                <h3>Choose date & time for each sub-group</h3>
+                <p>You selected <strong>${split.join(' + ')}</strong>. The lead booker can now choose the best available time for each sub-group.</p>
+                <button type="button" id="grp_applyRecommendedBtn" class="btn-primary full" onclick="grp_applyRecommendedManualPlan()">
+                    <span class="btn-text">Use Recommended Schedule</span>
+                </button>
+            </div>
+
+            ${subgroups.map((sg, i) => {
+                const names = sg.memberIndexes.map(grp_memberLabel).join(', ');
+                return `
+                    <div class="group-manual-subgroup-card">
+                        <div class="group-manual-subgroup-title">
+                            <strong>Sub-group ${sg.index}: ${sg.size} ${sg.size === 1 ? 'person' : 'people'}</strong>
+                            <span>${names}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Choose date</label>
+                            <input type="date"
+                                id="${grp_splitPlannerDateInputId(i)}"
+                                min="${grp_todayString()}"
+                                value="${dateStr}"
+                                onchange="grp_updateManualSubgroupDate(${i}, this.value)">
+                        </div>
+                        <label class="slots-label">Available times</label>
+                        <div id="${grp_splitPlannerSlotsId(i)}" class="slots-grid grp-manual-slots">
+                            <div class="loading-pulse">Loading times…</div>
+                        </div>
+                    </div>`;
+            }).join('')}
+
+            <div id="${grp_splitPlannerTimelineId()}"></div>
+
+            <button type="button" class="btn-primary full" onclick="goToStep('screen-group-confirm')" id="grp_manualContinueBtn">
+                Review Group Booking →
+            </button>
+        </div>
+    `;
+
+    const manualContinue = document.getElementById('grp_manualContinueBtn');
+    if (manualContinue) {
+        manualContinue.onclick = function() {
+            const allSelected = grp_selectedPlan.subgroups.every(sg => sg.dateStr && sg.timeStr);
+            if (!allSelected) {
+                toast('Please choose a time for every sub-group first.', 'warning');
+                return;
+            }
+            goToStep('screen-group-confirm');
+        };
+    }
+
+    subgroups.forEach((_, i) => grp_loadManualSubgroupSlots(i, dateStr));
+    grp_renderTimelinePreview();
+}
+
+// Override split option selection: no more forced auto-assignment.
+// The lead chooses date/time for every sub-group.
+window.grp_selectSplitOption = async function(splitStr, btn) {
+    document.querySelectorAll('.group-option-card').forEach(b => b.classList.remove('selected'));
+    if (btn) btn.classList.add('selected');
+
+    const dateStr = document.getElementById('grp_date')?.value || grp_todayString();
+    const split = splitStr.split('-').map(Number).filter(Boolean);
+
+    grp_renderManualSplitPlanner(dateStr, split);
+};
+
+// Ensure old cache/older click handlers can still call this safely.
+window.grp_startSplitPlanner = function(dateStr, split) {
+    grp_renderManualSplitPlanner(dateStr || grp_todayString(), split || [grp_members.length]);
+};
+
