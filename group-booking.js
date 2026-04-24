@@ -1089,6 +1089,15 @@ async function grp_preAssignTechs() {
     });
 }
 
+// ── Member totals helper ──────────────────────────────────────
+function grp_getMemberTotals(m) {
+    const services   = m.selectedServices || [];
+    const totalMins  = services.reduce((sum,s) => sum+((s.dur||0)*(s.qty||1)), 0);
+    const totalPrice = services.reduce((sum,s) => sum+((s.price||0)*(s.qty||1)), 0);
+    const label      = services.map(s=>`${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
+    return { totalMins, totalPrice, label };
+}
+
 function grp_populateConfirm() {
     const dateStr = document.getElementById('grp_date')?.value || '';
     const timeStr = document.getElementById('grp_time')?.value || '';
@@ -1131,16 +1140,10 @@ function grp_populateConfirm() {
     }
 
     // ── Billing mode selector ─────────────────────────────────
-    const totalGroupAmount = grp_members.reduce((sum,m) =>
-        sum + (m.selectedServices||[]).reduce((s,sv) => s+(sv.price*(sv.qty||1)),0), 0
-    );
-    const perPersonAmount = grp_members.length > 0
-        ? (totalGroupAmount / grp_members.length).toFixed(2)
-        : '0.00';
+    const groupTotal  = grp_members.reduce((sum,m) => sum+grp_getMemberTotals(m).totalPrice, 0);
+    const perPersonAmt= grp_members.length > 0 ? (groupTotal/grp_members.length).toFixed(2) : '0.00';
 
-    // Remove existing billing selector if any
-    const existingBilling = document.getElementById('grp_billingModeWrap');
-    if (existingBilling) existingBilling.remove();
+    document.getElementById('grp_billingModeWrap')?.remove();
 
     const billingWrap = document.createElement('div');
     billingWrap.id = 'grp_billingModeWrap';
@@ -1148,36 +1151,43 @@ function grp_populateConfirm() {
     billingWrap.innerHTML = `
         <p style="font-weight:700;color:var(--primary);font-size:0.88rem;margin:0 0 10px;">💳 How will payment be handled?</p>
         <div style="display:flex;flex-direction:column;gap:8px;">
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_single_lbl">
-                <input type="radio" name="grp_billingMode" value="single" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_lead_lbl">
+                <input type="radio" name="grp_billingMode" value="lead_pays_all" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
                 <span>
                     <strong style="display:block;font-size:0.85rem;">One person pays for everyone</strong>
                     <span style="font-size:0.78rem;color:#6b7280;">
-                        Total: <strong>${totalGroupAmount.toFixed(2)} GHC</strong> — paid by the lead booker at checkout
+                        Total: <strong>${groupTotal.toFixed(2)} GHC</strong> — lead booker pays at checkout
                     </span>
                 </span>
             </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_split_lbl">
-                <input type="radio" name="grp_billingMode" value="split" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_equal_lbl">
+                <input type="radio" name="grp_billingMode" value="split_equally" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
                 <span>
-                    <strong style="display:block;font-size:0.85rem;">Each person pays separately</strong>
+                    <strong style="display:block;font-size:0.85rem;">Split equally</strong>
                     <span style="font-size:0.78rem;color:#6b7280;">
-                        Each person is billed individually for their own services
+                        <strong>${perPersonAmt} GHC</strong> each — total divided equally among all members
+                    </span>
+                </span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_own_lbl">
+                <input type="radio" name="grp_billingMode" value="each_pays_own" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
+                <span>
+                    <strong style="display:block;font-size:0.85rem;">Each person pays for their own services</strong>
+                    <span style="font-size:0.78rem;color:#6b7280;">
+                        Individual bills per person based on services selected
                     </span>
                 </span>
             </label>
         </div>`;
 
-    // Insert after members list
-    const confMembersEl = document.getElementById('grp_conf_members');
-    confMembersEl?.after(billingWrap);
+    document.getElementById('grp_conf_members')?.after(billingWrap);
 }
 
 window.grp_onBillingChange = function() {
     const val = document.querySelector('input[name="grp_billingMode"]:checked')?.value;
-    // Highlight selected option
-    document.getElementById('grp_bill_single_lbl')?.style.setProperty('border-color', val==='single'?'var(--primary)':'#e5e7eb');
-    document.getElementById('grp_bill_split_lbl')?.style.setProperty('border-color', val==='split'?'var(--primary)':'#e5e7eb');
+    document.getElementById('grp_bill_lead_lbl')?.style.setProperty('border-color', val==='lead_pays_all'?'var(--primary)':'#e5e7eb');
+    document.getElementById('grp_bill_equal_lbl')?.style.setProperty('border-color', val==='split_equally'?'var(--primary)':'#e5e7eb');
+    document.getElementById('grp_bill_own_lbl')?.style.setProperty('border-color', val==='each_pays_own'?'var(--primary)':'#e5e7eb');
 };
 
 
@@ -1189,35 +1199,42 @@ window.grp_confirmBooking = async function() {
 
     if (!dateStr || !timeStr) { toast('Missing date or time.', 'warning'); return; }
 
+    const billingMode = document.querySelector('input[name="grp_billingMode"]:checked')?.value;
+    if (!billingMode) { toast('Please select a payment option.', 'warning'); return; }
+
     setBtnLoading(btn, true, 'Confirm Group Booking');
     try {
         grp_groupId = db.collection('Appointments').doc().id;
 
-        // Read billing mode — default to split if not selected
-        const billingMode = document.querySelector('input[name="grp_billingMode"]:checked')?.value || 'split';
-
-        // Tech assignments already calculated in grp_preAssignTechs()
-        const batch = db.batch();
+        const groupTotal = grp_members.reduce((sum,m) => sum+grp_getMemberTotals(m).totalPrice, 0);
+        const batch      = db.batch();
 
         grp_members.forEach((m, i) => {
-            const ref        = db.collection('Appointments').doc();
-            const services   = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
-            const totalMins  = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
-            const totalPrice = (m.selectedServices||[]).reduce((sum,s) => sum+(s.price*(s.qty||1)), 0);
+            const ref = db.collection('Appointments').doc();
+            const { totalMins, totalPrice, label } = grp_getMemberTotals(m);
+
+            // Calculate amountDue per billing mode
+            let amountDue = totalPrice;
+            if (billingMode === 'lead_pays_all')  amountDue = i===0 ? groupTotal : 0;
+            if (billingMode === 'split_equally')   amountDue = groupTotal / grp_members.length;
+            // each_pays_own keeps individual totalPrice
 
             batch.set(ref, {
                 groupId:           grp_groupId,
                 groupSize:         grp_members.length,
+                groupTotal:        groupTotal,
                 isGroupBooking:    true,
                 isLeadBooker:      i === 0,
                 billingMode:       billingMode,
-                clientName:        m.name || (i === 0 ? (bk_clientProfile?.name||'') : ''),
-                clientEmail:       i === 0 ? (bk_currentUser?.email||'') : '',
-                clientPhone:       i === 0 ? (bk_clientProfile?.phone||'') : '',
-                bookedService:     services,
+                amountDue:         amountDue,
+                clientName:        m.name || (i===0?(bk_clientProfile?.name||''):''),
+                clientEmail:       i===0?(bk_currentUser?.email||''):'',
+                clientPhone:       i===0?(bk_clientProfile?.phone||''):'',
+                bookedService:     label,
                 bookedDuration:    totalMins,
                 bookedPrice:       totalPrice,
-                grandTotal:        totalPrice,
+                grandTotal:        amountDue,
+                totalGHC:          amountDue,
                 dateString:        dateStr,
                 timeString:        timeStr,
                 status:            'Scheduled',
