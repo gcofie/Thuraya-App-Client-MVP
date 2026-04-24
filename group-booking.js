@@ -478,7 +478,18 @@ window.grp_generateSlots = async function() {
         grid.innerHTML = html || '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:16px 0;">No slots available.</p>';
 
         if (!anyAvailable) {
-            grid.innerHTML += '<p style="color:var(--text-muted);font-size:0.82rem;text-align:center;grid-column:1/-1;">Try a different date.</p>';
+            grid.innerHTML = `
+                <p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:16px 0;">
+                    No same-time slots available for your full group on this date.
+                </p>
+                <button class="slot-btn" style="grid-column:1/-1;" onclick="grp_findEarliestForAll('${dateStr}')">
+                    📅 Find earliest time for whole group
+                </button>
+                <button class="slot-btn" style="grid-column:1/-1;" onclick="grp_showSplitPlanner('${dateStr}', '09:00', 1)">
+                    ✂️ Split group across different times
+                </button>
+                <div id="grp_shortageResult" style="grid-column:1/-1;margin-top:12px;"></div>
+            `;
         }
 
     } catch (e) {
