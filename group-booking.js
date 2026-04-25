@@ -1,39 +1,237 @@
 // ============================================================
-//  GROUP BOOKING — app.js additions
-//  Paste this entire block at the BOTTOM of app.js
-//
-//  Also make these 3 small edits to existing app.js code:
-//
-//  EDIT 1 — line ~150 (inside auth.onAuthStateChanged, returning user branch):
-//    CHANGE:  goToStep('screen-services');
-//    TO:      goToStep('screen-booking-mode');
-//
-//  EDIT 2 — saveProfile() function, last line before catch:
-//    CHANGE:  goToStep('screen-services');
-//    TO:      goToStep('screen-booking-mode');
-//
-//  EDIT 3 — saveGuestProfile() function:
-//    CHANGE:  goToStep('screen-services');
-//    TO:      goToStep('screen-booking-mode');
-//
-//  EDIT 4 — bk_bookAgain() function at bottom of app.js:
-//    CHANGE:  goToStep('screen-services');
-//    TO:      goToStep('screen-booking-mode');
+//  THURAYA — CLIENT GROUP BOOKING FULL FLOW
+//  Safe modular file. Loaded after app.js.
+//  Handles:
+//  - group member service selection
+//  - same-time availability
+//  - client-controlled split options e.g. 4+1, 3+2
+//  - billing choices for same-time and split groups
+//  - Firestore writes compatible with Staff OS Appointments
 // ============================================================
 
-
 // ── Group state ───────────────────────────────────────────────
-let grp_groupSize    = 2;
-let grp_activeMember = 0;        // index of tab currently shown
-let grp_members      = [];       // [{ name, serviceId, serviceName, serviceDuration, servicePrice, dept }]
-let grp_groupId      = null;     // shared Firestore groupId written on confirm
+let grp_groupSize = 2;
+let grp_activeMember = 0;
+let grp_members = [];
+let grp_groupId = null;
+let grp_selectedPlan = { type: 'same', timeStr: '', dateStr: '', subgroups: [] };
+let grp_billingMode = '';
+let grp_bookedCacheByDate = {};
 
+function grp_todayString() {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
 
-// ── Solo shortcut (replaces direct goToStep calls) ────────────
+function grp_timeToMins(str) {
+    if (!str) return 0;
+    const [h, m] = String(str).split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+}
+
+function grp_minsToTime(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function grp_formatTime(t) {
+    if (!t) return '—';
+    const [h,m] = t.split(':').map(Number);
+    return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
+function grp_formatDate(d) {
+    if (!d) return '—';
+    try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+    catch(e) { return d; }
+}
+
+function grp_memberLabel(index) {
+    const m = grp_members[index] || {};
+    return m.name || (index === 0 ? 'You' : `Person ${index + 1}`);
+}
+
+function grp_memberTotals(member) {
+    const services = member?.selectedServices || [];
+    const totalMins = services.reduce((sum, s) => sum + ((Number(s.dur) || 0) * (Number(s.qty) || 1)), 0);
+    const listedSubtotal = services.reduce((sum, s) => sum + ((Number(s.price) || 0) * (Number(s.qty) || 1)), 0);
+    const taxResult = typeof applyTaxes === 'function'
+        ? applyTaxes(listedSubtotal)
+        : { basePrice: listedSubtotal, grandTotal: listedSubtotal, taxLines: [] };
+    const label = services.map(s => `${s.name}${s.qty > 1 ? ' (x' + s.qty + ')' : ''}`).join(', ');
+    return {
+        services,
+        totalMins,
+        listedSubtotal,
+        basePrice: taxResult.basePrice,
+        grandTotal: taxResult.grandTotal,
+        taxLines: taxResult.taxLines || [],
+        label
+    };
+}
+
+function grp_groupTotals() {
+    const memberTotals = grp_members.map(grp_memberTotals);
+    return {
+        memberTotals,
+        totalMinsMax: Math.max(0, ...memberTotals.map(t => t.totalMins || 0)),
+        listedSubtotal: memberTotals.reduce((s, t) => s + t.listedSubtotal, 0),
+        grandTotal: memberTotals.reduce((s, t) => s + t.grandTotal, 0)
+    };
+}
+
+async function grp_ensureTechs() {
+    try {
+        if (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs) && bk_techs.length) return bk_techs;
+        if (typeof loadTechs === 'function') await loadTechs();
+        if (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) return bk_techs;
+    } catch(e) {}
+    return [];
+}
+
+async function grp_getBookedSlots(dateStr) {
+    if (grp_bookedCacheByDate[dateStr]) return grp_bookedCacheByDate[dateStr];
+    const booked = [];
+    const statuses = ['Scheduled', 'Arrived', 'In Progress', 'Ready for Payment'];
+    try {
+        const snap = await db.collection('Appointments')
+            .where('dateString', '==', dateStr)
+            .where('status', 'in', statuses)
+            .get();
+        snap.forEach(doc => {
+            const d = doc.data() || {};
+            const email = d.assignedTechEmail || '';
+            if (!email || !d.timeString) return;
+            const start = grp_timeToMins(d.timeString);
+            const dur = parseInt(d.bookedDuration || 60, 10) || 60;
+            booked.push({ techEmail: email, startMins: start, endMins: start + dur });
+        });
+    } catch(e) {
+        // Firestore 'in' supports max 10 values; if rules/index fail, degrade gracefully.
+        try {
+            const snap = await db.collection('Appointments').where('dateString', '==', dateStr).get();
+            snap.forEach(doc => {
+                const d = doc.data() || {};
+                if (!statuses.includes(d.status)) return;
+                const email = d.assignedTechEmail || '';
+                if (!email || !d.timeString) return;
+                const start = grp_timeToMins(d.timeString);
+                const dur = parseInt(d.bookedDuration || 60, 10) || 60;
+                booked.push({ techEmail: email, startMins: start, endMins: start + dur });
+            });
+        } catch(inner) { console.error('Group availability load failed:', inner); }
+    }
+    grp_bookedCacheByDate[dateStr] = booked;
+    return booked;
+}
+
+function grp_getFreeTechsAt(techs, bookedSlots, startMins, durationMins) {
+    const endMins = startMins + durationMins;
+    const busy = new Set();
+    bookedSlots.forEach(b => {
+        if (b.startMins < endMins && b.endMins > startMins) busy.add(b.techEmail);
+    });
+    return techs.filter(t => t.email && !busy.has(t.email));
+}
+
+function grp_candidateSlots() {
+    const slots = [];
+    const open = 8 * 60;
+    const close = 20 * 60;
+    const step = 30;
+    for (let t = open; t < close; t += step) slots.push(t);
+    return slots;
+}
+
+function grp_isPastSlot(dateStr, startMins) {
+    if (dateStr !== grp_todayString()) return false;
+    const n = new Date();
+    return startMins <= (n.getHours() * 60 + n.getMinutes());
+}
+
+function grp_generatePartitions(total, maxPart) {
+    const results = [];
+    const seen = new Set();
+    function helper(remaining, maxAllowed, path) {
+        if (remaining === 0) {
+            const key = path.join('+');
+            if (!seen.has(key)) { seen.add(key); results.push([...path]); }
+            return;
+        }
+        const cap = Math.min(maxAllowed, maxPart, remaining);
+        for (let i = cap; i >= 1; i--) helper(remaining - i, i, [...path, i]);
+    }
+    helper(total, maxPart, []);
+    return results.sort((a, b) => {
+        if (a.length !== b.length) return a.length - b.length;
+        return b[0] - a[0];
+    });
+}
+
+function grp_allocateMembersBySplit(split) {
+    let cursor = 0;
+    return split.map((size, idx) => {
+        const memberIndexes = [];
+        for (let i = 0; i < size; i++) memberIndexes.push(cursor++);
+        return { index: idx + 1, size, memberIndexes, dateStr: '', timeStr: '', techs: [] };
+    });
+}
+
+async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks = []) {
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const close = 20 * 60;
+    const duration = Math.max(60, ...memberIndexes.map(i => grp_memberTotals(grp_members[i]).totalMins || 60));
+    const needed = memberIndexes.length;
+    const slots = grp_candidateSlots();
+
+    for (const start of slots) {
+        if (grp_isPastSlot(dateStr, start)) continue;
+        if (start + duration > close) continue;
+        let free = grp_getFreeTechsAt(techs, booked, start, duration);
+        // avoid double-using the same tech at same time within generated split plan
+        const lockAtThisTime = new Set(excludedTechLocks.filter(x => x.dateStr === dateStr && x.timeStr === grp_minsToTime(start)).map(x => x.email));
+        free = free.filter(t => !lockAtThisTime.has(t.email));
+        if (free.length >= needed) {
+            return { dateStr, timeStr: grp_minsToTime(start), techs: free.slice(0, needed), duration };
+        }
+    }
+    return null;
+}
+
+async function grp_buildPlanForSplit(dateStr, split) {
+    const subgroups = grp_allocateMembersBySplit(split);
+    const locks = [];
+    for (const sg of subgroups) {
+        const slot = await grp_findSlotForMembers(dateStr, sg.memberIndexes, locks);
+        if (!slot) return null;
+        sg.dateStr = slot.dateStr;
+        sg.timeStr = slot.timeStr;
+        sg.techs = slot.techs;
+        slot.techs.forEach(t => locks.push({ dateStr: slot.dateStr, timeStr: slot.timeStr, email: t.email }));
+    }
+    return subgroups;
+}
+
+async function grp_findEarliestFullGroup(startDateStr) {
+    const base = new Date(startDateStr + 'T12:00:00');
+    const allIndexes = grp_members.map((_, i) => i);
+    for (let d = 0; d < 21; d++) {
+        const x = new Date(base);
+        x.setDate(x.getDate() + d);
+        const dateStr = `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+        const slot = await grp_findSlotForMembers(dateStr, allIndexes, []);
+        if (slot) return slot;
+    }
+    return null;
+}
+
+// ── Solo shortcut ────────────────────────────────────────────
 window.grp_soloMode = function() {
-    goToStep('screen-services');
+    if (typeof bk_clearAllSelections === 'function') bk_clearAllSelections();
+    window.goToStep('screen-services');
 };
-
 
 // ── Group size picker ─────────────────────────────────────────
 window.grp_changeSize = function(delta) {
@@ -43,31 +241,31 @@ window.grp_changeSize = function(delta) {
 };
 
 window.grp_initMembers = function() {
-    // Each member stores the same shape as bk_selectedServices
-    // selectedServices: [{ id, type, price, dur, name, qty }]
+    grp_groupId = null;
+    grp_selectedPlan = { type: 'same', timeStr: '', dateStr: '', subgroups: [] };
+    grp_billingMode = '';
+    grp_bookedCacheByDate = {};
     grp_members = Array.from({ length: grp_groupSize }, (_, i) => ({
-        name:             i === 0 ? (bk_clientProfile?.name || '') : '',
+        name: i === 0 ? (bk_clientProfile?.name || '') : '',
         selectedServices: [],
-        dept:             'Hand'
+        dept: 'Hand',
+        assignedTechEmail: '',
+        assignedTechName: ''
     }));
     grp_activeMember = 0;
     grp_renderMemberTab(0);
-    goToStep('screen-group-services');
+    window.goToStep('screen-group-services');
 };
 
-
-// ── Tab rendering ─────────────────────────────────────────────
+// ── Tabs and member services ──────────────────────────────────
 function grp_renderTabs() {
     const container = document.getElementById('grp_personTabs');
     if (!container) return;
     container.innerHTML = grp_members.map((m, i) => {
-        const done   = m.selectedServices && m.selectedServices.length > 0;
+        const done = m.selectedServices && m.selectedServices.length > 0;
         const active = i === grp_activeMember;
-        return `<button
-            class="grp-tab ${active ? 'grp-tab--active' : ''} ${done && !active ? 'grp-tab--done' : ''}"
-            onclick="grp_renderMemberTab(${i})">
-            ${done ? '<span class="grp-tab-check">✓</span>' : ''}
-            ${m.name || (i === 0 ? 'You' : 'Person ' + (i + 1))}
+        return `<button type="button" class="grp-tab ${active ? 'grp-tab--active' : ''} ${done && !active ? 'grp-tab--done' : ''}" onclick="grp_renderMemberTab(${i})">
+            ${done ? '<span class="grp-tab-check">✓</span>' : ''}${grp_memberLabel(i)}
         </button>`;
     }).join('');
 }
@@ -75,62 +273,47 @@ function grp_renderTabs() {
 window.grp_renderMemberTab = function(index) {
     grp_activeMember = index;
     const member = grp_members[index];
-
-    // Name input
     const nameInput = document.getElementById('grp_activeName');
     const nameLabel = document.getElementById('grp_nameLabel');
-    if (nameInput) nameInput.value = member.name;
+    if (nameInput) nameInput.value = member.name || '';
     if (nameLabel) nameLabel.textContent = index === 0 ? 'Your name' : `Person ${index + 1}'s name`;
-
-    // Dept toggle
     document.querySelectorAll('#grp_deptToggle .dept-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.dept === member.dept);
     });
-
     grp_renderServiceList();
     grp_renderTabs();
     grp_updateProgress();
 };
 
 window.grp_saveName = function(val) {
-    if (grp_members[grp_activeMember] !== undefined) {
-        grp_members[grp_activeMember].name = val;
-        grp_renderTabs(); // refresh tab label live
+    if (grp_members[grp_activeMember]) {
+        grp_members[grp_activeMember].name = val.trim();
+        grp_renderTabs();
     }
 };
 
-
-// ── Dept switcher (group version) ────────────────────────────
 window.grp_switchDept = function(dept, btn) {
+    if (!grp_members[grp_activeMember]) return;
     grp_members[grp_activeMember].dept = dept;
     document.querySelectorAll('#grp_deptToggle .dept-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
     grp_renderServiceList();
 };
 
-
-// ── Service list for active member ───────────────────────────
-// Mirrors _buildCard() / renderMenuForDept() from app.js exactly —
-// same radio, checkbox, counter logic, same category groupings.
 function grp_renderServiceList() {
     const container = document.getElementById('grp_serviceList');
     if (!container) return;
-
     const member = grp_members[grp_activeMember];
-    const dept   = member.dept || 'Hand';
-    const sel    = member.selectedServices || [];
+    const dept = member.dept || 'Hand';
+    const sel = member.selectedServices || [];
 
-    // ── Build dbData the same way renderMenuForDept does ──────
-    const ALIASES = {
-        'I. HAND THERAPIES':  'I. HAND THERAPY RITUALS',
-        'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
-    };
-    const T_ORDER = { radio: 0, checkbox: 1, counter: 2 };
-
+    const aliases = { 'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS' };
+    const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
     const dbData = { Hand: {}, Foot: {} };
-    bk_menuServices.forEach(s => {
+
+    (bk_menuServices || []).forEach(s => {
         let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
-        cat = ALIASES[cat] ?? ALIASES[cat.toUpperCase()] ?? cat;
+        cat = aliases[cat] || aliases[cat.toUpperCase()] || cat;
         if (s.department === 'Both') {
             ['Hand','Foot'].forEach(d => {
                 if (!dbData[d][cat]) dbData[d][cat] = [];
@@ -144,23 +327,14 @@ function grp_renderServiceList() {
         }
     });
 
-    Object.values(dbData).forEach(dObj =>
-        Object.values(dObj).forEach(arr =>
-            arr.sort((a, b) => (T_ORDER[a.inputType] ?? 1) - (T_ORDER[b.inputType] ?? 1))
-        )
-    );
-
+    Object.values(dbData).forEach(dObj => Object.values(dObj).forEach(arr => arr.sort((a,b) => (typeOrder[a.inputType] ?? 1) - (typeOrder[b.inputType] ?? 1))));
     const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
-    const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
+    const sortedCats = Object.keys(dbData[dept] || {}).sort((a,b) => {
         const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
         const aNum = numRe.test(aU), bNum = numRe.test(bU);
         if (aNum && !bNum) return -1;
-        if (!aNum && bNum) return  1;
-        const aR = (dbData[dept][a][0]?.inputType || 'checkbox') === 'radio';
-        const bR = (dbData[dept][b][0]?.inputType || 'checkbox') === 'radio';
-        if (aR && !bR) return -1;
-        if (!aR && bR) return  1;
-        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
+        if (!aNum && bNum) return 1;
+        return aU.localeCompare(bU, undefined, { numeric:true, sensitivity:'base' });
     });
 
     if (!sortedCats.length) {
@@ -168,95 +342,64 @@ function grp_renderServiceList() {
         return;
     }
 
-    // ── Render using _grp_buildCard (mirrors _buildCard) ──────
     let html = '';
     sortedCats.forEach(cat => {
-        const items   = dbData[dept][cat];
+        const items = dbData[dept][cat];
         const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
-        const multis  = items.filter(s => (s.inputType || 'radio') !== 'radio');
-
+        const multis = items.filter(s => (s.inputType || 'radio') !== 'radio');
         html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
-
         if (singles.length && multis.length) {
             html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
-            singles.forEach(s => { html += _grp_buildCard(s, dept, sel); });
-            html += `<div class="menu-subgroup-divider"></div>`;
-            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
-            multis.forEach(s => { html += _grp_buildCard(s, dept, sel); });
+            singles.forEach(s => html += grp_buildCard(s, dept, sel));
+            html += `<div class="menu-subgroup-divider"></div><div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
+            multis.forEach(s => html += grp_buildCard(s, dept, sel));
         } else {
-            items.forEach(s => { html += _grp_buildCard(s, dept, sel); });
+            items.forEach(s => html += grp_buildCard(s, dept, sel));
         }
-
-        html += `</div>`;
+        html += '</div>';
     });
-
     container.innerHTML = html;
-
-    // Restore counter values
-    sel.filter(s => s.type === 'counter').forEach(s => {
-        const el = document.getElementById('grp_qty_' + s.id);
-        if (el) el.value = s.qty || 0;
-    });
 }
 
-// ── Mirrors _buildCard() exactly, scoped to group member ─────
-function _grp_buildCard(s, dept, sel) {
-    const type     = s.inputType || 'radio';
-    const name     = s.name      || 'Service';
-    const dur      = Number(s.duration) || 0;
-    const price    = Number(s.price)    || 0;
+function grp_escapeJs(str) {
+    return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
+function grp_buildCard(s, dept, sel) {
+    const type = s.inputType || 'radio';
+    const name = s.name || 'Service';
+    const dur = Number(s.duration) || 0;
+    const price = Number(s.price) || 0;
     const descHtml = s.desc ? `<div class="service-card-desc">${s.desc}</div>` : '';
-    const tagHtml  = (s.tag && s.tag !== 'None') ? `<span class="hl-tag">${s.tag}</span>` : '';
+    const tagHtml = (s.tag && s.tag !== 'None') ? `<span class="hl-tag">${s.tag}</span>` : '';
     const priceTag = `<span class="service-price-pill">${dur > 0 ? dur + ' mins &nbsp;|&nbsp; ' : ''}${price} GHC</span>`;
-    const safeName = name.replace(/'/g, "\\'");
+    const safeName = grp_escapeJs(name);
 
     if (type === 'counter') {
         const qty = sel.find(x => x.id === s.id)?.qty || 0;
-        return `
-            <div class="service-card" style="align-items:center;">
-                <div class="service-card-body" style="pointer-events:none;">
-                    <div class="service-card-name">${name} ${tagHtml}</div>
-                    ${descHtml}${priceTag}
-                </div>
-                <div class="counter-box">
-                    <button class="counter-btn" onclick="grp_updateCounter('${s.id}',${price},${dur},'${safeName}',-1)">−</button>
-                    <input type="number" id="grp_qty_${s.id}" value="${qty}" min="0" readonly
-                        style="width:44px;height:36px;text-align:center;padding:4px;font-weight:700;border:1px solid var(--border);border-radius:6px;">
-                    <button class="counter-btn" onclick="grp_updateCounter('${s.id}',${price},${dur},'${safeName}',1)">+</button>
-                </div>
-            </div>`;
+        return `<div class="service-card" style="align-items:center;">
+            <div class="service-card-body" style="pointer-events:none;"><div class="service-card-name">${name} ${tagHtml}</div>${descHtml}${priceTag}</div>
+            <div class="counter-box">
+                <button type="button" class="counter-btn" onclick="grp_updateCounter('${s.id}',${price},${dur},'${safeName}',-1)">−</button>
+                <input type="number" id="grp_qty_${s.id}" value="${qty}" min="0" readonly style="width:44px;height:36px;text-align:center;padding:4px;font-weight:700;border:1px solid var(--border);border-radius:6px;">
+                <button type="button" class="counter-btn" onclick="grp_updateCounter('${s.id}',${price},${dur},'${safeName}',1)">+</button>
+            </div></div>`;
     }
 
-    const groupName = type === 'radio' ? `grp_base_${dept}_${grp_activeMember}` : `grp_cb_${s.id}`;
-    const isSelected = sel.some(x => x.id === s.id);
+    const groupName = type === 'radio' ? `grp_base_${dept}_${grp_activeMember}` : `grp_cb_${s.id}_${grp_activeMember}`;
+    const selected = sel.some(x => x.id === s.id);
     const inputEl = type === 'radio'
-        ? `<input type="radio" name="${groupName}" id="grp_cb_${s.id}"
-               style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;"
-               ${isSelected ? 'checked' : ''}>`
-        : `<input type="checkbox" id="grp_cb_${s.id}"
-               style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;"
-               ${isSelected ? 'checked' : ''}>`;
-
-    return `
-        <div class="service-card ${isSelected ? 'selected' : ''}"
-            onclick="grp_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${safeName}')">
-            ${inputEl}
-            <div class="service-card-body">
-                <div class="service-card-name">${name} ${tagHtml}</div>
-                ${descHtml}${priceTag}
-            </div>
-        </div>`;
+        ? `<input type="radio" name="${groupName}" id="grp_cb_${s.id}" ${selected ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`
+        : `<input type="checkbox" id="grp_cb_${s.id}" ${selected ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`;
+    return `<div class="service-card ${selected ? 'selected' : ''}" onclick="grp_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${safeName}')">${inputEl}<div class="service-card-body"><div class="service-card-name">${name} ${tagHtml}</div>${descHtml}${priceTag}</div></div>`;
 }
 
-// ── Toggle card — mirrors bk_toggleCard scoped to member ─────
 window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, name) {
     event.preventDefault();
     const member = grp_members[grp_activeMember];
-    const input  = document.getElementById('grp_cb_' + id);
-    if (!input) return;
-
+    const input = document.getElementById('grp_cb_' + id);
+    if (!input || !member) return;
     if (type === 'radio') {
-        // Deselect all in group, remove from member selections
         document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
             r.checked = false;
             r.closest('.service-card')?.classList.remove('selected');
@@ -265,31 +408,24 @@ window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, n
             const el = document.getElementById('grp_cb_' + s.id);
             return !el || el.name !== groupName;
         });
-        const wasSelected = input.checked;
-        if (!wasSelected) {
-            input.checked = true;
-            card.classList.add('selected');
-            member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
-        }
+        input.checked = true;
+        card.classList.add('selected');
+        member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
     } else {
         input.checked = !input.checked;
         card.classList.toggle('selected', input.checked);
-        if (input.checked) {
-            member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
-        } else {
-            member.selectedServices = member.selectedServices.filter(s => s.id !== id);
-        }
+        if (input.checked) member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
+        else member.selectedServices = member.selectedServices.filter(s => s.id !== id);
     }
     grp_renderTabs();
     grp_updateProgress();
 };
 
-// ── Counter — mirrors bk_updateCounter scoped to member ──────
 window.grp_updateCounter = function(id, price, dur, name, delta) {
-    const input  = document.getElementById('grp_qty_' + id);
+    const input = document.getElementById('grp_qty_' + id);
     const member = grp_members[grp_activeMember];
-    if (!input) return;
-    let val = Math.max(0, (parseInt(input.value) || 0) + delta);
+    if (!input || !member) return;
+    const val = Math.max(0, (parseInt(input.value, 10) || 0) + delta);
     input.value = val;
     member.selectedServices = member.selectedServices.filter(s => s.id !== id);
     if (val > 0) member.selectedServices.push({ id, type: 'counter', price, dur, name, qty: val });
@@ -297,25 +433,17 @@ window.grp_updateCounter = function(id, price, dur, name, delta) {
     grp_updateProgress();
 };
 
-
-// ── Progress bar & continue button ───────────────────────────
 function grp_updateProgress() {
-    const done    = grp_members.filter(m => m.selectedServices && m.selectedServices.length > 0).length;
-    const total   = grp_members.length;
-    const allDone = done === total;
-
-    const progressEl  = document.getElementById('grp_progressText');
-    const nextBtn     = document.getElementById('grp_nextPersonBtn');
+    const done = grp_members.filter(m => m.selectedServices && m.selectedServices.length > 0).length;
+    const total = grp_members.length;
+    const progressEl = document.getElementById('grp_progressText');
+    const nextBtn = document.getElementById('grp_nextPersonBtn');
     const continueBtn = document.getElementById('grp_toDateTimeBtn');
-
     if (progressEl) progressEl.textContent = `${done} of ${total} selected`;
-
-    // Show "Next person" nudge if current member has selections but is not the last
-    const currentDone = grp_members[grp_activeMember].selectedServices?.length > 0;
-    const isLast      = grp_activeMember === total - 1;
-    if (nextBtn) nextBtn.style.display = (currentDone && !isLast) ? 'inline' : 'none';
-
-    if (continueBtn) continueBtn.disabled = !allDone;
+    const currentDone = grp_members[grp_activeMember]?.selectedServices?.length > 0;
+    const isLast = grp_activeMember === total - 1;
+    if (nextBtn) nextBtn.style.display = (currentDone && !isLast) ? 'inline-flex' : 'none';
+    if (continueBtn) continueBtn.disabled = done !== total;
 }
 
 window.grp_nextPerson = function() {
@@ -325,998 +453,892 @@ window.grp_nextPerson = function() {
     }
 };
 
-
-// ── Navigate to date/time ─────────────────────────────────────
+// ── Date / slots / split planner ──────────────────────────────
 window.grp_goToDateTime = function() {
-    // Set min date on group date picker
     const dateEl = document.getElementById('grp_date');
-    if (dateEl) { dateEl.min = todayStr; dateEl.value = ''; }
-
-    // Reset slot state
+    if (dateEl) { dateEl.min = grp_todayString(); dateEl.value = ''; }
     const slotsContainer = document.getElementById('grp_slotsContainer');
     if (slotsContainer) slotsContainer.style.display = 'none';
-    document.getElementById('grp_time').value = '';
+    const slots = document.getElementById('grp_slots');
+    if (slots) slots.innerHTML = '';
+    const timeEl = document.getElementById('grp_time');
+    if (timeEl) timeEl.value = '';
     const confirmBtn = document.getElementById('grp_toConfirmBtn');
     if (confirmBtn) confirmBtn.disabled = true;
-
-    // Update subtitle
     const sub = document.getElementById('grp_datetimeSubtitle');
-    if (sub) sub.textContent =
-        `Showing slots where all ${grp_members.length} people can be seen at the same time.`;
-
-    goToStep('screen-group-datetime');
+    if (sub) sub.textContent = `Showing times where all ${grp_members.length} people can be served together. If not possible, you can split the group.`;
+    window.goToStep('screen-group-datetime');
 };
-
-
-// ── Slot generation ───────────────────────────────────────────
-// Uses real Firestore Appointments data to check availability.
-// For each slot: queries whether any appointment conflicts for
-// each service's required duration window.
 
 window.grp_generateSlots = async function() {
     const dateEl = document.getElementById('grp_date');
-    const dateStr = dateEl?.value;
-    if (!dateStr) return;
-
+    const dateStr = dateEl?.value || '';
     const container = document.getElementById('grp_slotsContainer');
-    const grid      = document.getElementById('grp_slots');
-    if (!grid || !container) return;
-
-    container.style.display = 'block';
-    grid.innerHTML = '<div class="loading-pulse" style="grid-column:1/-1;">Checking availability…</div>';
-
-    // Reset time selection
-    document.getElementById('grp_time').value = '';
+    const grid = document.getElementById('grp_slots');
     const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (!dateStr || !container || !grid) return;
+    if (dateStr < grp_todayString()) {
+        container.style.display = 'block';
+        grid.innerHTML = '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">Cannot book in the past.</p>';
+        return;
+    }
+    grp_selectedPlan = { type: 'same', dateStr, timeStr: '', subgroups: [] };
     if (confirmBtn) confirmBtn.disabled = true;
-
-    // FIX: ensure bk_techs is loaded before generating slots
-    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
-    if (!techList.length) {
-        try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
-    }
-    if (!techList.length) {
-        try {
-            const snap = await db.collection('Users').get();
-            snap.forEach(doc => {
-                const d = doc.data();
-                const roles = (Array.isArray(d.roles)?d.roles:[d.role||'']).map(r=>(r||'').toLowerCase());
-                if (roles.some(r=>r.includes('tech')) && d.visibleToClients!==false)
-                    techList.push({ email: doc.id, name: d.name||doc.id });
-            });
-            // Update global bk_techs
-            if (typeof bk_techs !== 'undefined') bk_techs = techList;
-        } catch(e) { console.error('Tech load error:', e); }
-    }
-
-    // Debug — log what we have
-    console.log('🔧 grp_generateSlots — techList:', techList.length, techList.map(t=>t.name));
-    console.log('🔧 grp_members count:', grp_members.length);
-
-    // Safety fallback — if no techs found at all, assume enough techs for any slot
-    const techCountForSlots = techList.length > 0 ? techList.length : grp_members.length;
-
-    try {
-        // Fetch all appointments for this date once
-        const snap = await db.collection('Appointments')
-            .where('dateString', '==', dateStr)
-            .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress'])
-            .get();
-
-        const bookedSlots = []; // [{ techEmail, startMins, endMins }]
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (!d.timeString || !d.bookedDuration) return;
-            const [hh, mm] = d.timeString.split(':').map(Number);
-            const startMins = hh * 60 + mm;
-            bookedSlots.push({
-                techEmail: d.assignedTechEmail || '',
-                startMins,
-                endMins: startMins + (parseInt(d.bookedDuration) || 0)
-            });
-        });
-        _grp_bookedSlotsCache = bookedSlots; // cache for shortage detection
-
-        // Build time slots from 09:00 to 17:30 in 30-min steps
-        const slots = [];
-        for (let h = 9; h <= 17; h++) {
-            for (let m of [0, 30]) {
-                if (h === 17 && m === 30) continue;
-                slots.push(h * 60 + m);
-            }
-        }
-
-        // For each slot check if ALL members can be accommodated.
-        // Since the client doesn't pick techs, we check if there are
-        // enough non-conflicting tech slots for all services simultaneously.
-        // Simplified: slot is "available" if it's not past 5pm minus
-        // the longest service duration, and within business hours.
-        const maxDuration = Math.max(...grp_members.map(m =>
-            (m.selectedServices || []).reduce((sum, s) => sum + (s.dur * (s.qty || 1)), 0) || 60
-        ));
-        const closingMins = 18 * 60; // 6pm hard close
-
-        let html = '';
-        let anyAvailable = false;
-
-        slots.forEach(startMins => {
-            // Don't offer slots that would run past closing
-            if (startMins + maxDuration > closingMins) return;
-
-            const hh = Math.floor(startMins / 60);
-            const mm = startMins % 60;
-            const timeStr  = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-            const displayH = hh > 12 ? hh - 12 : hh;
-            const period   = hh >= 12 ? 'PM' : 'AM';
-            const label    = `${displayH}:${String(mm).padStart(2,'0')} ${period}`;
-
-            // Check: does the booked list have enough conflicts to block ALL techs?
-            // Real implementation: each member needs one free tech with the right service skill.
-            // Here we count how many "tech-slots" are blocked in this window and compare to
-            // total available techs — a conservative but correct approximation.
-            const windowEnd = startMins + maxDuration;
-            const conflictsInWindow = bookedSlots.filter(b =>
-                b.startMins < windowEnd && b.endMins > startMins
-            ).length;
-
-            // Available if fewer conflicts than total techs
-            const totalTechs   = Math.max(techCountForSlots, 1);
-            const neededTechs  = grp_members.length;
-            const freeTechs    = totalTechs - conflictsInWindow;
-            const available    = freeTechs >= neededTechs;
-
-            if (available) anyAvailable = true;
-
-            html += `
-            <button class="slot-btn ${available ? '' : 'slot-btn--taken'}"
-                ${available ? '' : 'disabled'}
-                onclick="grp_selectSlot('${timeStr}', this)">
-                ${label}
-            </button>`;
-        });
-
-        grid.innerHTML = html || '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:16px 0;">No slots available.</p>';
-
-        if (!anyAvailable) {
-            grid.innerHTML = `
-                <p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:16px 0;">
-                    No same-time slots available for your full group on this date.
-                </p>
-                <button class="slot-btn" style="grid-column:1/-1;" onclick="grp_findEarliestForAll('${dateStr}')">
-                    📅 Find earliest time for whole group
-                </button>
-                <button class="slot-btn" style="grid-column:1/-1;" onclick="grp_showSplitPlanner('${dateStr}', '09:00', 1)">
-                    ✂️ Split group across different times
-                </button>
-                <div id="grp_shortageResult" style="grid-column:1/-1;margin-top:12px;"></div>
-            `;
-        }
-
-    } catch (e) {
-        grid.innerHTML = `<p style="color:var(--error);grid-column:1/-1;">Could not load slots: ${e.message}</p>`;
-    }
-};
-
-window.grp_selectSlot = async function(timeStr, btn) {
-    document.querySelectorAll('#grp_slots .slot-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('grp_time').value = timeStr;
-    const confirmBtn = document.getElementById('grp_toConfirmBtn');
-    if (confirmBtn) confirmBtn.disabled = false;
-
-    // Check if enough techs are free at this slot
-    const dateStr = document.getElementById('grp_date')?.value || '';
-    await grp_checkTechShortage(dateStr, timeStr);
-};
-
-// ── Tech shortage detection ───────────────────────────────────
-// Called when a slot is selected. If not enough techs are free,
-// shows a warning modal with two options.
-
-let _grp_bookedSlotsCache  = []; // cached from grp_generateSlots
-let _grp_allSlotsCache     = []; // all slots with freeTech count
-let _grp_splitConfig       = []; // [{members:[], timeStr:'', techs:[]}]
-
-async function grp_checkTechShortage(dateStr, timeStr) {
-    // Ensure tech list is loaded
-    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
-    if (!techList.length) {
-        try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
-    }
-    if (!techList.length) {
-        try {
-            const snap = await db.collection('Users').get();
-            snap.forEach(doc => {
-                const d = doc.data();
-                const roles = (Array.isArray(d.roles)?d.roles:[d.role||'']).map(r=>(r||'').toLowerCase());
-                if (roles.some(r=>r.includes('tech')) && d.visibleToClients!==false)
-                    techList.push({ email: doc.id, name: d.name||doc.id });
-            });
-        } catch(e) {}
-    }
-
-    const neededTechs = grp_members.length;
-
-    // Count free techs at selected slot
-    const [hh, mm]   = timeStr.split(':').map(Number);
-    const slotStart  = hh * 60 + mm;
-    const maxDuration = Math.max(...grp_members.map(m =>
-        (m.selectedServices||[]).reduce((s,sv)=>s+(sv.dur*(sv.qty||1)),0)||60
-    ));
-    const slotEnd = slotStart + maxDuration;
-
-    // Use cached booked slots from slot generation
-    const busyEmails = new Set();
-    _grp_bookedSlotsCache.forEach(b => {
-        if (b.startMins < slotEnd && b.endMins > slotStart) busyEmails.add(b.techEmail);
-    });
-    const freeTechs = techList.filter(t => t.email && !busyEmails.has(t.email));
-
-    if (freeTechs.length >= neededTechs) {
-        // Enough techs — hide any warning
-        const w = document.getElementById('grp_shortageWarning');
-        if (w) w.style.display = 'none';
-        return;
-    }
-
-    // Not enough techs — show warning
-    grp_showShortageWarning(timeStr, dateStr, freeTechs, techList, neededTechs);
-}
-
-function grp_showShortageWarning(timeStr, dateStr, freeTechs, techList, neededTechs) {
-    // Remove existing warning if any
-    const existing = document.getElementById('grp_shortageWarning');
-    if (existing) existing.remove();
-
-    const fmt12 = (t) => {
-        const [h,m] = t.split(':').map(Number);
-        return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
-    };
-
-    const warning = document.createElement('div');
-    warning.id = 'grp_shortageWarning';
-    warning.style.cssText = `
-        background: #fff8e7;
-        border: 1.5px solid #f59e0b;
-        border-radius: 10px;
-        padding: 18px 16px;
-        margin-top: 14px;
-        font-size: 0.88rem;
-    `;
-
-    warning.innerHTML = `
-        <p style="font-weight:700;color:#b45309;margin:0 0 6px;">
-            ⚠️ Not enough technicians at ${fmt12(timeStr)}
-        </p>
-        <p style="color:#78350f;margin:0 0 14px;font-size:0.82rem;">
-            Your group needs <strong>${neededTechs} technicians</strong> but only 
-            <strong>${freeTechs.length}</strong> ${freeTechs.length===1?'is':'are'} free at this time.
-            Please choose an option below:
-        </p>
-
-        <div style="display:flex;flex-direction:column;gap:10px;">
-
-            <button onclick="grp_findEarliestForAll('${dateStr}')" 
-                style="background:#f59e0b;color:white;border:none;border-radius:8px;padding:12px 14px;font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;">
-                📅 Option 1 — Find earliest time for the whole group
-                <span style="display:block;font-weight:400;font-size:0.75rem;margin-top:3px;opacity:0.9;">
-                    We'll find the next slot where all ${neededTechs} technicians are free simultaneously.
-                </span>
-            </button>
-
-            <button onclick="grp_showSplitPlanner('${dateStr}', '${timeStr}', ${freeTechs.length})"
-                style="background:white;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;padding:12px 14px;font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;">
-                ✂️ Option 2 — Split the group across different times
-                <span style="display:block;font-weight:400;font-size:0.75rem;margin-top:3px;color:#78350f;">
-                    Divide your group into smaller sub-groups, each at their own convenient time.
-                </span>
-            </button>
-
-        </div>
-
-        <div id="grp_shortageResult" style="margin-top:14px;"></div>
-    `;
-
-    // Insert after the slots container
-    const slotsContainer = document.getElementById('grp_slotsContainer');
-    slotsContainer?.after(warning);
-}
-
-// ── Option 1: Find earliest slot for whole group ──────────────
-window.grp_findEarliestForAll = async function(dateStr) {
-    const resultEl = document.getElementById('grp_shortageResult');
-    if (resultEl) resultEl.innerHTML = '<p style="color:#b45309;font-size:0.82rem;">🔍 Searching for available slot…</p>';
-
-    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
-    if (!techList.length) { try { await loadTechs(); techList=[...(bk_techs||[])]; } catch(e){} }
-
-    const neededTechs = grp_members.length;
-    const maxDuration = Math.max(...grp_members.map(m =>
-        (m.selectedServices||[]).reduce((s,sv)=>s+(sv.dur*(sv.qty||1)),0)||60
-    ));
-    const closingMins = 18 * 60;
-
-    const fmt12 = (t) => {
-        const [h,m] = t.split(':').map(Number);
-        return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
-    };
-
-    // Check today first, then up to 14 days ahead
-    const toDateStr = (d) => d.toISOString().slice(0,10);
-    const dates = [dateStr];
-    const base = new Date(dateStr+'T12:00:00');
-    for (let i=1; i<=13; i++) {
-        const d = new Date(base); d.setDate(d.getDate()+i);
-        dates.push(toDateStr(d));
-    }
-
-    for (const d of dates) {
-        // Fetch booked slots for this date
-        let bookedSlots = [];
-        try {
-            const snap = await db.collection('Appointments')
-                .where('dateString','==',d)
-                .where('status','in',['Scheduled','Arrived','In Progress'])
-                .get();
-            snap.forEach(doc => {
-                const data = doc.data();
-                if (!data.timeString||!data.bookedDuration) return;
-                const [hh,mm] = data.timeString.split(':').map(Number);
-                const start = hh*60+mm;
-                bookedSlots.push({ techEmail: data.assignedTechEmail||'', startMins: start, endMins: start+(parseInt(data.bookedDuration)||0) });
-            });
-        } catch(e) {}
-
-        const slots = [];
-        for (let h=9; h<=17; h++) for (let m of [0,30]) { if(h===17&&m===30)continue; slots.push(h*60+m); }
-
-        for (const startMins of slots) {
-            if (startMins + maxDuration > closingMins) continue;
-            const slotEnd = startMins + maxDuration;
-            const busyEmails = new Set();
-            bookedSlots.forEach(b => { if(b.startMins<slotEnd&&b.endMins>startMins) busyEmails.add(b.techEmail); });
-            const freeTechs = techList.filter(t=>t.email&&!busyEmails.has(t.email));
-            if (freeTechs.length >= neededTechs) {
-                const hh = Math.floor(startMins/60);
-                const mm = startMins%60;
-                const timeStr = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-                const isSameDay = d === dateStr;
-                const dateLabel = isSameDay ? 'today' : new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-
-                if (resultEl) resultEl.innerHTML = `
-                    <div style="background:#f0fdf4;border:1.5px solid #22c55e;border-radius:8px;padding:14px;">
-                        <p style="font-weight:700;color:#15803d;margin:0 0 6px;">✅ Slot found!</p>
-                        <p style="margin:0 0 10px;font-size:0.85rem;color:#166534;">
-                            <strong>${fmt12(timeStr)}</strong> on <strong>${dateLabel}</strong> — 
-                            ${freeTechs.length} technicians available for your group of ${neededTechs}.
-                        </p>
-                        <button onclick="grp_acceptSuggestedSlot('${d}','${timeStr}')"
-                            style="background:#22c55e;color:white;border:none;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:0.85rem;">
-                            ✓ Book this slot
-                        </button>
-                    </div>`;
-                return;
-            }
-        }
-    }
-
-    if (resultEl) resultEl.innerHTML = `
-        <p style="color:var(--error);font-size:0.85rem;">
-            No available slot found for your whole group in the next 14 days. 
-            Please try Option 2 to split the group.
-        </p>`;
-};
-
-window.grp_acceptSuggestedSlot = function(dateStr, timeStr) {
-    // Update date and time inputs
-    const dateEl = document.getElementById('grp_date');
-    if (dateEl) { dateEl.value = dateStr; }
-    document.getElementById('grp_time').value = timeStr;
-
-    // Remove warning
-    const w = document.getElementById('grp_shortageWarning');
-    if (w) w.remove();
-
-    // Mark slot as selected visually
-    document.querySelectorAll('#grp_slots .slot-btn').forEach(b => b.classList.remove('active'));
-
-    // Enable confirm button
-    const confirmBtn = document.getElementById('grp_toConfirmBtn');
-    if (confirmBtn) confirmBtn.disabled = false;
-
-    // Regenerate slots for new date if date changed
-    grp_generateSlots();
-};
-
-// ── Option 2: Split group planner ────────────────────────────
-window.grp_showSplitPlanner = function(dateStr, selectedTime, availableTechCount) {
-    const resultEl = document.getElementById('grp_shortageResult');
-    if (!resultEl) return;
-
-    const memberCount = grp_members.length;
-
-    // Build sub-group size options — all ways to split memberCount into groups
-    // where each group size <= availableTechCount
-    const splits = [];
-    function findSplits(remaining, current, maxSize) {
-        if (remaining === 0) { splits.push([...current]); return; }
-        for (let i = Math.min(remaining, maxSize); i >= 1; i--) {
-            current.push(i);
-            findSplits(remaining-i, current, i); // descending to avoid duplicates
-            current.pop();
-        }
-    }
-    findSplits(memberCount, [], Math.min(memberCount, availableTechCount || memberCount));
-
-    // Format split options
-    const splitOptions = splits.map(s => s.join(' + ')).join('|');
-    const splitOptionHTML = splits.map((s,i) =>
-        `<option value="${i}">${s.join(' + ')} people</option>`
-    ).join('');
-
-    resultEl.innerHTML = `
-        <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:16px;">
-            <p style="font-weight:700;color:var(--primary);margin:0 0 10px;">✂️ Split Group Planner</p>
-
-            <div style="margin-bottom:12px;">
-                <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">
-                    How would you like to split your group of ${memberCount}?
-                </label>
-                <select id="grp_splitChoice" onchange="grp_renderSplitAssignment(${JSON.stringify(splits).replace(/"/g,'&quot;')})"
-                    style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.85rem;">
-                    <option value="">— Select split —</option>
-                    ${splitOptionHTML}
-                </select>
-            </div>
-
-            <div id="grp_splitAssignment"></div>
-        </div>`;
-};
-
-window.grp_renderSplitAssignment = function(splits) {
-    const idx = parseInt(document.getElementById('grp_splitChoice')?.value);
-    if (isNaN(idx) || !splits[idx]) return;
-
-    const split     = splits[idx];
-    const container = document.getElementById('grp_splitAssignment');
-    if (!container) return;
-
-    const fmt12 = (t) => {
-        if (!t) return '—';
-        const [h,m] = t.split(':').map(Number);
-        return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
-    };
-
-    // Build member dropdown options
-    const memberOptions = grp_members.map((m,i) =>
-        `<option value="${i}">${m.name || (i===0?'You':'Person '+(i+1))}</option>`
-    ).join('');
-
-    // Build sub-group cards
-    const subGroupHTML = split.map((size, gi) => `
-        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                <p style="font-weight:700;color:var(--primary);margin:0;font-size:0.85rem;">
-                    Sub-group ${gi+1} (${size} ${size===1?'person':'people'})
-                </p>
-                <span id="grp_sg_time_${gi}" style="font-size:0.78rem;color:#6b7280;">Finding time…</span>
-            </div>
-            ${Array.from({length:size},(_,mi) => `
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                    <label style="font-size:0.78rem;color:#374151;min-width:60px;">Slot ${mi+1}:</label>
-                    <select id="grp_sg_${gi}_${mi}" 
-                        style="flex:1;padding:6px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:0.82rem;">
-                        <option value="">— Assign member —</option>
-                        ${memberOptions}
-                    </select>
-                </div>`).join('')}
-        </div>`).join('');
-
-    container.innerHTML = `
-        ${subGroupHTML}
-        <button onclick="grp_confirmSplitBooking(${JSON.stringify(split).replace(/"/g,'&quot;')})"
-            style="width:100%;background:var(--primary);color:white;border:none;border-radius:8px;padding:12px;font-weight:700;font-size:0.85rem;cursor:pointer;margin-top:4px;">
-            ✓ Confirm Split Booking
-        </button>`;
-
-    // Find best slot for each sub-group
-    const dateStr = document.getElementById('grp_date')?.value || '';
-    split.forEach((size, gi) => grp_findSlotForSubGroup(gi, size, dateStr));
-};
-
-async function grp_findSlotForSubGroup(gi, size, dateStr) {
-    const timeEl = document.getElementById(`grp_sg_time_${gi}`);
-    if (timeEl) timeEl.textContent = 'Finding time…';
-
-    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
-    if (!techList.length) { try { await loadTechs(); techList=[...(bk_techs||[])]; } catch(e){} }
-
-    const maxDuration = Math.max(...grp_members.map(m =>
-        (m.selectedServices||[]).reduce((s,sv)=>s+(sv.dur*(sv.qty||1)),0)||60
-    ));
-    const closingMins = 18*60;
-
-    const fmt12 = (t) => {
-        const [h,m] = t.split(':').map(Number);
-        return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
-    };
-
-    const toDateStr = (d) => d.toISOString().slice(0,10);
-    const dates = [dateStr];
-    const base = new Date(dateStr+'T12:00:00');
-    for (let i=1;i<=13;i++) { const d=new Date(base); d.setDate(d.getDate()+i); dates.push(toDateStr(d)); }
-
-    for (const d of dates) {
-        let bookedSlots = [];
-        try {
-            const snap = await db.collection('Appointments')
-                .where('dateString','==',d)
-                .where('status','in',['Scheduled','Arrived','In Progress'])
-                .get();
-            snap.forEach(doc => {
-                const data = doc.data();
-                if (!data.timeString||!data.bookedDuration) return;
-                const [hh,mm] = data.timeString.split(':').map(Number);
-                const start = hh*60+mm;
-                bookedSlots.push({ techEmail:data.assignedTechEmail||'', startMins:start, endMins:start+(parseInt(data.bookedDuration)||0) });
-            });
-        } catch(e) {}
-
-        const slots = [];
-        for (let h=9;h<=17;h++) for (let m of [0,30]) { if(h===17&&m===30)continue; slots.push(h*60+m); }
-
-        for (const startMins of slots) {
-            if (startMins+maxDuration>closingMins) continue;
-            const slotEnd = startMins+maxDuration;
-            const busyEmails = new Set();
-            bookedSlots.forEach(b=>{ if(b.startMins<slotEnd&&b.endMins>startMins) busyEmails.add(b.techEmail); });
-            const freeTechs = techList.filter(t=>t.email&&!busyEmails.has(t.email));
-            if (freeTechs.length >= size) {
-                const hh = Math.floor(startMins/60);
-                const mm = startMins%60;
-                const timeStr = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-                const isSameDay = d===dateStr;
-                const dateLabel = isSameDay?'today':new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-                if (timeEl) timeEl.innerHTML = `<span style="color:#15803d;font-weight:700;">${fmt12(timeStr)} ${isSameDay?'':'· '+dateLabel}</span>`;
-                // Store on element for use at confirmation
-                timeEl.dataset.timeStr = timeStr;
-                timeEl.dataset.dateStr = d;
-                timeEl.dataset.freeTechs = JSON.stringify(freeTechs.slice(0,size));
-                return;
-            }
-        }
-        if (timeEl) timeEl.textContent = 'No slot found in 14 days';
-    }
-}
-
-// ── Confirm split booking ─────────────────────────────────────
-window.grp_confirmSplitBooking = async function(split) {
-    // Validate all members assigned
-    const assignments = []; // [{memberIdx, subGroupIdx, timeStr, dateStr, techs}]
-    let valid = true;
-    const assignedMembers = new Set();
-
-    split.forEach((size, gi) => {
-        const timeEl = document.getElementById(`grp_sg_time_${gi}`);
-        const timeStr = timeEl?.dataset.timeStr || '';
-        const dateStr = timeEl?.dataset.dateStr || '';
-        let freeTechs = [];
-        try { freeTechs = JSON.parse(timeEl?.dataset.freeTechs||'[]'); } catch(e){}
-
-        for (let mi=0; mi<size; mi++) {
-            const sel = document.getElementById(`grp_sg_${gi}_${mi}`);
-            const memberIdx = parseInt(sel?.value);
-            if (isNaN(memberIdx) || sel?.value === '') { valid=false; return; }
-            if (assignedMembers.has(memberIdx)) { valid=false; return; }
-            assignedMembers.add(memberIdx);
-            assignments.push({ memberIdx, subGroupIdx: gi, timeStr, dateStr, tech: freeTechs[mi] || { email:'', name:'To be assigned' } });
-        }
+    document.getElementById('grp_time').value = '';
+    container.style.display = 'block';
+    grid.innerHTML = '<div class="loading-pulse" style="grid-column:1/-1;">Checking group availability…</div>';
+
+    await grp_ensureTechs();
+    const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
+    const booked = await grp_getBookedSlots(dateStr);
+    const group = grp_groupTotals();
+    const duration = Math.max(60, group.totalMinsMax || 60);
+    const needed = grp_members.length;
+    const close = 20 * 60;
+    const slotMap = {};
+    let maxFreeOnDay = 0;
+
+    grp_candidateSlots().forEach(start => {
+        if (grp_isPastSlot(dateStr, start)) return;
+        if (start + duration > close) return;
+        const free = grp_getFreeTechsAt(techs, booked, start, duration);
+        maxFreeOnDay = Math.max(maxFreeOnDay, free.length);
+        if (free.length >= needed) slotMap[start] = free.slice(0, needed);
     });
 
-    if (!valid || assignedMembers.size !== grp_members.length) {
-        toast('Please assign all group members to a sub-group slot.', 'warning');
-        return;
-    }
-
-    // Write all appointments
-    try {
-        const groupId = db.collection('Appointments').doc().id;
-        grp_groupId   = groupId;
-        const batch   = db.batch();
-
-        assignments.forEach((a, i) => {
-            const m          = grp_members[a.memberIdx];
-            const ref        = db.collection('Appointments').doc();
-            const services   = (m.selectedServices||[]).map(s=>`${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
-            const totalMins  = (m.selectedServices||[]).reduce((sum,s)=>sum+(s.dur*(s.qty||1)),0);
-            const totalPrice = (m.selectedServices||[]).reduce((sum,s)=>sum+(s.price*(s.qty||1)),0);
-
-            batch.set(ref, {
-                groupId,
-                groupSize:         grp_members.length,
-                isGroupBooking:    true,
-                splitGroup:        true,
-                subGroupIndex:     a.subGroupIdx + 1,
-                isLeadBooker:      a.memberIdx === 0,
-                clientName:        m.name||(a.memberIdx===0?(bk_clientProfile?.name||''):''),
-                clientEmail:       a.memberIdx===0?(bk_currentUser?.email||''):'',
-                clientPhone:       a.memberIdx===0?(bk_clientProfile?.phone||''):'',
-                bookedService:     services,
-                bookedDuration:    totalMins,
-                bookedPrice:       totalPrice,
-                grandTotal:        totalPrice,
-                dateString:        a.dateStr,
-                timeString:        a.timeStr,
-                status:            'Scheduled',
-                source:            'client-group-booking-split',
-                bookedBy:          bk_isGuest?('guest:'+(bk_clientProfile?.phone||'')):(bk_currentUser?.email||''),
-                assignedTechName:  a.tech.name  || 'To be assigned',
-                assignedTechEmail: a.tech.email || '',
-                createdAt:         firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt:         firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Store on member for success screen
-            m.assignedTechName  = a.tech.name  || 'To be assigned';
-            m.assignedTechEmail = a.tech.email || '';
-            m.splitTimeStr      = a.timeStr;
-            m.splitDateStr      = a.dateStr;
-            m.subGroupIndex     = a.subGroupIdx + 1;
-        });
-
-        await batch.commit();
-
-        // Show success — use split success screen
-        grp_populateSplitSuccess();
-        _screenHistory = ['screen-welcome','screen-booking-mode'];
-        _origGoToStep('screen-group-success');
-
-    } catch(e) {
-        toast('Split booking failed: '+e.message, 'error');
-    }
-};
-
-function grp_populateSplitSuccess() {
-    document.getElementById('grp_suc_datetime').textContent = 'Split across multiple times — see details below';
-    document.getElementById('grp_suc_size').textContent     = `${grp_members.length} people`;
-    document.getElementById('grp_suc_ref').textContent      = grp_groupId?.slice(0,8).toUpperCase()||'—';
-
-    const membersEl = document.getElementById('grp_suc_members');
-    if (membersEl) {
-        membersEl.innerHTML = grp_members.map((m,i) => {
-            const services  = (m.selectedServices||[]).map(s=>`${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
-            const totalMins = (m.selectedServices||[]).reduce((sum,s)=>sum+(s.dur*(s.qty||1)),0);
-            const techName  = m.assignedTechName || 'To be assigned';
-            const timeLabel = m.splitTimeStr ? (() => {
-                const [h,mn] = m.splitTimeStr.split(':').map(Number);
-                return `${h%12||12}:${String(mn).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
-            })() : '';
-            const dateLabel = m.splitDateStr
-                ? new Date(m.splitDateStr+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})
-                : '';
-            return `
-            <div class="grp-member-card">
-                <div class="grp-member-index">${i+1}</div>
-                <div class="grp-member-info">
-                    <strong>${m.name||(i===0?'You':'Person '+(i+1))}</strong>
-                    <span>${services||'—'} · ${totalMins} mins</span>
-                    <span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">
-                        👩‍🔧 <strong>${techName}</strong>
-                        ${timeLabel?`· 🕐 Sub-group ${m.subGroupIndex}: ${timeLabel} ${dateLabel}`:''}
-                    </span>
-                </div>
-            </div>`;
+    const sameSlots = Object.keys(slotMap).map(Number).sort((a,b) => a-b);
+    if (sameSlots.length) {
+        grid.innerHTML = sameSlots.map(t => {
+            const t24 = grp_minsToTime(t);
+            return `<button type="button" class="slot-btn" data-time="${t24}" onclick="grp_selectSameSlot('${t24}', this)">${grp_formatTime(t24)}</button>`;
         }).join('');
+        return;
     }
-}
 
-
-// ── Populate & navigate to confirm screen ─────────────────────
-// Override goToStep for screen-group-confirm to populate first
-const _origGoToStep = goToStep;
-window.goToStep = function(id) {
-    if (id === 'screen-group-confirm') {
-        // Pre-assign techs first, THEN show the confirm screen
-        grp_preAssignTechs().then(() => {
-            grp_populateConfirm();
-            _origGoToStep(id);
-        });
-        return; // Don't call _origGoToStep yet
-    }
-    _origGoToStep(id);
+    grp_renderCapacityOptions(dateStr, maxFreeOnDay, techs.length);
 };
 
-// ── Pre-assign techs before confirm screen ────────────────────
-async function grp_preAssignTechs() {
+window.grp_selectSameSlot = async function(timeStr, btn) {
+    document.querySelectorAll('#grp_slots .slot-btn').forEach(b => b.classList.remove('selected', 'active'));
+    if (btn) btn.classList.add('selected', 'active');
     const dateStr = document.getElementById('grp_date')?.value || '';
-    const timeStr = document.getElementById('grp_time')?.value || '';
-
-    // Get full tech list
-    let techList = (typeof bk_techs !== 'undefined') ? [...bk_techs] : [];
-    if (!techList.length) {
-        try { await loadTechs(); techList = [...(bk_techs||[])]; } catch(e) {}
-    }
-    if (!techList.length) {
-        try {
-            const snap = await db.collection('Users').get();
-            snap.forEach(doc => {
-                const d = doc.data();
-                const roles = (Array.isArray(d.roles) ? d.roles : [d.role||'']).map(r=>(r||'').toLowerCase());
-                if (roles.some(r => r.includes('tech')) && d.visibleToClients !== false) {
-                    techList.push({ email: doc.id, name: d.name || doc.id });
-                }
-            });
-        } catch(e) {}
-    }
-
-    // Find busy techs at this slot
-    const busyTechEmails = new Set();
-    if (dateStr && timeStr) {
-        try {
-            const [hh, mm] = timeStr.split(':').map(Number);
-            const slotStart = hh * 60 + mm;
-            const maxDuration = Math.max(...grp_members.map(m =>
-                (m.selectedServices||[]).reduce((s,sv) => s+(sv.dur*(sv.qty||1)), 0) || 60
-            ));
-            const slotEnd = slotStart + maxDuration;
-
-            const existingSnap = await db.collection('Appointments')
-                .where('dateString', '==', dateStr)
-                .where('status', 'in', ['Scheduled','Arrived','In Progress'])
-                .get();
-
-            existingSnap.forEach(doc => {
-                const d = doc.data();
-                if (!d.timeString || !d.assignedTechEmail) return;
-                const [eh, em] = d.timeString.split(':').map(Number);
-                const eStart = eh * 60 + em;
-                const eEnd   = eStart + (parseInt(d.bookedDuration) || 60);
-                if (eStart < slotEnd && eEnd > slotStart) busyTechEmails.add(d.assignedTechEmail);
-            });
-        } catch(e) {}
-    }
-
-    // Build free tech pool
-    const freeTechs  = techList.filter(t => t.email && !busyTechEmails.has(t.email));
-    const assignPool = freeTechs.length >= grp_members.length
-        ? freeTechs
-        : techList.length > 0
-            ? techList
-            : [{ email: '', name: 'To be assigned' }];
-
-    // Assign unique tech per member and store on grp_members
-    const assignedInThisBooking = new Set();
+    document.getElementById('grp_time').value = timeStr;
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const duration = Math.max(60, grp_groupTotals().totalMinsMax || 60);
+    const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration).slice(0, grp_members.length);
     grp_members.forEach((m, i) => {
-        const uniqueTech = assignPool.find(t => !assignedInThisBooking.has(t.email));
-        if (uniqueTech) {
-            assignedInThisBooking.add(uniqueTech.email);
-            m.assignedTechName  = uniqueTech.name;
-            m.assignedTechEmail = uniqueTech.email;
-        } else {
-            const fallback = assignPool[i % assignPool.length];
-            m.assignedTechName  = fallback.name  || 'To be assigned';
-            m.assignedTechEmail = fallback.email || '';
-        }
+        m.assignedTechEmail = free[i]?.email || '';
+        m.assignedTechName = free[i]?.name || 'To be assigned';
+        m.splitDateStr = '';
+        m.splitTimeStr = '';
+        m.subGroupIndex = null;
     });
+    grp_selectedPlan = { type: 'same', dateStr, timeStr, subgroups: [] };
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = false;
+};
+
+function grp_renderCapacityOptions(dateStr, maxFreeOnDay, totalTechs) {
+    const grid = document.getElementById('grp_slots');
+    const capacity = Math.max(1, Math.min(grp_members.length - 1, maxFreeOnDay || totalTechs || 1));
+    const splitOptions = grp_generatePartitions(grp_members.length, capacity).filter(p => p.length > 1);
+    const splitHtml = splitOptions.slice(0, 8).map((p, idx) => {
+        const label = p.join(' + ');
+        return `<button type="button" class="group-option-card" onclick="grp_selectSplitOption('${p.join('-')}', this)">
+            <div class="group-option-icon">${idx + 1}</div>
+            <div class="group-option-body"><strong>${label} people ${idx === 0 ? '<span class="group-recommended-badge">Recommended</span>' : ''}</strong><span>${p.length} sub-groups. We will assign the earliest available times for each sub-group.</span></div>
+        </button>`;
+    }).join('');
+
+    grid.innerHTML = `<div class="group-capacity-panel warn" style="grid-column:1/-1;">
+        <h3>Not enough technicians for one shared time</h3>
+        <p>Your group has <strong>${grp_members.length}</strong> people. On this date, the highest same-time capacity found is <strong>${maxFreeOnDay || 0}</strong> technician(s). Choose one of the options below.</p>
+        <div class="group-option-list">
+            <button type="button" class="group-option-card" onclick="grp_findFullGroupAlternative('${dateStr}')">
+                <div class="group-option-icon">📅</div>
+                <div class="group-option-body"><strong>Find earliest time for the whole group</strong><span>Search the next 21 days for a time where everyone can be served together.</span></div>
+            </button>
+            ${splitHtml ? `<div class="group-split-panel"><h3>Or split your group</h3><p>Choose how you want the group divided. Example: 3 + 2 means three people first, then two people at another available time.</p><div class="group-option-list">${splitHtml}</div><div id="grp_splitPreview" style="margin-top:12px;"></div></div>` : '<p style="color:var(--error);">No split option could be generated. Please try another date.</p>'}
+        </div>
+    </div>`;
 }
 
-// ── Member totals helper ──────────────────────────────────────
-function grp_getMemberTotals(m) {
-    const services   = m.selectedServices || [];
-    const totalMins  = services.reduce((sum,s) => sum+((s.dur||0)*(s.qty||1)), 0);
-    const totalPrice = services.reduce((sum,s) => sum+((s.price||0)*(s.qty||1)), 0);
-    const label      = services.map(s=>`${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
-    return { totalMins, totalPrice, label };
-}
-
-function grp_populateConfirm() {
-    const dateStr = document.getElementById('grp_date')?.value || '';
-    const timeStr = document.getElementById('grp_time')?.value || '';
-
-    let dateFormatted = dateStr;
-    try { dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB',
-        { weekday:'long', day:'numeric', month:'long' }); } catch(e) {}
-
-    let timeFormatted = timeStr;
-    try {
-        const [h, m] = timeStr.split(':').map(Number);
-        timeFormatted = `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
-    } catch(e) {}
-
-    document.getElementById('grp_conf_date').textContent = dateFormatted;
-    document.getElementById('grp_conf_time').textContent = timeFormatted;
-    document.getElementById('grp_conf_size').textContent = `${grp_members.length} people`;
-
-    const membersEl = document.getElementById('grp_conf_members');
-    if (membersEl) {
-        membersEl.innerHTML = grp_members.map((m, i) => {
-            const services   = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
-            const totalMins  = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
-            const totalPrice = (m.selectedServices||[]).reduce((sum,s) => sum+(s.price*(s.qty||1)), 0);
-            const techName   = m.assignedTechName || 'To be assigned';
-            return `
-            <div class="grp-member-card">
-                <div class="grp-member-index">${i + 1}</div>
-                <div class="grp-member-info">
-                    <strong>${m.name || (i === 0 ? 'You' : 'Person ' + (i + 1))}
-                        ${i === 0 ? '<span class="grp-lead-badge">Lead booker</span>' : ''}
-                    </strong>
-                    <span>${services || '—'} · ${totalMins} mins · ${totalPrice.toFixed(0)} GHC</span>
-                    <span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">
-                        👩‍🔧 Technician: <strong>${techName}</strong>
-                    </span>
-                </div>
-            </div>`;
-        }).join('');
+window.grp_findFullGroupAlternative = async function(dateStr) {
+    const preview = document.getElementById('grp_splitPreview') || document.getElementById('grp_slots');
+    if (preview) preview.innerHTML = '<div class="loading-pulse">Searching for earliest full-group time…</div>';
+    const slot = await grp_findEarliestFullGroup(dateStr);
+    if (!slot) {
+        if (preview) preview.innerHTML = '<p style="color:var(--error);font-size:0.85rem;">No full-group slot found in the next 21 days. Please choose a split option.</p>';
+        return;
     }
+    if (preview) preview.innerHTML = `<div class="group-capacity-panel"><h3>Full-group slot found</h3><p><strong>${grp_formatDate(slot.dateStr)}</strong> at <strong>${grp_formatTime(slot.timeStr)}</strong></p><button type="button" class="btn-primary full" onclick="grp_acceptFullGroupAlternative('${slot.dateStr}','${slot.timeStr}')">Book this full-group time</button></div>`;
+};
 
-    // ── Billing mode selector ─────────────────────────────────
-    const groupTotal  = grp_members.reduce((sum,m) => sum+grp_getMemberTotals(m).totalPrice, 0);
-    const perPersonAmt= grp_members.length > 0 ? (groupTotal/grp_members.length).toFixed(2) : '0.00';
+window.grp_acceptFullGroupAlternative = async function(dateStr, timeStr) {
+    const dateEl = document.getElementById('grp_date');
+    if (dateEl) dateEl.value = dateStr;
+    await grp_selectSameSlot(timeStr, null);
+    window.goToStep('screen-group-confirm');
+};
 
-    document.getElementById('grp_billingModeWrap')?.remove();
+window.grp_selectSplitOption = async function(splitStr, btn) {
+    document.querySelectorAll('.group-option-card').forEach(b => b.classList.remove('selected'));
+    if (btn) btn.classList.add('selected');
+    const dateStr = document.getElementById('grp_date')?.value || '';
+    const split = splitStr.split('-').map(Number).filter(Boolean);
+    const preview = document.getElementById('grp_splitPreview');
+    if (preview) preview.innerHTML = '<div class="loading-pulse">Finding times for your chosen split…</div>';
+    const plan = await grp_buildPlanForSplit(dateStr, split);
+    if (!plan) {
+        if (preview) preview.innerHTML = '<p style="color:var(--error);font-size:0.85rem;">Could not fit this split on the selected date. Try a smaller split, or choose another date.</p>';
+        return;
+    }
+    grp_selectedPlan = { type: 'split', dateStr, timeStr: '', subgroups: plan };
+    plan.forEach(sg => {
+        sg.memberIndexes.forEach((mi, idx) => {
+            const m = grp_members[mi];
+            const tech = sg.techs[idx] || {};
+            m.assignedTechEmail = tech.email || '';
+            m.assignedTechName = tech.name || 'To be assigned';
+            m.splitDateStr = sg.dateStr;
+            m.splitTimeStr = sg.timeStr;
+            m.subGroupIndex = sg.index;
+        });
+    });
+    document.getElementById('grp_time').value = 'SPLIT';
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (preview) {
+        preview.innerHTML = `<div class="group-split-panel"><h3>Split plan ready</h3><p>Review the proposed sub-group schedule below, then continue to confirmation.</p>${plan.map(sg => {
+            const names = sg.memberIndexes.map(grp_memberLabel).join(', ');
+            return `<div class="group-subslot-card"><strong>Sub-group ${sg.index}: ${sg.size} ${sg.size === 1 ? 'person' : 'people'} · ${grp_formatTime(sg.timeStr)}</strong><p>${names}</p></div>`;
+        }).join('')}<button type="button" class="btn-primary full" onclick="goToStep('screen-group-confirm')">Review Split Booking →</button></div>`;
+    }
+};
 
-    const billingWrap = document.createElement('div');
-    billingWrap.id = 'grp_billingModeWrap';
-    billingWrap.style.cssText = 'margin-top:16px;padding:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;';
-    billingWrap.innerHTML = `
-        <p style="font-weight:700;color:var(--primary);font-size:0.88rem;margin:0 0 10px;">💳 How will payment be handled?</p>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_lead_lbl">
-                <input type="radio" name="grp_billingMode" value="lead_pays_all" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
-                <span>
-                    <strong style="display:block;font-size:0.85rem;">One person pays for everyone</strong>
-                    <span style="font-size:0.78rem;color:#6b7280;">
-                        Total: <strong>${groupTotal.toFixed(2)} GHC</strong> — lead booker pays at checkout
-                    </span>
-                </span>
-            </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_equal_lbl">
-                <input type="radio" name="grp_billingMode" value="split_equally" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
-                <span>
-                    <strong style="display:block;font-size:0.85rem;">Split equally</strong>
-                    <span style="font-size:0.78rem;color:#6b7280;">
-                        <strong>${perPersonAmt} GHC</strong> each — total divided equally among all members
-                    </span>
-                </span>
-            </label>
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:white;border:1.5px solid #e5e7eb;border-radius:8px;" id="grp_bill_own_lbl">
-                <input type="radio" name="grp_billingMode" value="each_pays_own" onchange="grp_onBillingChange()" style="margin-top:3px;flex-shrink:0;">
-                <span>
-                    <strong style="display:block;font-size:0.85rem;">Each person pays for their own services</strong>
-                    <span style="font-size:0.78rem;color:#6b7280;">
-                        Individual bills per person based on services selected
-                    </span>
-                </span>
-            </label>
+// ── Confirmation and billing ──────────────────────────────────
+function grp_billingOptionsHtml() {
+    const totals = grp_groupTotals();
+    const total = totals.grandTotal;
+    const perPerson = grp_members.length ? total / grp_members.length : total;
+    if (grp_selectedPlan.type === 'split') {
+        return `<div class="group-billing-panel" id="grp_billingPanel"><h3>Payment options</h3><p>Because your group is split across different times, choose how checkout should be handled.</p>
+            <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="subgroup_pays_separately" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Each sub-group pays separately</strong><span>FOH bills each sub-group when they finish.</span></span></label>
+            <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="lead_pays_all_after_last" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Lead booker pays for all after the last sub-group</strong><span>One final bill is raised after everyone is done.</span><span class="amount-pill">Group total: ${total.toFixed(2)} GHC</span></span></label>
         </div>`;
-
-    document.getElementById('grp_conf_members')?.after(billingWrap);
+    }
+    return `<div class="group-billing-panel" id="grp_billingPanel"><h3>Payment options</h3><p>Everyone arrives together, so choose how the shared session should be billed.</p>
+        <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="lead_pays_all" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>One person pays for all</strong><span>The lead booker pays the full group total.</span><span class="amount-pill">${total.toFixed(2)} GHC</span></span></label>
+        <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="split_equally" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Split equally</strong><span>Total divided by ${grp_members.length} people.</span><span class="amount-pill">${perPerson.toFixed(2)} GHC each</span></span></label>
+        <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="each_pays_own" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Each pays their own</strong><span>Each person pays for their selected services.</span></span></label>
+    </div>`;
 }
 
 window.grp_onBillingChange = function() {
-    const val = document.querySelector('input[name="grp_billingMode"]:checked')?.value;
-    document.getElementById('grp_bill_lead_lbl')?.style.setProperty('border-color', val==='lead_pays_all'?'var(--primary)':'#e5e7eb');
-    document.getElementById('grp_bill_equal_lbl')?.style.setProperty('border-color', val==='split_equally'?'var(--primary)':'#e5e7eb');
-    document.getElementById('grp_bill_own_lbl')?.style.setProperty('border-color', val==='each_pays_own'?'var(--primary)':'#e5e7eb');
+    grp_billingMode = document.querySelector('input[name="grp_billingMode"]:checked')?.value || '';
+    document.querySelectorAll('.group-billing-card').forEach(card => {
+        const input = card.querySelector('input');
+        card.classList.toggle('selected', input?.checked === true);
+    });
 };
 
+function grp_populateConfirm() {
+    const isSplit = grp_selectedPlan.type === 'split';
+    const dateLabel = isSplit ? 'Split times' : grp_formatDate(grp_selectedPlan.dateStr || document.getElementById('grp_date')?.value || '');
+    const timeLabel = isSplit ? 'See sub-groups below' : grp_formatTime(grp_selectedPlan.timeStr || document.getElementById('grp_time')?.value || '');
+    document.getElementById('grp_conf_date').textContent = dateLabel;
+    document.getElementById('grp_conf_time').textContent = timeLabel;
+    document.getElementById('grp_conf_size').textContent = `${grp_members.length} people`;
+    const membersEl = document.getElementById('grp_conf_members');
+    if (membersEl) {
+        membersEl.innerHTML = grp_members.map((m, i) => {
+            const t = grp_memberTotals(m);
+            const splitLine = isSplit ? `<span style="color:var(--gold-dark);font-size:0.78rem;margin-top:2px;display:block;">🕐 Sub-group ${m.subGroupIndex}: ${grp_formatDate(m.splitDateStr)} at ${grp_formatTime(m.splitTimeStr)}</span>` : '';
+            return `<div class="grp-member-card"><div class="grp-member-index">${i+1}</div><div class="grp-member-info"><strong>${grp_memberLabel(i)}${i === 0 ? '<span class="grp-lead-badge">Lead booker</span>' : ''}</strong><span>${t.label || '—'} · ${t.totalMins} mins · ${t.grandTotal.toFixed(2)} GHC</span><span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">👩‍🔧 ${m.assignedTechName || 'To be assigned'}</span>${splitLine}</div></div>`;
+        }).join('');
+    }
+    const info = document.querySelector('#screen-group-confirm .grp-info-box p');
+    if (info) info.textContent = isSplit
+        ? 'Your group will be served in sub-groups at different times. One confirmation covers the full group plan.'
+        : 'All services run at the same time. The session ends when the longest treatment is complete.';
+    document.getElementById('grp_billingPanel')?.remove();
+    membersEl?.insertAdjacentHTML('afterend', grp_billingOptionsHtml());
+}
 
-// ── Batch Firestore write ─────────────────────────────────────
+async function grp_preAssignSameTimeIfNeeded() {
+    if (grp_selectedPlan.type !== 'same') return;
+    const dateStr = grp_selectedPlan.dateStr || document.getElementById('grp_date')?.value || '';
+    const timeStr = grp_selectedPlan.timeStr || document.getElementById('grp_time')?.value || '';
+    if (!dateStr || !timeStr) return;
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const duration = Math.max(60, grp_groupTotals().totalMinsMax || 60);
+    const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration).slice(0, grp_members.length);
+    grp_members.forEach((m, i) => {
+        m.assignedTechEmail = free[i]?.email || m.assignedTechEmail || '';
+        m.assignedTechName = free[i]?.name || m.assignedTechName || 'To be assigned';
+    });
+}
+
+function grp_computeBillingForMember(memberIndex, memberTotal) {
+    const totals = grp_groupTotals();
+    const mode = grp_billingMode;
+    let amountDue = memberTotal.grandTotal;
+    let payableBy = 'self';
+    if (mode === 'lead_pays_all') {
+        amountDue = memberIndex === 0 ? totals.grandTotal : 0;
+        payableBy = memberIndex === 0 ? 'lead_booker' : 'covered_by_lead';
+    } else if (mode === 'split_equally') {
+        amountDue = totals.grandTotal / grp_members.length;
+        payableBy = 'split_equal_share';
+    } else if (mode === 'each_pays_own') {
+        amountDue = memberTotal.grandTotal;
+        payableBy = 'self';
+    } else if (mode === 'lead_pays_all_after_last') {
+        amountDue = memberIndex === 0 ? totals.grandTotal : 0;
+        payableBy = memberIndex === 0 ? 'lead_booker_final_bill' : 'covered_by_lead_final_bill';
+    } else if (mode === 'subgroup_pays_separately') {
+        amountDue = memberTotal.grandTotal;
+        payableBy = 'subgroup_or_member_at_completion';
+    }
+    return { amountDue: Number(amountDue.toFixed(2)), payableBy };
+}
+
 window.grp_confirmBooking = async function() {
-    const btn     = document.getElementById('grp_btnConfirm');
-    const dateStr = document.getElementById('grp_date')?.value || '';
-    const timeStr = document.getElementById('grp_time')?.value || '';
-
-    if (!dateStr || !timeStr) { toast('Missing date or time.', 'warning'); return; }
-
-    const billingMode = document.querySelector('input[name="grp_billingMode"]:checked')?.value;
-    if (!billingMode) { toast('Please select a payment option.', 'warning'); return; }
-
+    const btn = document.getElementById('grp_btnConfirm');
+    grp_billingMode = document.querySelector('input[name="grp_billingMode"]:checked')?.value || '';
+    if (!grp_billingMode) { toast('Please choose how payment will be handled.', 'warning'); return; }
+    await grp_preAssignSameTimeIfNeeded();
+    const dateFallback = document.getElementById('grp_date')?.value || '';
+    const timeFallback = document.getElementById('grp_time')?.value || '';
+    if (!dateFallback || !timeFallback) { toast('Missing group date or time.', 'warning'); return; }
     setBtnLoading(btn, true, 'Confirm Group Booking');
     try {
         grp_groupId = db.collection('Appointments').doc().id;
-
-        const groupTotal = grp_members.reduce((sum,m) => sum+grp_getMemberTotals(m).totalPrice, 0);
-        const batch      = db.batch();
-
+        const batch = db.batch();
+        const groupTotals = grp_groupTotals();
         grp_members.forEach((m, i) => {
+            const mt = grp_memberTotals(m);
+            const billing = grp_computeBillingForMember(i, mt);
             const ref = db.collection('Appointments').doc();
-            const { totalMins, totalPrice, label } = grp_getMemberTotals(m);
-
-            // Calculate amountDue per billing mode
-            let amountDue = totalPrice;
-            if (billingMode === 'lead_pays_all')  amountDue = i===0 ? groupTotal : 0;
-            if (billingMode === 'split_equally')   amountDue = groupTotal / grp_members.length;
-            // each_pays_own keeps individual totalPrice
-
+            const isSplit = grp_selectedPlan.type === 'split';
+            const dateStr = isSplit ? (m.splitDateStr || dateFallback) : dateFallback;
+            const timeStr = isSplit ? (m.splitTimeStr || '') : (grp_selectedPlan.timeStr || timeFallback);
             batch.set(ref, {
-                groupId:           grp_groupId,
-                groupSize:         grp_members.length,
-                groupTotal:        groupTotal,
-                isGroupBooking:    true,
-                isLeadBooker:      i === 0,
-                billingMode:       billingMode,
-                amountDue:         amountDue,
-                clientName:        m.name || (i===0?(bk_clientProfile?.name||''):''),
-                clientEmail:       i===0?(bk_currentUser?.email||''):'',
-                clientPhone:       i===0?(bk_clientProfile?.phone||''):'',
-                bookedService:     label,
-                bookedDuration:    totalMins,
-                bookedPrice:       totalPrice,
-                grandTotal:        amountDue,
-                totalGHC:          amountDue,
-                dateString:        dateStr,
-                timeString:        timeStr,
-                status:            'Scheduled',
-                source:            'client-group-booking',
-                bookedBy:          bk_isGuest
-                                    ? ('guest:'+(bk_clientProfile?.phone||''))
-                                    : (bk_currentUser?.email||''),
-                assignedTechName:  m.assignedTechName  || 'To be assigned',
+                groupId: grp_groupId,
+                groupSize: grp_members.length,
+                isGroupBooking: true,
+                splitGroup: isSplit,
+                subGroupIndex: isSplit ? (m.subGroupIndex || 1) : 1,
+                billingScenario: isSplit ? 'split_group_different_times' : 'whole_group_same_time',
+                billingMode: grp_billingMode,
+                groupTotal: Number(groupTotals.grandTotal.toFixed(2)),
+                amountDue: billing.amountDue,
+                payableBy: billing.payableBy,
+                isLeadBooker: i === 0,
+                clientPhone: i === 0 ? (bk_clientProfile?.phone || '') : '',
+                clientName: m.name || grp_memberLabel(i),
+                clientEmail: i === 0 ? (bk_isGuest ? '' : (bk_currentUser?.email || '')) : '',
                 assignedTechEmail: m.assignedTechEmail || '',
-                createdAt:         firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt:         firebase.firestore.FieldValue.serverTimestamp()
+                assignedTechName: m.assignedTechName || 'To be assigned',
+                bookedService: mt.label,
+                bookedDuration: mt.totalMins,
+                bookedPrice: Number(mt.basePrice.toFixed(2)),
+                grandTotal: billing.amountDue,
+                totalGHC: billing.amountDue,
+                memberServiceTotal: Number(mt.grandTotal.toFixed(2)),
+                taxBreakdown: JSON.stringify(mt.taxLines.map(l => ({ name:l.name, rate:l.rate, amount:l.amount }))),
+                dateString: dateStr,
+                timeString: timeStr,
+                status: 'Scheduled',
+                source: isSplit ? 'client-group-booking-split' : 'client-group-booking',
+                bookedBy: bk_isGuest ? ('guest:' + (bk_clientProfile?.phone || '')) : (bk_currentUser?.email || ''),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         });
-
         await batch.commit();
-
-        grp_populateSuccess(dateStr, timeStr);
+        grp_populateSuccess();
         _screenHistory = ['screen-welcome', 'screen-booking-mode'];
-        _origGoToStep('screen-group-success');
-
-    } catch (e) {
-        toast('Booking failed: ' + e.message, 'error');
+        grp_baseGoToStep('screen-group-success');
+    } catch(e) {
+        toast('Group booking failed: ' + e.message, 'error');
     } finally {
         setBtnLoading(btn, false, 'Confirm Group Booking');
     }
 };
 
-
-// ── Success screen ────────────────────────────────────────────
-function grp_populateSuccess(dateStr, timeStr) {
-    let dateFormatted = dateStr;
-    try { dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB',
-        { weekday:'long', day:'numeric', month:'long' }); } catch(e) {}
-
-    let timeFormatted = timeStr;
-    try {
-        const [h, m] = timeStr.split(':').map(Number);
-        timeFormatted = `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
-    } catch(e) {}
-
-    document.getElementById('grp_suc_datetime').textContent = `${dateFormatted} at ${timeFormatted}`;
-    document.getElementById('grp_suc_size').textContent     = `${grp_members.length} people`;
-    document.getElementById('grp_suc_ref').textContent      = grp_groupId?.slice(0, 8).toUpperCase() || '—';
-
+function grp_populateSuccess() {
+    const isSplit = grp_selectedPlan.type === 'split';
+    document.getElementById('grp_suc_datetime').textContent = isSplit
+        ? 'Split across multiple times — see details below'
+        : `${grp_formatDate(grp_selectedPlan.dateStr || document.getElementById('grp_date')?.value || '')} at ${grp_formatTime(grp_selectedPlan.timeStr || document.getElementById('grp_time')?.value || '')}`;
+    document.getElementById('grp_suc_size').textContent = `${grp_members.length} people`;
+    document.getElementById('grp_suc_ref').textContent = grp_groupId ? grp_groupId.slice(0, 8).toUpperCase() : '—';
     const membersEl = document.getElementById('grp_suc_members');
     if (membersEl) {
         membersEl.innerHTML = grp_members.map((m, i) => {
-            const services  = (m.selectedServices||[]).map(s => `${s.name}${s.qty>1?' (x'+s.qty+')':''}`).join(', ');
-            const totalMins = (m.selectedServices||[]).reduce((sum,s) => sum+(s.dur*(s.qty||1)), 0);
-            const techName  = m.assignedTechName || 'To be assigned';
-            return `
-            <div class="grp-member-card">
-                <div class="grp-member-index">${i + 1}</div>
-                <div class="grp-member-info">
-                    <strong>${m.name || (i === 0 ? 'You' : 'Person ' + (i + 1))}</strong>
-                    <span>${services || '—'} · ${totalMins} mins</span>
-                    <span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">
-                        👩‍🔧 <strong>${techName}</strong>
-                    </span>
-                </div>
-            </div>`;
+            const mt = grp_memberTotals(m);
+            const splitLine = isSplit ? `<span style="color:var(--gold-dark);font-size:0.78rem;margin-top:2px;display:block;">🕐 Sub-group ${m.subGroupIndex}: ${grp_formatTime(m.splitTimeStr)} · ${grp_formatDate(m.splitDateStr)}</span>` : '';
+            return `<div class="grp-member-card"><div class="grp-member-index">${i+1}</div><div class="grp-member-info"><strong>${grp_memberLabel(i)}</strong><span>${mt.label || '—'} · ${mt.totalMins} mins</span><span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">👩‍🔧 ${m.assignedTechName || 'To be assigned'}</span>${splitLine}</div></div>`;
         }).join('');
     }
 }
 
-
 window.grp_bookAgain = function() {
-    grp_groupSize    = 2;
+    grp_groupSize = 2;
     grp_activeMember = 0;
-    grp_members      = [];
-    grp_groupId      = null;
-    _screenHistory   = ['screen-welcome'];
-    goToStep('screen-booking-mode');
+    grp_members = [];
+    grp_groupId = null;
+    grp_selectedPlan = { type: 'same', timeStr: '', dateStr: '', subgroups: [] };
+    grp_billingMode = '';
+    grp_bookedCacheByDate = {};
+    const n = document.getElementById('grp_sizeNumber');
+    if (n) n.textContent = '2';
+    _screenHistory = ['screen-welcome'];
+    window.goToStep('screen-booking-mode');
 };
+
+// ── Wrap navigation after app.js is loaded ────────────────────
+const grp_baseGoToStep = window.goToStep;
+window.goToStep = function(id) {
+    if (id === 'screen-group-confirm') {
+        grp_preAssignSameTimeIfNeeded().then(() => {
+            grp_populateConfirm();
+            grp_baseGoToStep(id);
+        });
+        return;
+    }
+    grp_baseGoToStep(id);
+};
+
+
+// ============================================================
+// GROUP SLOT FIX — hard override, must remain at the VERY BOTTOM.
+// Purpose: never show a dead-end "No slots available" message for
+// group bookings. If same-time capacity is not available, show
+// full-group alternative + client-controlled split options.
+// Version: group-split-fix-20260424
+// ============================================================
+console.log('✅ group-booking.js loaded: group-split-fix-20260424');
+
+window.grp_generateSlots = async function() {
+    const dateEl = document.getElementById('grp_date');
+    const dateStr = dateEl?.value || '';
+    const container = document.getElementById('grp_slotsContainer');
+    const grid = document.getElementById('grp_slots');
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+
+    if (!dateStr || !container || !grid) return;
+
+    if (dateStr < grp_todayString()) {
+        container.style.display = 'block';
+        grid.innerHTML = '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">Cannot book in the past.</p>';
+        return;
+    }
+
+    grp_selectedPlan = { type: 'same', dateStr, timeStr: '', subgroups: [] };
+
+    if (confirmBtn) confirmBtn.disabled = true;
+    const hiddenTime = document.getElementById('grp_time');
+    if (hiddenTime) hiddenTime.value = '';
+
+    container.style.display = 'block';
+    grid.innerHTML = '<div class="loading-pulse" style="grid-column:1/-1;">Checking group availability…</div>';
+
+    try {
+        await grp_ensureTechs();
+
+        const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
+        const booked = await grp_getBookedSlots(dateStr);
+        const group = grp_groupTotals();
+
+        const duration = Math.max(60, group.totalMinsMax || 60);
+        const needed = Math.max(2, grp_members.length || grp_groupSize || 2);
+        const close = 20 * 60;
+        const slotMap = {};
+        let maxFreeOnDay = 0;
+
+        grp_candidateSlots().forEach(start => {
+            if (grp_isPastSlot(dateStr, start)) return;
+            if (start + duration > close) return;
+
+            const free = grp_getFreeTechsAt(techs, booked, start, duration);
+            maxFreeOnDay = Math.max(maxFreeOnDay, free.length);
+
+            if (free.length >= needed) {
+                slotMap[start] = free.slice(0, needed);
+            }
+        });
+
+        const sameSlots = Object.keys(slotMap).map(Number).sort((a, b) => a - b);
+
+        if (sameSlots.length) {
+            grid.innerHTML = sameSlots.map(t => {
+                const t24 = grp_minsToTime(t);
+                return `<button type="button" class="slot-btn" data-time="${t24}" onclick="grp_selectSameSlot('${t24}', this)">${grp_formatTime(t24)}</button>`;
+            }).join('');
+            return;
+        }
+
+        // IMPORTANT: group booking never dead-ends here.
+        // If no full-group same-time slot exists, render split choices.
+        grp_renderCapacityOptions(dateStr, maxFreeOnDay, techs.length);
+
+    } catch (e) {
+        console.error('Group availability error:', e);
+        grid.innerHTML = `
+            <div class="group-capacity-panel warn" style="grid-column:1/-1;">
+                <h3>We could not check full-group availability</h3>
+                <p>You can still choose a split option below.</p>
+                <button type="button" class="btn-primary full" onclick="grp_renderCapacityOptions('${dateStr}', 1, 1)">
+                    Show split options
+                </button>
+            </div>`;
+    }
+};
+
+// Also defend against older loaded scripts by replacing exact old message after render.
+setInterval(() => {
+    const grid = document.getElementById('grp_slots');
+    if (!grid) return;
+    const txt = (grid.textContent || '').trim();
+    if (txt.includes('No slots available for your group on this date')) {
+        const dateStr = document.getElementById('grp_date')?.value || grp_todayString();
+        console.warn('Replacing old group no-slots dead-end with split options.');
+        grp_renderCapacityOptions(dateStr, 1, (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs.length : 1);
+    }
+}, 600);
+
+
+// ============================================================
+// MANUAL SPLIT PLANNER UPGRADE
+// - Lead chooses date/time for each sub-group
+// - Prevents overlapping tech reuse
+// - Shows recommended best sequence
+// - Shows timeline preview
+// Version: manual-split-planner-20260424
+// ============================================================
+console.log('✅ group-booking.js upgrade loaded: manual-split-planner-20260424');
+
+function grp_splitPlannerDateInputId(index) {
+    return `grp_manual_sg_date_${index}`;
+}
+
+function grp_splitPlannerSlotsId(index) {
+    return `grp_manual_sg_slots_${index}`;
+}
+
+function grp_splitPlannerTimelineId() {
+    return 'grp_manualTimelinePreview';
+}
+
+function grp_getManualLocks(exceptIndex = -1) {
+    const locks = [];
+    if (!grp_selectedPlan || !Array.isArray(grp_selectedPlan.subgroups)) return locks;
+
+    grp_selectedPlan.subgroups.forEach((sg, idx) => {
+        if (idx === exceptIndex) return;
+        if (!sg.dateStr || !sg.timeStr || !Array.isArray(sg.techs)) return;
+        sg.techs.forEach(t => {
+            if (t && t.email) {
+                locks.push({
+                    dateStr: sg.dateStr,
+                    timeStr: sg.timeStr,
+                    email: t.email,
+                    subGroupIndex: sg.index || (idx + 1)
+                });
+            }
+        });
+    });
+
+    return locks;
+}
+
+function grp_durationForSubgroup(sg) {
+    return Math.max(60, ...(sg.memberIndexes || []).map(i => grp_memberTotals(grp_members[i]).totalMins || 60));
+}
+
+function grp_freeTechsRespectingManualLocks(techs, booked, dateStr, startMins, duration, exceptIndex = -1) {
+    let free = grp_getFreeTechsAt(techs, booked, startMins, duration);
+    const timeStr = grp_minsToTime(startMins);
+    const locks = grp_getManualLocks(exceptIndex);
+    const lockedAtSameTime = new Set(
+        locks
+            .filter(l => l.dateStr === dateStr && l.timeStr === timeStr)
+            .map(l => l.email)
+    );
+    return free.filter(t => !lockedAtSameTime.has(t.email));
+}
+
+async function grp_getAvailableSlotsForSubgroup(index, dateStr) {
+    const sg = grp_selectedPlan.subgroups[index];
+    if (!sg) return [];
+
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const duration = grp_durationForSubgroup(sg);
+    const close = 20 * 60;
+    const out = [];
+
+    grp_candidateSlots().forEach(start => {
+        if (grp_isPastSlot(dateStr, start)) return;
+        if (start + duration > close) return;
+
+        const free = grp_freeTechsRespectingManualLocks(techs, booked, dateStr, start, duration, index);
+        if (free.length >= sg.size) {
+            out.push({
+                timeStr: grp_minsToTime(start),
+                startMins: start,
+                duration,
+                techs: free.slice(0, sg.size)
+            });
+        }
+    });
+
+    return out;
+}
+
+async function grp_findBestManualPlan(dateStr, split) {
+    const plan = grp_allocateMembersBySplit(split);
+    const chosen = [];
+
+    for (let i = 0; i < plan.length; i++) {
+        const sg = plan[i];
+        const techs = await grp_ensureTechs();
+        const booked = await grp_getBookedSlots(dateStr);
+        const duration = grp_durationForSubgroup(sg);
+        const close = 20 * 60;
+        let best = null;
+
+        for (const start of grp_candidateSlots()) {
+            if (grp_isPastSlot(dateStr, start)) continue;
+            if (start + duration > close) continue;
+
+            let free = grp_getFreeTechsAt(techs, booked, start, duration);
+
+            const timeStr = grp_minsToTime(start);
+            const lockedAtSameTime = new Set();
+            chosen.forEach(prev => {
+                if (prev.dateStr === dateStr && prev.timeStr === timeStr) {
+                    (prev.techs || []).forEach(t => lockedAtSameTime.add(t.email));
+                }
+            });
+            free = free.filter(t => !lockedAtSameTime.has(t.email));
+
+            if (free.length >= sg.size) {
+                best = {
+                    dateStr,
+                    timeStr,
+                    techs: free.slice(0, sg.size),
+                    startMins: start,
+                    duration
+                };
+                break;
+            }
+        }
+
+        if (!best) return null;
+
+        sg.dateStr = best.dateStr;
+        sg.timeStr = best.timeStr;
+        sg.techs = best.techs;
+        chosen.push({ ...best, index: sg.index });
+    }
+
+    return plan;
+}
+
+function grp_renderTimelinePreview() {
+    const el = document.getElementById(grp_splitPlannerTimelineId());
+    if (!el) return;
+
+    if (!grp_selectedPlan || !Array.isArray(grp_selectedPlan.subgroups)) {
+        el.innerHTML = '';
+        return;
+    }
+
+    const subgroups = [...grp_selectedPlan.subgroups];
+    const selectedCount = subgroups.filter(sg => sg.dateStr && sg.timeStr).length;
+    const allSelected = selectedCount === subgroups.length;
+
+    const sorted = subgroups
+        .filter(sg => sg.dateStr && sg.timeStr)
+        .sort((a, b) => ((a.dateStr || '') + (a.timeStr || '')).localeCompare((b.dateStr || '') + (b.timeStr || '')));
+
+    if (!sorted.length) {
+        el.innerHTML = `
+            <div class="grp-timeline-empty">
+                Select times for each sub-group to build the timeline.
+            </div>`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="grp-timeline-card">
+            <div class="grp-timeline-head">
+                <strong>Timeline preview</strong>
+                <span>${selectedCount} of ${subgroups.length} selected</span>
+            </div>
+            <div class="grp-timeline-list">
+                ${sorted.map((sg, idx) => {
+                    const names = (sg.memberIndexes || []).map(grp_memberLabel).join(', ');
+                    const techNames = (sg.techs || []).map(t => t.name || t.email).join(', ') || 'To be assigned';
+                    const duration = grp_durationForSubgroup(sg);
+                    return `
+                        <div class="grp-timeline-item">
+                            <div class="grp-timeline-dot">${idx + 1}</div>
+                            <div class="grp-timeline-body">
+                                <strong>Sub-group ${sg.index}: ${sg.size} ${sg.size === 1 ? 'person' : 'people'}</strong>
+                                <span>${grp_formatDate(sg.dateStr)} at ${grp_formatTime(sg.timeStr)} · ${duration} mins</span>
+                                <small>${names}</small>
+                                <small>Technicians: ${techNames}</small>
+                            </div>
+                        </div>`;
+                }).join('')}
+            </div>
+            ${allSelected ? '<div class="grp-timeline-ready">✓ All sub-groups scheduled. You can continue to confirmation.</div>' : ''}
+        </div>
+    `;
+
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = !allSelected;
+}
+
+async function grp_loadManualSubgroupSlots(index, dateStr) {
+    const slotBox = document.getElementById(grp_splitPlannerSlotsId(index));
+    if (!slotBox) return;
+
+    slotBox.innerHTML = '<div class="loading-pulse">Checking available times…</div>';
+
+    const sg = grp_selectedPlan.subgroups[index];
+    if (!sg) return;
+
+    sg.dateStr = dateStr;
+    sg.timeStr = '';
+    sg.techs = [];
+
+    const slots = await grp_getAvailableSlotsForSubgroup(index, dateStr);
+
+    if (!slots.length) {
+        slotBox.innerHTML = `
+            <p class="grp-no-slots">
+                No suitable time found for this sub-group on this date. Try another date.
+            </p>`;
+        grp_renderTimelinePreview();
+        return;
+    }
+
+    slotBox.innerHTML = slots.map(slot => {
+        const techNames = slot.techs.map(t => t.name || t.email).join(', ');
+        return `
+            <button type="button" class="slot-btn grp-manual-slot-btn"
+                data-time="${slot.timeStr}"
+                onclick="grp_selectManualSubgroupTime(${index}, '${slot.timeStr}', this)">
+                <strong>${grp_formatTime(slot.timeStr)}</strong>
+                <span>${techNames}</span>
+            </button>`;
+    }).join('');
+
+    grp_renderTimelinePreview();
+}
+
+window.grp_updateManualSubgroupDate = async function(index, dateStr) {
+    if (!dateStr) return;
+    if (dateStr < grp_todayString()) {
+        toast('Cannot book in the past.', 'warning');
+        const input = document.getElementById(grp_splitPlannerDateInputId(index));
+        if (input) input.value = grp_todayString();
+        dateStr = grp_todayString();
+    }
+    await grp_loadManualSubgroupSlots(index, dateStr);
+};
+
+window.grp_selectManualSubgroupTime = async function(index, timeStr, btn) {
+    const sg = grp_selectedPlan.subgroups[index];
+    if (!sg) return;
+
+    const dateStr = sg.dateStr || document.getElementById(grp_splitPlannerDateInputId(index))?.value || grp_selectedPlan.dateStr;
+    const start = grp_timeToMins(timeStr);
+    const techs = await grp_ensureTechs();
+    const booked = await grp_getBookedSlots(dateStr);
+    const duration = grp_durationForSubgroup(sg);
+    const free = grp_freeTechsRespectingManualLocks(techs, booked, dateStr, start, duration, index);
+
+    if (free.length < sg.size) {
+        toast('That time is no longer available. Please choose another.', 'warning');
+        await grp_loadManualSubgroupSlots(index, dateStr);
+        return;
+    }
+
+    sg.dateStr = dateStr;
+    sg.timeStr = timeStr;
+    sg.techs = free.slice(0, sg.size);
+
+    (sg.memberIndexes || []).forEach((mi, idx) => {
+        const m = grp_members[mi];
+        const tech = sg.techs[idx] || {};
+        if (!m) return;
+        m.assignedTechEmail = tech.email || '';
+        m.assignedTechName = tech.name || 'To be assigned';
+        m.splitDateStr = sg.dateStr;
+        m.splitTimeStr = sg.timeStr;
+        m.subGroupIndex = sg.index;
+    });
+
+    const grid = btn?.parentElement;
+    if (grid) grid.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected', 'active'));
+    if (btn) btn.classList.add('selected', 'active');
+
+    // Refresh other sub-group slot lists so conflict prevention is visible immediately.
+    for (let i = 0; i < grp_selectedPlan.subgroups.length; i++) {
+        if (i === index) continue;
+        const other = grp_selectedPlan.subgroups[i];
+        const otherDate = other.dateStr || document.getElementById(grp_splitPlannerDateInputId(i))?.value;
+        if (otherDate && !other.timeStr) {
+            await grp_loadManualSubgroupSlots(i, otherDate);
+        }
+    }
+
+    grp_renderTimelinePreview();
+};
+
+window.grp_applyRecommendedManualPlan = async function() {
+    const dateStr = grp_selectedPlan.dateStr || document.getElementById('grp_date')?.value || grp_todayString();
+    const split = (grp_selectedPlan.subgroups || []).map(sg => sg.size);
+    const btn = document.getElementById('grp_applyRecommendedBtn');
+
+    setBtnLoading(btn, true, 'Use Recommended Schedule');
+    try {
+        const plan = await grp_findBestManualPlan(dateStr, split);
+        if (!plan) {
+            toast('Could not build a recommended sequence for this date. Please choose times manually.', 'warning');
+            return;
+        }
+
+        grp_selectedPlan = { type: 'split', dateStr, timeStr: 'SPLIT', subgroups: plan };
+        const timeEl = document.getElementById('grp_time');
+        if (timeEl) timeEl.value = 'SPLIT';
+
+        plan.forEach((sg, i) => {
+            const input = document.getElementById(grp_splitPlannerDateInputId(i));
+            if (input) input.value = sg.dateStr;
+            (sg.memberIndexes || []).forEach((mi, idx) => {
+                const m = grp_members[mi];
+                const tech = sg.techs[idx] || {};
+                if (!m) return;
+                m.assignedTechEmail = tech.email || '';
+                m.assignedTechName = tech.name || 'To be assigned';
+                m.splitDateStr = sg.dateStr;
+                m.splitTimeStr = sg.timeStr;
+                m.subGroupIndex = sg.index;
+            });
+        });
+
+        for (let i = 0; i < plan.length; i++) {
+            await grp_loadManualSubgroupSlots(i, plan[i].dateStr);
+            const grid = document.getElementById(grp_splitPlannerSlotsId(i));
+            const btnToSelect = grid?.querySelector(`[data-time="${plan[i].timeStr}"]`);
+            if (btnToSelect) btnToSelect.classList.add('selected', 'active');
+        }
+
+        grp_renderTimelinePreview();
+        toast('Recommended schedule applied.', 'success');
+    } finally {
+        setBtnLoading(btn, false, 'Use Recommended Schedule');
+    }
+};
+
+function grp_renderManualSplitPlanner(dateStr, split) {
+    const grid = document.getElementById('grp_slots');
+    if (!grid) return;
+
+    const subgroups = grp_allocateMembersBySplit(split);
+    grp_selectedPlan = {
+        type: 'split',
+        dateStr,
+        timeStr: 'SPLIT',
+        subgroups
+    };
+
+    const timeEl = document.getElementById('grp_time');
+    if (timeEl) timeEl.value = 'SPLIT';
+
+    const confirmBtn = document.getElementById('grp_toConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    grid.innerHTML = `
+        <div class="group-manual-planner" style="grid-column:1/-1;">
+            <div class="group-manual-planner-head">
+                <h3>Choose date & time for each sub-group</h3>
+                <p>You selected <strong>${split.join(' + ')}</strong>. The lead booker can now choose the best available time for each sub-group.</p>
+                <button type="button" id="grp_applyRecommendedBtn" class="btn-primary full" onclick="grp_applyRecommendedManualPlan()">
+                    <span class="btn-text">Use Recommended Schedule</span>
+                </button>
+            </div>
+
+            ${subgroups.map((sg, i) => {
+                const names = sg.memberIndexes.map(grp_memberLabel).join(', ');
+                return `
+                    <div class="group-manual-subgroup-card">
+                        <div class="group-manual-subgroup-title">
+                            <strong>Sub-group ${sg.index}: ${sg.size} ${sg.size === 1 ? 'person' : 'people'}</strong>
+                            <span>${names}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Choose date</label>
+                            <input type="date"
+                                id="${grp_splitPlannerDateInputId(i)}"
+                                min="${grp_todayString()}"
+                                value="${dateStr}"
+                                onchange="grp_updateManualSubgroupDate(${i}, this.value)">
+                        </div>
+                        <label class="slots-label">Available times</label>
+                        <div id="${grp_splitPlannerSlotsId(i)}" class="slots-grid grp-manual-slots">
+                            <div class="loading-pulse">Loading times…</div>
+                        </div>
+                    </div>`;
+            }).join('')}
+
+            <div id="${grp_splitPlannerTimelineId()}"></div>
+
+            <button type="button" class="btn-primary full" onclick="goToStep('screen-group-confirm')" id="grp_manualContinueBtn">
+                Review Group Booking →
+            </button>
+        </div>
+    `;
+
+    const manualContinue = document.getElementById('grp_manualContinueBtn');
+    if (manualContinue) {
+        manualContinue.onclick = function() {
+            const allSelected = grp_selectedPlan.subgroups.every(sg => sg.dateStr && sg.timeStr);
+            if (!allSelected) {
+                toast('Please choose a time for every sub-group first.', 'warning');
+                return;
+            }
+            goToStep('screen-group-confirm');
+        };
+    }
+
+    subgroups.forEach((_, i) => grp_loadManualSubgroupSlots(i, dateStr));
+    grp_renderTimelinePreview();
+}
+
+// Override split option selection: no more forced auto-assignment.
+// The lead chooses date/time for every sub-group.
+window.grp_selectSplitOption = async function(splitStr, btn) {
+    document.querySelectorAll('.group-option-card').forEach(b => b.classList.remove('selected'));
+    if (btn) btn.classList.add('selected');
+
+    const dateStr = document.getElementById('grp_date')?.value || grp_todayString();
+    const split = splitStr.split('-').map(Number).filter(Boolean);
+
+    grp_renderManualSplitPlanner(dateStr, split);
+};
+
+// Ensure old cache/older click handlers can still call this safely.
+window.grp_startSplitPlanner = function(dateStr, split) {
+    grp_renderManualSplitPlanner(dateStr || grp_todayString(), split || [grp_members.length]);
+};
+
