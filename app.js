@@ -904,6 +904,19 @@ window.bk_confirmBooking = async function() {
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
+        // Phase 8 safety check: revalidate the exact tech/date/time before writing.
+        // This prevents double-booking if another booking was made after slots loaded.
+        if (window.av_getSlotMap && techEmail) {
+            const liveSlotMap = await window.av_getSlotMap(date, [techEmail], totalMins);
+            const selectedMins = window.av_toMins ? window.av_toMins(time) : timeToMins(time);
+            const stillAvailable = (liveSlotMap[selectedMins] || []).includes(techEmail);
+            if (!stillAvailable) {
+                toast('That time was just taken. Please choose another available time.', 'warning');
+                if (window.bk_generateSlots) await window.bk_generateSlots();
+                return;
+            }
+        }
+
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
@@ -1093,4 +1106,4 @@ window.bk_exitBooking = function() {
 
 
 // Phase 5.5E: Client App availability alignment patch loaded.
-console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
+console.log('Thuraya Client App Phase 8 Smart Booking safety loaded');

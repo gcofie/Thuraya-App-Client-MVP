@@ -25,22 +25,107 @@ function av_dayAbbr(dateStr) {
     return days[new Date(dateStr + 'T12:00:00').getDay()];
 }
 
+
+// ── Phase 8 helpers: formatting + smart slot scoring ───────
+function av_formatTimeFromMins(t) {
+    const hrs  = Math.floor(Number(t) / 60), mins = Number(t) % 60;
+    const ampm = hrs >= 12 ? 'PM' : 'AM';
+    const h12  = hrs % 12 || 12;
+    return `${h12}:${String(mins).padStart(2, '0')} ${ampm}`;
+}
+
+function av_escapeAttr(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function av_slotSmartScore(mins, techs, loadMap) {
+    const techCount = (techs || []).length;
+    const avgLoad = techCount ? techs.reduce((sum, email) => sum + (loadMap[email] || 0), 0) / techCount : 99;
+    const preferred = (mins >= 10 * 60 && mins <= 15 * 60) ? 18 : 0;
+    const avoidLate = mins >= 18 * 60 ? -8 : 0;
+    const capacity  = Math.min(techCount, 6) * 12;
+    const fairness  = Math.max(0, 18 - (avgLoad * 4));
+    return Math.round(capacity + fairness + preferred + avoidLate);
+}
+
+function av_rankSlotMap(slotMap, loadMap) {
+    const ranked = Object.entries(slotMap || {}).map(([mins, techs]) => ({
+        mins: Number(mins),
+        techs: [...new Set(techs || [])].sort((a, b) => (loadMap[a] || 0) - (loadMap[b] || 0)),
+        score: av_slotSmartScore(Number(mins), techs || [], loadMap || {})
+    })).sort((a, b) => b.score - a.score || a.mins - b.mins);
+    const normalized = {};
+    ranked.slice().sort((a, b) => a.mins - b.mins).forEach(r => { normalized[r.mins] = r.techs; });
+    return { ranked, normalized };
+}
+
+async function av_getDailyLoadMap(dateStr) {
+    const loadMap = {};
+    try {
+        const snap = await db.collection('Appointments')
+            .where('dateString', '==', dateStr)
+            .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress', 'Ready for Payment'])
+            .get();
+        snap.forEach(doc => {
+            const a = doc.data() || {};
+            const email = a.assignedTechEmail;
+            if (email) loadMap[email] = (loadMap[email] || 0) + 1;
+        });
+    } catch (e) {
+        console.warn('Availability smart load map skipped:', e.message || e);
+    }
+    return loadMap;
+}
+
+function av_renderSmartHeader(ranked, container, onSelect) {
+    if (!ranked || !ranked.length) return '';
+    const best = ranked[0];
+    const alternatives = ranked.slice(1, 3);
+    const altHtml = alternatives.length
+        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">${alternatives.map(r => {
+            const hh = String(Math.floor(r.mins / 60)).padStart(2, '0');
+            const mm = String(r.mins % 60).padStart(2, '0');
+            const t24 = `${hh}:${mm}`;
+            return `<button type="button" class="btn-outline btn-sm" style="font-size:0.76rem;padding:7px 10px;" onclick="${onSelect}('${t24}', document.querySelector('[data-time=&quot;${t24}&quot;]'))">${av_formatTimeFromMins(r.mins)}</button>`;
+        }).join('')}</div>`
+        : '';
+    const best24 = `${String(Math.floor(best.mins / 60)).padStart(2, '0')}:${String(best.mins % 60).padStart(2, '0')}`;
+    return `
+        <div class="smart-booking-card" style="grid-column:1/-1;border:1px solid rgba(180,132,58,.28);background:linear-gradient(135deg,rgba(180,132,58,.10),rgba(255,255,255,.92));border-radius:16px;padding:14px;margin-bottom:6px;box-shadow:0 8px 24px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(180,132,58,.16);">✨</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;color:var(--primary);font-size:.92rem;">Smart Booking recommends ${av_formatTimeFromMins(best.mins)}</div>
+                    <div style="color:var(--text-muted);font-size:.78rem;line-height:1.35;margin-top:3px;">Best balance of technician availability, workload and client-friendly timing.</div>
+                    ${altHtml}
+                </div>
+                <button type="button" class="btn-primary btn-sm" style="padding:8px 11px;font-size:.76rem;white-space:nowrap;" onclick="${onSelect}('${best24}', document.querySelector('[data-time=&quot;${best24}&quot;]'))">Pick</button>
+            </div>
+        </div>`;
+}
+
 // ── Helper: render slot buttons into a container ─────────────
-function av_renderSlots(slotMap, container, onSelect) {
+function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
+    const loadMap = smartOptions.loadMap || {};
+    const rankedInput = smartOptions.ranked || av_rankSlotMap(slotMap, loadMap).ranked;
+    const rankedByMin = {};
+    rankedInput.forEach((r, idx) => { rankedByMin[r.mins] = { ...r, rank: idx + 1 }; });
+
     const slots = Object.keys(slotMap).map(Number).sort((a, b) => a - b);
     if (!slots.length) {
         container.innerHTML = '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">No available times for this date. Try a different date.</p>';
         return;
     }
-    container.innerHTML = slots.map(t => {
-        const hrs  = Math.floor(t / 60), mins = t % 60;
-        const ampm = hrs >= 12 ? 'PM' : 'AM';
-        const h12  = hrs % 12 || 12;
-        const mm   = String(mins).padStart(2, '0');
-        const t24  = `${String(hrs).padStart(2,'0')}:${mm}`;
-        const techList = JSON.stringify(slotMap[t]);
-        return `<button class="slot-btn" data-time="${t24}" data-techs='${techList}'
-            onclick="${onSelect}('${t24}', this)">${h12}:${mm} ${ampm}</button>`;
+
+    const smartHeader = smartOptions.showSmartHeader === false ? '' : av_renderSmartHeader(rankedInput, container, onSelect);
+    container.innerHTML = smartHeader + slots.map(t => {
+        const t24  = `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`;
+        const info = rankedByMin[t] || { score: 0, rank: 99 };
+        const techList = av_escapeAttr(JSON.stringify(slotMap[t] || []));
+        const recommended = info.rank === 1 ? '<span style="display:block;font-size:.62rem;margin-top:2px;color:var(--gold-dark);font-weight:700;letter-spacing:.02em;">Recommended</span>' : '';
+        const manyTechs = (slotMap[t] || []).length > 1 ? ` title="${slotMap[t].length} technicians available"` : '';
+        return `<button class="slot-btn ${info.rank === 1 ? 'smart-recommended' : ''}" data-time="${t24}" data-smart-score="${info.score}" data-techs='${techList}'${manyTechs}
+            onclick="${onSelect}('${t24}', this)">${av_formatTimeFromMins(t)}${recommended}</button>`;
     }).join('');
 }
 
@@ -268,15 +353,20 @@ window.bk_generateSlots = async function() {
     try {
         // Firestore 'in' operator supports max 30 items; chunk if needed
         const chunks   = av_chunkArray(techsToCheck, 30);
-        const maps     = await Promise.all(chunks.map(chunk => av_getSlotMap(date, chunk, totalMins)));
+        const [maps, loadMap] = await Promise.all([
+            Promise.all(chunks.map(chunk => av_getSlotMap(date, chunk, totalMins))),
+            av_getDailyLoadMap(date)
+        ]);
         const slotMap  = av_mergeSlotMaps(maps);
+        const rankedResult = av_rankSlotMap(slotMap, loadMap);
 
-        if (!Object.keys(slotMap).length) {
+        if (!Object.keys(rankedResult.normalized).length) {
             slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">No available times for this date. Try a different date.</p>';
             return;
         }
 
-        av_renderSlots(slotMap, slotsEl, 'bk_selectSlot');
+        window.av_lastSlotContext = { date, loadMap, ranked: rankedResult.ranked, slotMap: rankedResult.normalized };
+        av_renderSlots(rankedResult.normalized, slotsEl, 'bk_selectSlot', { loadMap, ranked: rankedResult.ranked });
 
     } catch (e) {
         slotsEl.innerHTML = `<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">Error loading slots: ${e.message}</p>`;
@@ -295,7 +385,8 @@ window.bk_selectSlot = function(time, btn) {
         try {
             const available = JSON.parse(btn.getAttribute('data-techs') || '[]');
             if (available.length) {
-                const assignedEmail = available[0];
+                const loadMap = window.av_lastSlotContext?.loadMap || {};
+                const assignedEmail = [...available].sort((a, b) => (loadMap[a] || 0) - (loadMap[b] || 0))[0];
                 const tech = bk_techs.find(t => t.email === assignedEmail);
                 document.getElementById('bk_techEmail').value = assignedEmail;
                 document.getElementById('bk_techName').value  = tech?.name || assignedEmail;
@@ -343,7 +434,10 @@ window.grp_generateSlots = async function() {
         // Fetch availability using the longest duration as the window
         // (conservative — ensures the slot fits everyone)
         const chunks  = av_chunkArray(allTechEmails, 30);
-        const maps    = await Promise.all(chunks.map(chunk => av_getSlotMap(dateStr, chunk, maxDuration)));
+        const [maps, loadMap] = await Promise.all([
+            Promise.all(chunks.map(chunk => av_getSlotMap(dateStr, chunk, maxDuration))),
+            av_getDailyLoadMap(dateStr)
+        ]);
         const slotMap = av_mergeSlotMaps(maps);
 
         // Filter: slot must have at least as many free techs as group members
@@ -352,14 +446,16 @@ window.grp_generateSlots = async function() {
         Object.entries(slotMap).forEach(([t, techs]) => {
             if (techs.length >= groupSize) filteredMap[t] = techs;
         });
+        const rankedResult = av_rankSlotMap(filteredMap, loadMap);
 
-        if (!Object.keys(filteredMap).length) {
+        if (!Object.keys(rankedResult.normalized).length) {
             grid.innerHTML = '<p style="color:var(--error);grid-column:1/-1;text-align:center;padding:16px 0;">No slots available for your group on this date. Try a different date.</p>';
             return;
         }
 
+        window.av_lastGroupSlotContext = { date: dateStr, loadMap, ranked: rankedResult.ranked, slotMap: rankedResult.normalized };
         // Render with grp_selectSlot handler
-        av_renderSlots(filteredMap, grid, 'grp_selectSlot');
+        av_renderSlots(rankedResult.normalized, grid, 'grp_selectSlot', { loadMap, ranked: rankedResult.ranked });
 
     } catch (e) {
         grid.innerHTML = `<p style="color:var(--error);grid-column:1/-1;">Could not load slots: ${e.message}</p>`;
@@ -397,9 +493,12 @@ window.av_chunkArray   = av_chunkArray;
 window.av_mergeSlotMaps= av_mergeSlotMaps;
 window.av_toMins       = av_toMins;
 window.av_dayAbbr      = av_dayAbbr;
+window.av_getDailyLoadMap = av_getDailyLoadMap;
+window.av_rankSlotMap  = av_rankSlotMap;
+window.av_formatTimeFromMins = av_formatTimeFromMins;
 
 console.log('Thuraya availability engine 4b loaded.');
 
 
 // Phase 5.5E: Unified solo/group availability alignment loaded.
-console.log('Thuraya availability engine Phase 5.5E loaded.');
+console.log('Thuraya availability engine Phase 8 Smart Booking loaded.');
