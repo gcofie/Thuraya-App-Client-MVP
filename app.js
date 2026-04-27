@@ -16,7 +16,6 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
-let bk_authIntent = false; // Phase 8 login routing guard
 
 // ── State ─────────────────────────────────────────────────
 let bk_currentUser    = null;
@@ -137,28 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = await db.collection('Client_Users').doc(user.email.toLowerCase()).get();
                 if (doc.exists) {
                     bk_clientProfile = doc.data();
+                    // ── EDIT 1: send returning users to mode select, not straight to services ──
                     loadTechs();
-
-                    // Phase 8 routing fix: keep welcome visible on refresh, continue only after Google click.
-                    if (bk_authIntent === true) {
-                        bk_authIntent = false;
-                        goToStep('screen-booking-mode');
-                    } else {
-                        showScreen('screen-welcome');
-                    }
-
+                    goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
                 } else {
                     document.getElementById('prof_email').value = user.email || '';
                     document.getElementById('prof_name').value  = user.displayName || '';
-
-                    if (bk_authIntent === true) {
-                        bk_authIntent = false;
-                        goToStep('screen-profile');
-                    } else {
-                        showScreen('screen-welcome');
-                    }
+                    goToStep('screen-profile');
                 }
             } catch (e) {
                 toast('Could not load your profile. Please try again.', 'error');
@@ -178,11 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
 async function signInWithGoogle() {
     const btn = document.getElementById('btnGoogleSignIn');
     setBtnLoading(btn, true);
-    bk_authIntent = true;
     try {
         await auth.signInWithPopup(googleProvider);
     } catch (e) {
-        bk_authIntent = false;
         setBtnLoading(btn, false, undefined);
         const errEl = document.getElementById('welcomeError');
         if (errEl) { errEl.textContent = 'Sign-in failed. Please try again.'; errEl.style.display = 'block'; }
@@ -920,19 +904,6 @@ window.bk_confirmBooking = async function() {
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
-        // Phase 8 safety check: revalidate the exact tech/date/time before writing.
-        // This prevents double-booking if another booking was made after slots loaded.
-        if (window.av_getSlotMap && techEmail) {
-            const liveSlotMap = await window.av_getSlotMap(date, [techEmail], totalMins);
-            const selectedMins = window.av_toMins ? window.av_toMins(time) : timeToMins(time);
-            const stillAvailable = (liveSlotMap[selectedMins] || []).includes(techEmail);
-            if (!stillAvailable) {
-                toast('That time was just taken. Please choose another available time.', 'warning');
-                if (window.bk_generateSlots) await window.bk_generateSlots();
-                return;
-            }
-        }
-
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
@@ -1041,14 +1012,18 @@ window.bk_viewMyBookings = async function() {
             return;
         }
 
+        // Client-friendly labels.
+        // Firestore still keeps the operational staff status internally.
+        // The client app only translates the wording for a better customer experience.
         const statusLabels = {
-            'Scheduled':         { label: 'Scheduled',   cls: 'status-scheduled' },
-            'Arrived':           { label: 'Arrived',     cls: 'status-arrived'   },
-            'In Progress':       { label: 'In Progress', cls: 'status-arrived'   },
-            'Ready for Payment': { label: 'Completing',  cls: 'status-arrived'   },
+            'Scheduled':         { label: 'Confirmed',   cls: 'status-scheduled' },
+            'Arrived':           { label: 'Checked In',  cls: 'status-arrived'   },
+            'In Progress':       { label: 'In Service',  cls: 'status-arrived'   },
+            'Ready for Payment': { label: 'Wrapping Up', cls: 'status-arrived'   },
             'Closed':            { label: 'Completed',   cls: 'status-closed'    },
+            'Completed':         { label: 'Completed',   cls: 'status-closed'    },
             'Cancelled':         { label: 'Cancelled',   cls: 'status-cancelled' },
-            'No Show':           { label: 'No Show',     cls: 'status-noshow'    },
+            'No Show':           { label: 'Missed',      cls: 'status-noshow'    },
         };
 
         // Build array and sort newest first by date then time
@@ -1121,18 +1096,8 @@ window.bk_exitBooking = function() {
 };
 
 
-
-// Phase 8 routing helper: force the client app back to the welcome screen.
-window.bk_forceWelcome = function() {
-    bk_currentUser = null;
-    bk_clientProfile = null;
-    bk_isGuest = false;
-    bk_authIntent = false;
-    auth.signOut().finally(() => {
-        _screenHistory = ['screen-welcome'];
-        showScreen('screen-welcome');
-    });
-};
-
 // Phase 5.5E: Client App availability alignment patch loaded.
-console.log('Thuraya Client App Phase 8 Smart Booking safety loaded');
+console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
+
+
+console.log('Thuraya Phase 8F client-friendly booking status labels loaded.');
