@@ -56,16 +56,19 @@ function av_renderSlots(slotMap, container, onSelect) {
 //  Layer 3 — Appointments:    existing bookings
 // ============================================================
 async function av_getSlotMap(dateStr, techEmails, totalMins) {
+    techEmails = (techEmails || []).filter(Boolean);
+    totalMins = parseInt(totalMins || 0, 10);
+
     const dayAbbr  = av_dayAbbr(dateStr);
     const isToday  = dateStr === todayStr;
     const nowMins  = isToday ? (new Date().getHours() * 60 + new Date().getMinutes()) : -1;
 
     // ── Fetch all 4 layers in parallel ───────────────────────
     const [blockSnap, schedSnap, leaveSnap, apptSnap] = await Promise.all([
-        // Layer 0: calendar blocks for this date
-        db.collection('Calendar_Blocks')
-            .where('dateString', '==', dateStr)
-            .get(),
+        // Layer 0: fetch ALL calendar blocks and filter client-side.
+        // This supports full_day, time_range, tech_specific and date_range blocks.
+        // Calendar_Blocks is expected to be small; this avoids missing date_range records.
+        db.collection('Calendar_Blocks').get(),
 
         // Layer 1: fetch ALL schedules — tiny collection, no index needed
         db.collection('Staff_Schedules').get(),
@@ -88,12 +91,20 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     const timeBlocks  = [];              // [{ startMins, endMins, techEmail }] — '' = all
 
     blockSnap.forEach(doc => {
-        const b = doc.data();
-        if (b.type === 'full_day') {
+        const b = doc.data() || {};
+        const type = b.type || '';
+
+        const appliesByDate =
+            (b.dateString && b.dateString === dateStr) ||
+            (b.rangeStart && b.rangeEnd && b.rangeStart <= dateStr && b.rangeEnd >= dateStr);
+
+        if (!appliesByDate) return;
+
+        if (type === 'full_day' && !b.techEmail) {
             fullDayBlock = true;
-        } else if (b.type === 'tech_specific' && b.techEmail) {
+        } else if ((type === 'full_day' || type === 'tech_specific' || type === 'date_range') && b.techEmail) {
             techBlocked.add(b.techEmail);
-        } else if (b.type === 'time_range') {
+        } else if (type === 'time_range') {
             timeBlocks.push({
                 startMins: av_toMins(b.startTime),
                 endMins:   av_toMins(b.endTime),
@@ -137,13 +148,24 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     // ── Build busy map: techEmail → [{ start, end }] ─────────
     const busyMap = {};
     apptSnap.forEach(doc => {
-        const a = doc.data();
+        const a = doc.data() || {};
         const email = a.assignedTechEmail;
-        if (!email) return;
+        if (!email) {
+            console.warn('Availability: appointment missing assignedTechEmail and was ignored:', doc.id, a);
+            return;
+        }
+
+        const startMins = av_toMins(a.timeString);
+        const duration = parseInt(a.bookedDuration || a.duration || a.totalDuration || 0, 10);
+        if (!a.timeString || !duration) {
+            console.warn('Availability: appointment missing time or duration and was ignored:', doc.id, a);
+            return;
+        }
+
         if (!busyMap[email]) busyMap[email] = [];
         busyMap[email].push({
-            start: av_toMins(a.timeString),
-            end:   av_toMins(a.timeString) + parseInt(a.bookedDuration || 0)
+            start: startMins,
+            end:   startMins + duration
         });
     });
 
@@ -187,6 +209,14 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
                 slotMap[t].push(email);
             }
         }
+    });
+
+    console.log('Availability slot map', {
+        dateStr,
+        totalMins,
+        techsChecked: techEmails.length,
+        slotCount: Object.keys(slotMap).length,
+        techs: techEmails
     });
 
     return slotMap;
@@ -369,3 +399,7 @@ window.av_toMins       = av_toMins;
 window.av_dayAbbr      = av_dayAbbr;
 
 console.log('Thuraya availability engine 4b loaded.');
+
+
+// Phase 5.5E: Unified solo/group availability alignment loaded.
+console.log('Thuraya availability engine Phase 5.5E loaded.');

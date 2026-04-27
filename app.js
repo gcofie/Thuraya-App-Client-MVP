@@ -536,31 +536,11 @@ window.switchDept = function(dept, btn) {
 
 async function loadTechs() {
     try {
-        const today = (() => {
-            const n = new Date();
-            return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-        })();
-
-        // Fetch users and calendar blocks in parallel
-        const [usersSnap, blocksSnap] = await Promise.all([
-            db.collection('Users').get(),
-            // Get date_range and tech_specific blocks that cover today
-            db.collection('Calendar_Blocks')
-                .where('type', 'in', ['date_range', 'tech_specific'])
-                .get()
-        ]);
-
-        // Build set of tech emails blocked today
-        const blockedToday = new Set();
-        blocksSnap.forEach(doc => {
-            const b = doc.data();
-            if (!b.techEmail) return; // no tech = all techs, handled in availability engine
-            if (b.type === 'tech_specific' && b.dateString === today) {
-                blockedToday.add(b.techEmail);
-            } else if (b.type === 'date_range' && b.rangeStart <= today && b.rangeEnd >= today) {
-                blockedToday.add(b.techEmail);
-            }
-        });
+        // Phase 5.5E Availability Alignment:
+        // Do NOT pre-filter technicians by today's Calendar_Blocks here.
+        // Availability depends on the booking date selected by the client, not only today.
+        // availability.js handles date-specific blocks, leave, schedules and appointment conflicts.
+        const usersSnap = await db.collection('Users').get();
 
         bk_techs = [];
         usersSnap.forEach(doc => {
@@ -568,13 +548,18 @@ async function loadTechs() {
             const roles = (Array.isArray(d.roles) ? d.roles : [d.role || '']).map(r => (r || '').toLowerCase());
             const isTech = roles.some(r => r.includes('tech'));
             if (!isTech) return;
-            // Hide techs marked invisible to clients
+
+            // Hide techs marked invisible to clients.
             if (d.visibleToClients === false) return;
-            // Hide techs with an active calendar block today
-            if (blockedToday.has(doc.id)) return;
+
             bk_techs.push({ email: doc.id, name: d.name || doc.id });
         });
-    } catch (e) { bk_techs = []; }
+
+        console.log('Client booking techs loaded:', bk_techs.length, bk_techs.map(t => t.name || t.email));
+    } catch (e) {
+        console.error('Client booking loadTechs failed:', e);
+        bk_techs = [];
+    }
 }
 
 // ── Technician selection ──────────────────────────────────
@@ -1105,3 +1090,7 @@ window.bk_exitBooking = function() {
     _screenHistory = ['screen-welcome'];
     showScreen('screen-welcome');
 };
+
+
+// Phase 5.5E: Client App availability alignment patch loaded.
+console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
