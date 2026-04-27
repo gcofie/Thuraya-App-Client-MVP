@@ -16,6 +16,7 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
+let bk_authIntent = false; // Phase 8 login routing guard
 
 // ── State ─────────────────────────────────────────────────
 let bk_currentUser    = null;
@@ -136,15 +137,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = await db.collection('Client_Users').doc(user.email.toLowerCase()).get();
                 if (doc.exists) {
                     bk_clientProfile = doc.data();
-                    // ── EDIT 1: send returning users to mode select, not straight to services ──
                     loadTechs();
-                    goToStep('screen-booking-mode');
+
+                    // Phase 8 routing fix: keep welcome visible on refresh, continue only after Google click.
+                    if (bk_authIntent === true) {
+                        bk_authIntent = false;
+                        goToStep('screen-booking-mode');
+                    } else {
+                        showScreen('screen-welcome');
+                    }
+
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
                 } else {
                     document.getElementById('prof_email').value = user.email || '';
                     document.getElementById('prof_name').value  = user.displayName || '';
-                    goToStep('screen-profile');
+
+                    if (bk_authIntent === true) {
+                        bk_authIntent = false;
+                        goToStep('screen-profile');
+                    } else {
+                        showScreen('screen-welcome');
+                    }
                 }
             } catch (e) {
                 toast('Could not load your profile. Please try again.', 'error');
@@ -164,9 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
 async function signInWithGoogle() {
     const btn = document.getElementById('btnGoogleSignIn');
     setBtnLoading(btn, true);
+    bk_authIntent = true;
     try {
         await auth.signInWithPopup(googleProvider);
     } catch (e) {
+        bk_authIntent = false;
         setBtnLoading(btn, false, undefined);
         const errEl = document.getElementById('welcomeError');
         if (errEl) { errEl.textContent = 'Sign-in failed. Please try again.'; errEl.style.display = 'block'; }
@@ -536,31 +552,11 @@ window.switchDept = function(dept, btn) {
 
 async function loadTechs() {
     try {
-        const today = (() => {
-            const n = new Date();
-            return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-        })();
-
-        // Fetch users and calendar blocks in parallel
-        const [usersSnap, blocksSnap] = await Promise.all([
-            db.collection('Users').get(),
-            // Get date_range and tech_specific blocks that cover today
-            db.collection('Calendar_Blocks')
-                .where('type', 'in', ['date_range', 'tech_specific'])
-                .get()
-        ]);
-
-        // Build set of tech emails blocked today
-        const blockedToday = new Set();
-        blocksSnap.forEach(doc => {
-            const b = doc.data();
-            if (!b.techEmail) return; // no tech = all techs, handled in availability engine
-            if (b.type === 'tech_specific' && b.dateString === today) {
-                blockedToday.add(b.techEmail);
-            } else if (b.type === 'date_range' && b.rangeStart <= today && b.rangeEnd >= today) {
-                blockedToday.add(b.techEmail);
-            }
-        });
+        // Phase 5.5E Availability Alignment:
+        // Do NOT pre-filter technicians by today's Calendar_Blocks here.
+        // Availability depends on the booking date selected by the client, not only today.
+        // availability.js handles date-specific blocks, leave, schedules and appointment conflicts.
+        const usersSnap = await db.collection('Users').get();
 
         bk_techs = [];
         usersSnap.forEach(doc => {
@@ -568,13 +564,18 @@ async function loadTechs() {
             const roles = (Array.isArray(d.roles) ? d.roles : [d.role || '']).map(r => (r || '').toLowerCase());
             const isTech = roles.some(r => r.includes('tech'));
             if (!isTech) return;
-            // Hide techs marked invisible to clients
+
+            // Hide techs marked invisible to clients.
             if (d.visibleToClients === false) return;
-            // Hide techs with an active calendar block today
-            if (blockedToday.has(doc.id)) return;
+
             bk_techs.push({ email: doc.id, name: d.name || doc.id });
         });
-    } catch (e) { bk_techs = []; }
+
+        console.log('Client booking techs loaded:', bk_techs.length, bk_techs.map(t => t.name || t.email));
+    } catch (e) {
+        console.error('Client booking loadTechs failed:', e);
+        bk_techs = [];
+    }
 }
 
 // ── Technician selection ──────────────────────────────────
@@ -919,6 +920,19 @@ window.bk_confirmBooking = async function() {
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
+        // Phase 8 safety check: revalidate the exact tech/date/time before writing.
+        // This prevents double-booking if another booking was made after slots loaded.
+        if (window.av_getSlotMap && techEmail) {
+            const liveSlotMap = await window.av_getSlotMap(date, [techEmail], totalMins);
+            const selectedMins = window.av_toMins ? window.av_toMins(time) : timeToMins(time);
+            const stillAvailable = (liveSlotMap[selectedMins] || []).includes(techEmail);
+            if (!stillAvailable) {
+                toast('That time was just taken. Please choose another available time.', 'warning');
+                if (window.bk_generateSlots) await window.bk_generateSlots();
+                return;
+            }
+        }
+
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
@@ -1105,3 +1119,20 @@ window.bk_exitBooking = function() {
     _screenHistory = ['screen-welcome'];
     showScreen('screen-welcome');
 };
+
+
+
+// Phase 8 routing helper: force the client app back to the welcome screen.
+window.bk_forceWelcome = function() {
+    bk_currentUser = null;
+    bk_clientProfile = null;
+    bk_isGuest = false;
+    bk_authIntent = false;
+    auth.signOut().finally(() => {
+        _screenHistory = ['screen-welcome'];
+        showScreen('screen-welcome');
+    });
+};
+
+// Phase 5.5E: Client App availability alignment patch loaded.
+console.log('Thuraya Client App Phase 8 Smart Booking safety loaded');
