@@ -497,6 +497,42 @@ window.av_getDailyLoadMap = av_getDailyLoadMap;
 window.av_rankSlotMap  = av_rankSlotMap;
 window.av_formatTimeFromMins = av_formatTimeFromMins;
 
+
+// ============================================================
+//  PHASE 8A FIX — GROUP SLOT SELECTOR SAFETY
+//  Fixes: Uncaught ReferenceError: grp_selectSlot is not defined
+//  Cause: availability.js renders group slot buttons with onclick="grp_selectSlot(...)"
+//  before/without group-booking.js exposing that function globally.
+// ============================================================
+window.grp_selectSlot = window.grp_selectSlot || function(time, btn) {
+    try {
+        document.querySelectorAll('#grp_slots .slot-btn').forEach(b => b.classList.remove('selected'));
+        if (btn) btn.classList.add('selected');
+
+        const timeEl = document.getElementById('grp_time');
+        if (timeEl) timeEl.value = time;
+
+        let availableTechs = [];
+        try {
+            availableTechs = JSON.parse(btn?.getAttribute('data-techs') || '[]');
+        } catch (e) {
+            availableTechs = [];
+        }
+
+        // Store context for group-booking confirm logic if it needs it later.
+        window.grp_selectedTime = time;
+        window.grp_selectedSlotTechs = availableTechs;
+
+        const confirmBtn = document.getElementById('grp_toConfirmBtn');
+        if (confirmBtn) confirmBtn.disabled = false;
+
+        console.log('Group slot selected:', { time, availableTechs });
+    } catch (e) {
+        console.error('grp_selectSlot fallback failed:', e);
+        if (typeof toast === 'function') toast('Could not select this time. Please try again.', 'error');
+    }
+};
+
 console.log('Thuraya availability engine 4b loaded.');
 
 
