@@ -17,7 +17,7 @@
     <style id="bkFloatingSignOutStyles">
         .bk-floating-signout {
             position: fixed;
-            top: 14px;
+            top: 58px;
             right: 14px;
             z-index: 9999;
             border: 1px solid rgba(255,255,255,0.22);
@@ -34,13 +34,31 @@
             cursor: pointer;
             box-shadow: 0 10px 24px rgba(0,0,0,0.18);
         }
-        .bk-floating-signout:active {
-            transform: scale(0.97);
+        .bk-floating-signout:active { transform: scale(0.97); }
+
+        /* Push staging environment banner to bottom so it does not cover Sign Out */
+        #stagingBanner,
+        .staging-banner,
+        [data-staging-banner],
+        .env-banner {
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9998 !important;
         }
-        #screen-welcome.active ~ .bk-floating-signout {
-            display: none !important;
+
+        body[data-env="staging"] #app,
+        body.staging #app {
+            padding-top: 18px;
+        }
+
+        body[data-env="staging"] .screen-inner,
+        body.staging .screen-inner {
+            padding-top: 20px;
         }
     </style>
+
 
 </head>
 <body>
@@ -52,7 +70,7 @@
     <div id="app">
 
         <!-- Floating sign-out for testing -->
-        <button id="bkFloatingSignOut" class="bk-floating-signout" onclick="bk_signOut()" style="display:none;">
+        <button id="bkFloatingSignOut" class="bk-floating-signout" onclick="bk_signOut()" style="display:none">
             Sign Out
         </button>
 

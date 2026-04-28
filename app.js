@@ -39,10 +39,29 @@ const todayStr        = (() => {
 })();
 
 
+
+function bk_isAuthOrGuestReady() {
+    return !!bk_currentUser || !!bk_clientProfile || bk_isGuest === true;
+}
+
 function bk_showFloatingSignOut(show) {
     const btn = document.getElementById('bkFloatingSignOut');
     if (!btn) return;
     btn.style.display = show ? 'block' : 'none';
+}
+
+
+function bk_moveStagingBannerToBottom() {
+    const selectors = ['#stagingBanner', '.staging-banner', '[data-staging-banner]', '.env-banner'];
+    selectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+            el.style.top = 'auto';
+            el.style.bottom = '0';
+            el.style.left = '0';
+            el.style.right = '0';
+            el.style.zIndex = '9998';
+        });
+    });
 }
 
 // ── Screen navigation ────────────────────────────────────
@@ -55,8 +74,10 @@ function showScreen(id) {
     const target = document.getElementById(id);
     if (target) { target.style.display = 'flex'; requestAnimationFrame(() => target.classList.add('active')); }
 
-    // Keep sign-out visible after login/guest entry, hidden on welcome.
-    bk_showFloatingSignOut(id !== 'screen-welcome' && (!!bk_currentUser || !!bk_clientProfile || bk_isGuest));
+    // Hide on entry/profile screens. Show after a client has entered the app.
+    const hideOn = ['screen-welcome', 'screen-profile', 'screen-guest'];
+    bk_showFloatingSignOut(!hideOn.includes(id) && bk_isAuthOrGuestReady());
+    bk_moveStagingBannerToBottom();
 }
 
 function goToStep(id) {
@@ -136,6 +157,8 @@ function applyTaxes(listedTotal) {
 // ── Init & Auth ───────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+    bk_showFloatingSignOut(false);
+    bk_moveStagingBannerToBottom();
     const dateEl = document.getElementById('bk_date');
     if (dateEl) dateEl.min = todayStr;
 
