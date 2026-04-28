@@ -1607,3 +1607,371 @@ body {
         font-size: .52rem;
     }
 }
+
+/* ============================================================
+   PAGE 3 / SERVICES — PREMIUM iPHONE STYLE POLISH
+   Visual-only patch. No booking, Firebase, pricing, or navigation logic changed.
+   ============================================================ */
+
+body {
+    background:
+        radial-gradient(circle at 18% 8%, rgba(201,168,76,.13), transparent 28%),
+        radial-gradient(circle at 92% 24%, rgba(47,56,72,.07), transparent 30%),
+        linear-gradient(135deg, #f8f4ee 0%, #eee8de 100%) !important;
+}
+
+#screen-services.active {
+    min-height: 100svh !important;
+    padding: 10px 0 0 !important;
+}
+
+#screen-services.active::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(201,168,76,.85), rgba(154,122,46,.95)) top/100% 4px no-repeat,
+        radial-gradient(circle at 82% 21%, rgba(201,168,76,.10), transparent 24%),
+        radial-gradient(circle at 22% 76%, rgba(255,255,255,.64), transparent 28%);
+    z-index: 0;
+}
+
+#screen-services .screen-inner {
+    max-width: 430px !important;
+    width: min(100%, 430px) !important;
+    min-height: 100svh !important;
+    padding: 22px 18px 245px !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 34px 34px 0 0 !important;
+    background:
+        radial-gradient(circle at 100% 7%, rgba(201,168,76,.10), transparent 27%),
+        linear-gradient(180deg, rgba(255,253,249,.92), rgba(247,242,235,.96)) !important;
+    box-shadow: 0 -1px 0 rgba(255,255,255,.9), 0 20px 60px rgba(28,22,16,.10) !important;
+}
+
+@media (min-width: 760px) {
+    #screen-services.active {
+        padding: 20px 0 !important;
+    }
+    #screen-services .screen-inner {
+        min-height: min(920px, calc(100svh - 40px)) !important;
+        border-radius: 42px !important;
+        border: 1px solid rgba(255,255,255,.78) !important;
+        box-shadow: 0 28px 90px rgba(28,22,16,.18) !important;
+    }
+    #screen-services .screen-inner::before {
+        content: "9:41";
+        display: block;
+        height: 28px;
+        color: #111827;
+        font-weight: 850;
+        font-size: .78rem;
+        letter-spacing: -.02em;
+        padding-left: 8px;
+        margin-bottom: 8px;
+    }
+    #screen-services .screen-inner::after {
+        content: "▮▮  ◜◝  ▭";
+        position: absolute;
+        top: 22px;
+        right: 28px;
+        color: #111827;
+        font-size: .72rem;
+        letter-spacing: .08em;
+        opacity: .9;
+    }
+}
+
+#screen-services .back-btn {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(216,213,208,.85) !important;
+    background: rgba(255,255,255,.74) !important;
+    box-shadow: 0 8px 20px rgba(20,16,12,.06) !important;
+    color: transparent !important;
+    margin-bottom: 12px !important;
+    position: relative !important;
+}
+#screen-services .back-btn::before {
+    content: "‹";
+    color: #2f3848;
+    font-size: 1.75rem;
+    line-height: 36px;
+    position: absolute;
+    inset: 0;
+    text-align: center;
+}
+
+#screen-services .step-header {
+    margin-bottom: 18px !important;
+}
+#screen-services .step-badge {
+    padding: 6px 13px !important;
+    border-radius: 999px !important;
+    background: rgba(201,168,76,.12) !important;
+    border: 1px solid rgba(201,168,76,.28) !important;
+    color: #9a7a2e !important;
+    font-size: .66rem !important;
+    letter-spacing: .14em !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.72) !important;
+}
+#screen-services .step-header h2 {
+    color: #243044 !important;
+    font-size: clamp(2.05rem, 8vw, 2.65rem) !important;
+    letter-spacing: -.045em !important;
+    line-height: .98 !important;
+    margin: 8px 0 10px !important;
+}
+#screen-services .step-header p {
+    color: rgba(43,48,56,.66) !important;
+    font-size: .94rem !important;
+    line-height: 1.45 !important;
+    max-width: 34ch !important;
+}
+
+#screen-services .dept-toggle {
+    min-height: 66px !important;
+    padding: 5px !important;
+    margin: 22px 0 26px !important;
+    border-radius: 24px !important;
+    background: rgba(255,255,255,.78) !important;
+    border: 1px solid rgba(210,205,197,.88) !important;
+    box-shadow: 0 18px 38px rgba(30,24,18,.09), inset 0 1px 0 rgba(255,255,255,.88) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+}
+#screen-services .dept-btn {
+    min-height: 56px !important;
+    border-radius: 19px !important;
+    font-size: .95rem !important;
+    font-weight: 850 !important;
+    color: rgba(72,65,56,.78) !important;
+}
+#screen-services .dept-btn.active {
+    background: linear-gradient(145deg, #374052, #202838) !important;
+    color: #fff !important;
+    box-shadow: 0 14px 28px rgba(32,40,56,.22), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+#bk_serviceMenu {
+    gap: 14px !important;
+}
+#bk_serviceMenu::before {
+    content: "Services";
+    display: block;
+    margin-bottom: 0;
+    color: #9a7a2e;
+    font-size: .7rem;
+    font-weight: 900;
+    letter-spacing: .20em;
+    text-transform: uppercase;
+}
+
+#bk_serviceMenu .service-card,
+#bk_serviceMenu .service-option {
+    min-height: 102px !important;
+    padding: 18px 18px !important;
+    border-radius: 24px !important;
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    column-gap: 15px !important;
+    background: rgba(255,255,255,.80) !important;
+    border: 1px solid rgba(214,209,201,.86) !important;
+    box-shadow: 0 14px 34px rgba(30,24,18,.075), inset 0 1px 0 rgba(255,255,255,.86) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+}
+#bk_serviceMenu .service-card.selected,
+#bk_serviceMenu .service-option.selected {
+    background: linear-gradient(145deg, rgba(255,253,249,.94), rgba(248,244,237,.92)) !important;
+    border: 1.6px solid rgba(201,168,76,.95) !important;
+    box-shadow: 0 18px 44px rgba(154,122,46,.16), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+#bk_serviceMenu .service-card.selected::after,
+#bk_serviceMenu .service-option.selected::after {
+    top: 18px !important;
+    right: 16px !important;
+    padding: 6px 9px !important;
+    border-radius: 999px !important;
+    background: rgba(201,168,76,.10) !important;
+    color: #9a7a2e !important;
+    font-size: .55rem !important;
+    letter-spacing: .16em !important;
+}
+#bk_serviceMenu input[type="radio"],
+#bk_serviceMenu input[type="checkbox"] {
+    width: 25px !important;
+    height: 25px !important;
+    filter: drop-shadow(0 4px 8px rgba(47,56,72,.12));
+}
+#bk_serviceMenu .service-card strong,
+#bk_serviceMenu .service-card .service-title,
+#bk_serviceMenu .service-card .service-name,
+#bk_serviceMenu .service-option .so-name,
+#bk_serviceMenu .svc-name {
+    color: #131923 !important;
+    font-size: 1.04rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -.025em !important;
+}
+#bk_serviceMenu .service-meta,
+#bk_serviceMenu .service-duration,
+#bk_serviceMenu .so-duration,
+#bk_serviceMenu .svc-meta,
+#bk_serviceMenu .service-card small,
+#bk_serviceMenu .service-price,
+#bk_serviceMenu .so-price,
+#bk_serviceMenu .svc-price {
+    color: #9a7a2e !important;
+    font-size: .86rem !important;
+    font-weight: 850 !important;
+}
+
+#bk_stickyBar {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    bottom: 12px !important;
+    width: min(100% - 24px, 406px) !important;
+    max-width: 406px !important;
+    padding: 0 !important;
+    z-index: 80 !important;
+}
+#bk_stickyFull {
+    border-radius: 28px !important;
+    padding: 20px 18px 16px !important;
+    background: rgba(255,255,255,.88) !important;
+    border: 1px solid rgba(214,209,201,.90) !important;
+    box-shadow: 0 24px 70px rgba(21,17,12,.20), inset 0 1px 0 rgba(255,255,255,.92) !important;
+    backdrop-filter: blur(22px) saturate(1.15) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.15) !important;
+}
+.sticky-empty {
+    border-radius: 22px !important;
+    background: rgba(255,255,255,.86) !important;
+    border: 1px solid rgba(214,209,201,.90) !important;
+    box-shadow: 0 18px 48px rgba(21,17,12,.14) !important;
+    padding: 16px 18px !important;
+    color: #7a7060 !important;
+    text-align: center !important;
+}
+.lux-receipt-heading {
+    padding-bottom: 11px !important;
+    margin-bottom: 13px !important;
+    font-size: .65rem !important;
+}
+.lux-receipt-service-row {
+    align-items: center !important;
+    padding-bottom: 12px !important;
+}
+.lux-receipt-service-main {
+    min-width: 0 !important;
+}
+.lux-receipt-service-main::before {
+    content: "";
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    float: left;
+    margin: 0 13px 0 0;
+    background:
+        radial-gradient(circle at 42% 42%, rgba(255,255,255,.35) 0 18%, transparent 19%),
+        linear-gradient(135deg, rgba(201,168,76,.26), rgba(47,56,72,.16));
+    box-shadow: inset 0 0 0 1px rgba(201,168,76,.18), 0 8px 18px rgba(30,24,18,.08);
+}
+.lux-service-name {
+    font-size: .98rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -.02em !important;
+    padding-top: 5px !important;
+}
+.lux-service-meta {
+    font-size: .82rem !important;
+}
+.lux-money {
+    font-size: 1rem !important;
+}
+.lux-tax-title {
+    margin-top: 12px !important;
+}
+.lux-tax-row span,
+.lux-tax-row strong {
+    font-size: .82rem !important;
+}
+.sticky-footer {
+    margin-top: 15px !important;
+    padding-top: 15px !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+}
+.sticky-totals {
+    display: grid !important;
+    grid-template-columns: 1fr 1.25fr !important;
+    gap: 12px !important;
+}
+.sticky-total-line {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+}
+.sticky-total-label {
+    font-size: .74rem !important;
+    letter-spacing: .08em !important;
+    color: #8b8176 !important;
+}
+.sticky-total-value {
+    font-size: 1.12rem !important;
+    color: #2f3848 !important;
+    text-align: left !important;
+}
+.sticky-total-value.accent {
+    font-size: 2.15rem !important;
+    color: #050505 !important;
+    line-height: .9 !important;
+}
+.sticky-actions {
+    display: grid !important;
+    grid-template-columns: 74px 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+.sticky-clear-btn {
+    border: 0 !important;
+    background: transparent !important;
+    color: #8b6f2d !important;
+    font-weight: 750 !important;
+}
+#btnToTech {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+    border-radius: 22px !important;
+    background: linear-gradient(145deg, #374052, #202838) !important;
+    box-shadow: 0 18px 30px rgba(32,40,56,.24) !important;
+    font-weight: 900 !important;
+}
+
+@media (max-width: 420px) {
+    #screen-services .screen-inner {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+    #bk_stickyBar {
+        width: calc(100% - 18px) !important;
+        bottom: 8px !important;
+    }
+    #bk_stickyFull {
+        padding: 18px 15px 14px !important;
+        border-radius: 25px !important;
+    }
+    #bk_serviceMenu .service-card,
+    #bk_serviceMenu .service-option {
+        padding: 16px 14px !important;
+    }
+}
