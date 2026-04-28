@@ -1192,7 +1192,7 @@ function renderClientCareLibrary() {
                 <div class="cx-client-card-meta">${category}</div>
                 <div class="cx-client-card-title">${title}</div>
                 ${description ? `<div class="cx-client-card-desc">${description}</div>` : ''}
-                <a href="${url}" target="_blank" rel="noopener">Open Document</a>
+                <a href="#" onclick="event.preventDefault(); openClientDocument(\`${url}\`, \`${title}\`)">Open Document</a>
             </div>
         `;
     }).join('');
@@ -1240,3 +1240,77 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(bk_moveStagingBannerToBottom, 300);
     setTimeout(bk_moveStagingBannerToBottom, 1000);
 });
+
+
+
+// ── In-App Document Viewer ────────────────────────────────
+let bk_currentDocumentUrl = '';
+let bk_currentDocumentTitle = '';
+
+function bk_escapeAttr(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function bk_toEmbeddableDocumentUrl(url) {
+    if (!url) return '';
+
+    if (url.includes('drive.google.com')) {
+        const fileMatch = url.match(/\/file\/d\/([^/]+)/);
+        if (fileMatch && fileMatch[1]) {
+            return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+        }
+
+        const idMatch = url.match(/[?&]id=([^&]+)/);
+        if (idMatch && idMatch[1]) {
+            return `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+        }
+    }
+
+    return url;
+}
+
+window.openClientDocument = function(url, title) {
+    bk_currentDocumentUrl = url || '';
+    bk_currentDocumentTitle = title || 'Document';
+
+    const frame = document.getElementById('docViewerFrame');
+    const titleEl = document.getElementById('docViewerTitle');
+
+    if (titleEl) titleEl.textContent = bk_currentDocumentTitle;
+
+    if (!frame || !bk_currentDocumentUrl) {
+        toast('Document link unavailable.', 'warning');
+        return;
+    }
+
+    frame.src = bk_toEmbeddableDocumentUrl(bk_currentDocumentUrl);
+
+    _screenHistory.push('screen-doc-viewer');
+    showScreen('screen-doc-viewer');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.bk_closeDocumentViewer = function() {
+    const frame = document.getElementById('docViewerFrame');
+    if (frame) frame.src = '';
+
+    if (_screenHistory[_screenHistory.length - 1] === 'screen-doc-viewer') {
+        _screenHistory.pop();
+    }
+
+    const prev = _screenHistory[_screenHistory.length - 1] || 'screen-booking-mode';
+    showScreen(prev);
+};
+
+window.bk_openDocumentExternal = function() {
+    if (!bk_currentDocumentUrl) {
+        toast('Document link unavailable.', 'warning');
+        return;
+    }
+    window.open(bk_currentDocumentUrl, '_blank', 'noopener');
+};

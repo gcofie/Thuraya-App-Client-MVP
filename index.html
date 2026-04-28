@@ -117,6 +117,70 @@
         }
     </style>
 
+
+    <style id="thurayaInAppDocViewerStyles">
+        .doc-viewer-inner {
+            padding: 0 !important;
+            height: 100vh;
+            max-width: none !important;
+            display: flex !important;
+            flex-direction: column;
+            background: #f7f3ec;
+        }
+        .doc-viewer-header {
+            height: 64px;
+            display: grid;
+            grid-template-columns: 90px 1fr 70px;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,.92);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            position: relative;
+            z-index: 2;
+        }
+        .doc-viewer-header .back-btn {
+            margin: 0 !important;
+            font-size: .82rem;
+            color: var(--primary);
+        }
+        .doc-viewer-title {
+            text-align: center;
+            color: var(--primary);
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-viewer-open {
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--primary);
+            border-radius: 999px;
+            padding: 8px 10px;
+            font-size: .72rem;
+            font-family: var(--font-sans);
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .doc-viewer-frame-wrap {
+            flex: 1;
+            min-height: 0;
+            background: #fff;
+        }
+        #docViewerFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #fff;
+        }
+    </style>
+
 </head>
 <body>
 
@@ -519,6 +583,21 @@
             </div>
         </div>
 
+
+        <!-- IN-APP DOCUMENT VIEWER -->
+        <div class="screen" id="screen-doc-viewer">
+            <div class="screen-inner doc-viewer-inner">
+                <div class="doc-viewer-header">
+                    <button class="back-btn" onclick="bk_closeDocumentViewer()">← Back</button>
+                    <div class="doc-viewer-title" id="docViewerTitle">Document</div>
+                    <button class="doc-viewer-open" id="docViewerOpenExternal" onclick="bk_openDocumentExternal()">Open</button>
+                </div>
+                <div class="doc-viewer-frame-wrap">
+                    <iframe id="docViewerFrame" title="THURAYA Document Viewer"></iframe>
+                </div>
+            </div>
+        </div>
+
         <!-- ── GROUP BOOKING SCREENS ──────────────────────────── -->
 
         <!-- Group Size -->
@@ -714,7 +793,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="app.js?v=phase8-smart-booking-20260427"></script>
+    <script src="app.js?v=doc-viewer-20260428"></script>
     <script src="group-booking.js?v=phase8-smart-booking-20260427"></script>
     <script src="availability.js?v=phase8-smart-booking-20260427"></script>
 </body>
