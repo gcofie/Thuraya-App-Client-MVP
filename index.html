@@ -8,7 +8,7 @@
     <title>THURAYA — Book Your Visit</title>
     <link rel="stylesheet" href="styles.css?v=phase8-smart-booking-20260427">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style id="thurayaClientCareSafePatchStyles">
         /* Visible only after login/guest entry */
@@ -237,6 +237,30 @@
 
     <!-- ── APP SHELL ──────────────────────────────── -->
     <div id="app">
+
+
+        <!-- Theme UI Header: visual only, no app logic affected -->
+        <div class="theme-status-bar" aria-hidden="true">
+            <span id="themeClock">9:41</span>
+            <span>THURAYA</span>
+        </div>
+        <div class="theme-splash" aria-hidden="true">
+            <div class="theme-brand-name">THURAYA</div>
+            <div class="theme-brand-tag">The Haute Address for Cosmopolitan Nails</div>
+            <div class="theme-greeting-row">
+                <div>
+                    <div class="theme-greet-sub">Welcome</div>
+                    <div class="theme-greet-name">Reserve your ritual</div>
+                </div>
+                <div class="theme-greet-badge">Client Portal</div>
+            </div>
+        </div>
+        <div class="theme-tabs" aria-hidden="true">
+            <div class="theme-tab theme-tab-on">Book</div>
+            <div class="theme-tab">Services</div>
+            <div class="theme-tab">Info</div>
+            <div class="theme-tab">Loyalty</div>
+        </div>
 
         <button id="bkFloatingSignOut" class="bk-floating-signout" onclick="bk_signOut()" style="display:none;">
             Sign Out
