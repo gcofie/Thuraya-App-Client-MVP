@@ -80,8 +80,9 @@
         email,
         name: existing.name || user.displayName || "",
         phone: existing.phone || "",
+        dob: existing.dob || existing.Date_Of_Birth || "",
         authProvider: existing.authProvider || provider,
-        profileComplete: !!(existing.name && p9bCleanPhone(existing.phone).length === 10),
+        profileComplete: !!(existing.name && p9bCleanPhone(existing.phone).length === 10 && (existing.dob || existing.Date_Of_Birth)),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         createdAt: existing.createdAt || firebase.firestore.FieldValue.serverTimestamp(),
       },
@@ -92,13 +93,15 @@
     const phoneEl = document.getElementById("prof_phone");
     const emailEl = document.getElementById("prof_email");
     const genderEl = document.getElementById("prof_gender");
+    const dobEl = document.getElementById("prof_dob");
 
     if (nameEl && !nameEl.value) nameEl.value = existing.name || user.displayName || "";
     if (phoneEl && !phoneEl.value) phoneEl.value = existing.phone || existing.Tel_Number || "";
     if (emailEl) emailEl.value = email;
     if (genderEl && existing.gender && !genderEl.value) genderEl.value = existing.gender;
+    if (dobEl && !dobEl.value) dobEl.value = existing.dob || existing.Date_Of_Birth || "";
 
-    const profileComplete = !!((existing.name || user.displayName) && p9bCleanPhone(existing.phone).length === 10);
+    const profileComplete = !!((existing.name || user.displayName) && p9bCleanPhone(existing.phone).length === 10 && (existing.dob || existing.Date_Of_Birth));
 
     if (!profileComplete) {
       p9bGoTo("screen-profile");

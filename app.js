@@ -225,15 +225,18 @@ async function saveProfile() {
     const name   = document.getElementById('prof_name').value.trim();
     const phone  = document.getElementById('prof_phone').value.replace(/\D/g, '');
     const gender = document.getElementById('prof_gender').value;
+    const dob    = document.getElementById('prof_dob')?.value || '';
     const email  = bk_currentUser?.email?.toLowerCase() || '';
 
     if (!name)          { toast('Please enter your full name.', 'warning'); return; }
     if (phone.length !== 10) { toast('Phone number must be 10 digits.', 'warning'); return; }
+    if (!dob)           { toast('Please enter your date of birth.', 'warning'); return; }
 
     setBtnLoading(btn, true, 'Save & Continue');
     try {
         const profile = {
-            name, phone, gender, email,
+            name, phone, gender, dob, email,
+            profileComplete: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await db.collection('Client_Users').doc(email).set(profile, { merge: true });
@@ -243,6 +246,7 @@ async function saveProfile() {
             Tel_Number:  phone,
             Email:       email,
             Gender:      gender,
+            Date_Of_Birth: dob,
             Last_Updated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         bk_clientProfile = profile;

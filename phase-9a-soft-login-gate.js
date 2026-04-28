@@ -55,7 +55,8 @@
     if (!profile) return false;
     const name = String(profile.name || profile.fullName || profile.Forename || "").trim();
     const phone = p9CleanPhone(profile.phone || profile.Tel_Number || profile.tel || "");
-    return !!name && phone.length === 10;
+    const dob = String(profile.dob || profile.Date_Of_Birth || profile.dateOfBirth || "").trim();
+    return !!name && phone.length === 10 && !!dob;
   }
 
   function p9FillProfileForm(user, profile = {}) {
@@ -63,11 +64,13 @@
     const emailEl = document.getElementById("prof_email");
     const phoneEl = document.getElementById("prof_phone");
     const genderEl = document.getElementById("prof_gender");
+    const dobEl = document.getElementById("prof_dob");
 
     if (nameEl && !nameEl.value) nameEl.value = profile.name || profile.fullName || user?.displayName || "";
     if (emailEl) emailEl.value = profile.email || user?.email || "";
     if (phoneEl && !phoneEl.value) phoneEl.value = profile.phone || profile.Tel_Number || "";
     if (genderEl && profile.gender && !genderEl.value) genderEl.value = profile.gender;
+    if (dobEl && !dobEl.value) dobEl.value = profile.dob || profile.Date_Of_Birth || profile.dateOfBirth || "";
   }
 
   function p9EnsureStyles() {
@@ -177,6 +180,7 @@
           name: user.displayName || "",
           email,
           authProvider: "google",
+          dob: "",
           profileComplete: false,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -185,7 +189,7 @@
       );
       p9FillProfileForm(user, { email, name: user.displayName || "" });
       p9GoTo("screen-profile");
-      p9Toast("Please add your phone number before confirming your booking.", "info");
+      p9Toast("Please add your phone number and date of birth before confirming your booking.", "info");
       return false;
     }
 
@@ -201,7 +205,7 @@
       );
       p9FillProfileForm(user, profile);
       p9GoTo("screen-profile");
-      p9Toast("Please add your name and phone number before confirming your booking.", "info");
+      p9Toast("Please add your name, phone number and date of birth before confirming your booking.", "info");
       return false;
     }
 
@@ -284,13 +288,15 @@
           const email = user.email.toLowerCase();
           const phone = p9CleanPhone(document.getElementById("prof_phone")?.value || "");
           const name = String(document.getElementById("prof_name")?.value || "").trim();
+          const dob = String(document.getElementById("prof_dob")?.value || "").trim();
           await db.collection("Client_Users").doc(email).set(
             {
               name,
               phone,
+              dob,
               email,
               authProvider: "google",
-              profileComplete: !!name && phone.length === 10,
+              profileComplete: !!name && phone.length === 10 && !!dob,
               updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             },
             { merge: true }
