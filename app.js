@@ -818,6 +818,7 @@ function populateConfirmScreen() {
 
     document.getElementById('conf_priceBreakdown').innerHTML = priceHtml;
     document.getElementById('conf_total').textContent = finalTotal.toFixed(2) + ' GHC';
+    bk_showSlotHoldNotice();
 }
 
 // ── Promo code ────────────────────────────────────────────
@@ -971,6 +972,71 @@ function bk_validateBookForDetails() {
 }
 
 
+
+// ── Phase 9C: Smart Availability Engine ─────────────────────
+async function bk_hasSlotConflict(techEmail, date, time) {
+    if (!date || !time) return false;
+
+    // If technician is not assigned, do not block; staff can assign later.
+    if (!techEmail || techEmail === 'any' || techEmail === 'ANY') return false;
+
+    const activeStatuses = ['Scheduled', 'Confirmed', 'Arrived', 'In Progress'];
+
+    try {
+        const snap = await db.collection('Appointments')
+            .where('assignedTechEmail', '==', techEmail)
+            .where('dateString', '==', date)
+            .where('timeString', '==', time)
+            .where('status', 'in', activeStatuses)
+            .limit(1)
+            .get();
+
+        return !snap.empty;
+    } catch (e) {
+        console.warn('Phase 9C conflict check failed:', e);
+
+        // Firestore may require a composite index. If the indexed query fails,
+        // fall back to a safer date/time check and filter locally.
+        try {
+            const fallback = await db.collection('Appointments')
+                .where('dateString', '==', date)
+                .where('timeString', '==', time)
+                .limit(20)
+                .get();
+
+            let conflict = false;
+            fallback.forEach(doc => {
+                const a = doc.data() || {};
+                if (
+                    String(a.assignedTechEmail || '').toLowerCase() === String(techEmail || '').toLowerCase() &&
+                    activeStatuses.includes(a.status || '')
+                ) {
+                    conflict = true;
+                }
+            });
+
+            return conflict;
+        } catch (fallbackError) {
+            console.warn('Phase 9C fallback conflict check failed:', fallbackError);
+            toast('We could not verify this slot. Please try again.', 'error');
+            return true;
+        }
+    }
+}
+
+function bk_showSlotHoldNotice() {
+    const confirmBtn = document.getElementById('btnConfirmBooking');
+    if (!confirmBtn || document.getElementById('bkSlotHoldNotice')) return;
+
+    const notice = document.createElement('div');
+    notice.id = 'bkSlotHoldNotice';
+    notice.className = 'slot-hold-notice';
+    notice.innerHTML = '⚡ We will re-check this slot before confirming to prevent double bookings.';
+
+    confirmBtn.insertAdjacentElement('beforebegin', notice);
+}
+
+
 // ── Confirm Booking ───────────────────────────────────────
 
 window.bk_confirmBooking = async function() {
@@ -1003,6 +1069,12 @@ const bookForDetails = bk_validateBookForDetails();
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
+        const conflict = await bk_hasSlotConflict(techEmail, date, time);
+        if (conflict) {
+            toast('This time slot has just been booked. Please choose another time.', 'error');
+            return;
+        }
+
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
