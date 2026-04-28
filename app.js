@@ -1102,6 +1102,74 @@ window.bk_exitBooking = function() {
 
 
 
+// ── Sign Out / Session Reset ──────────────────────────────
+window.bk_signOut = async function() {
+    try {
+        if (typeof bk_clientExperienceUnsub === 'function') {
+            bk_clientExperienceUnsub();
+            bk_clientExperienceUnsub = null;
+        }
+    } catch(e) {
+        console.warn('Client Experience listener cleanup skipped', e);
+    }
+
+    try {
+        if (auth && auth.currentUser) {
+            await auth.signOut();
+        }
+
+        bk_currentUser = null;
+        bk_clientProfile = null;
+        bk_isGuest = false;
+        bk_selectedServices = [];
+        bk_activePromo = null;
+        bk_confirmedAppt = null;
+        bk_clientExperienceDocs = [];
+        bk_clientExperienceFilter = 'all';
+        _screenHistory = ['screen-welcome'];
+
+        try { bk_clearAllSelections(); } catch(e) {}
+        try { selectTechOption('any'); } catch(e) {}
+
+        const fieldsToClear = [
+            'guest_name','guest_phone','guest_gender',
+            'prof_name','prof_phone','prof_gender','prof_email',
+            'bk_date','bk_time','bk_techEmail','bk_techName',
+            'bk_promoCode','bk_promoId','bk_promoCodeVal','bk_discountAmount'
+        ];
+
+        fieldsToClear.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
+
+        const slotsContainer = document.getElementById('bk_slotsContainer');
+        if (slotsContainer) slotsContainer.style.display = 'none';
+
+        const stickyBar = document.getElementById('bk_stickyBar');
+        if (stickyBar) stickyBar.style.display = 'none';
+
+        const promoPanel = document.getElementById('promoInputPanel');
+        if (promoPanel) promoPanel.style.display = 'none';
+
+        const promoStatus = document.getElementById('bk_promoStatus');
+        if (promoStatus) promoStatus.style.display = 'none';
+
+        const viewBookingsBtn = document.getElementById('btnViewBookings');
+        if (viewBookingsBtn) viewBookingsBtn.style.display = 'none';
+
+        showScreen('screen-welcome');
+        toast('Signed out successfully.', 'success');
+
+    } catch(e) {
+        toast('Sign out failed: ' + e.message, 'error');
+    }
+};
+
+
+
 // ── Client Experience Library ─────────────────────────────
 function bk_escapeHtml(value) {
     return String(value || '').replace(/[&<>\"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '\"':'&quot;', "'":'&#039;' })[m]);

@@ -353,6 +353,9 @@
                     <button class="btn-ghost full" onclick="bk_bookAgain()">
                         Book Another Visit
                     </button>
+                    <button class="btn-ghost full" onclick="bk_signOut()">
+                        Sign Out
+                    </button>
                     <button class="btn-ghost full" style="color:var(--error); border-color:var(--error);" onclick="bk_exitBooking()">
                         Exit
                     </button>
@@ -375,6 +378,9 @@
                 <div class="step-footer" style="margin-top:24px;">
                     <button class="btn-primary full" onclick="goToStep('screen-booking-mode')">
                         Book a New Visit
+                    </button>
+                    <button class="btn-ghost full" onclick="bk_signOut()" style="margin-top:10px;">
+                        Sign Out
                     </button>
                 </div>
             </div>
