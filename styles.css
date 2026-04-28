@@ -1372,3 +1372,238 @@ body {
         border-radius: 18px !important;
     }
 }
+
+
+
+/* ============================================================
+   SERVICE CARDS POLISH — PREMIUM SELECTION EXPERIENCE
+   Visual-only patch. Does not touch service selection logic.
+   ============================================================ */
+
+/* Keep service area aligned and calm */
+#screen-services .screen-inner {
+    max-width: 560px !important;
+    margin: 0 auto !important;
+}
+
+/* Therapy toggle: softer, more premium */
+.dept-toggle {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0 !important;
+    padding: 6px !important;
+    background: rgba(255,255,255,.74) !important;
+    border: 1px solid rgba(216,213,208,.95) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 32px rgba(20,16,12,.06) !important;
+    margin: 24px 0 28px !important;
+}
+
+.dept-btn {
+    min-height: 52px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    color: #7a7060 !important;
+    font-weight: 750 !important;
+    font-size: .92rem !important;
+    letter-spacing: .01em !important;
+    transition: all .18s ease !important;
+}
+
+.dept-btn.active {
+    background: #2f3848 !important;
+    color: #fff !important;
+    box-shadow: 0 10px 22px rgba(47,56,72,.16) !important;
+}
+
+/* Section label */
+#screen-services .book-section-title,
+#screen-services .slots-label,
+#screen-services .form-group label {
+    color: #9a7a2e !important;
+    font-size: .72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: .18em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 12px !important;
+}
+
+/* Main service card refinement */
+#bk_serviceMenu {
+    display: grid !important;
+    gap: 12px !important;
+}
+
+#bk_serviceMenu .service-card,
+#bk_serviceMenu .service-option {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    align-items: center !important;
+    column-gap: 14px !important;
+
+    min-height: 92px !important;
+    padding: 18px 18px !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(216,213,208,.95) !important;
+    background: rgba(255,255,255,.78) !important;
+    box-shadow: 0 12px 30px rgba(20,16,12,.055) !important;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease !important;
+}
+
+/* Hover/tap premium feedback */
+#bk_serviceMenu .service-card:hover,
+#bk_serviceMenu .service-option:hover {
+    border-color: rgba(201,168,76,.72) !important;
+    box-shadow: 0 16px 38px rgba(20,16,12,.08) !important;
+}
+
+/* Selected card: strong but elegant */
+#bk_serviceMenu .service-card.selected,
+#bk_serviceMenu .service-option.selected {
+    background: linear-gradient(135deg, rgba(240,237,232,.94), rgba(250,250,248,.92)) !important;
+    border: 1.5px solid #c9a84c !important;
+    box-shadow: 0 18px 44px rgba(154,122,46,.13) !important;
+}
+
+/* Selection circle */
+#bk_serviceMenu input[type="radio"],
+#bk_serviceMenu input[type="checkbox"] {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
+    accent-color: #2f3848 !important;
+    justify-self: center !important;
+}
+
+/* If the card has custom check UI */
+#bk_serviceMenu .so-check {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #8b8176 !important;
+    background: transparent !important;
+}
+
+#bk_serviceMenu .so-check.on {
+    background: #2f3848 !important;
+    border-color: #2f3848 !important;
+    box-shadow: inset 0 0 0 4px #f7f3ec !important;
+}
+
+/* Title hierarchy */
+#bk_serviceMenu .service-card strong,
+#bk_serviceMenu .service-card .service-title,
+#bk_serviceMenu .service-card .service-name,
+#bk_serviceMenu .service-option .so-name,
+#bk_serviceMenu .svc-name {
+    color: #171717 !important;
+    font-size: 1.02rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    letter-spacing: -.01em !important;
+}
+
+/* Meta/pill refinement */
+#bk_serviceMenu .service-meta,
+#bk_serviceMenu .service-duration,
+#bk_serviceMenu .so-duration,
+#bk_serviceMenu .svc-meta,
+#bk_serviceMenu .service-card small {
+    color: #9a7a2e !important;
+    font-size: .82rem !important;
+    font-weight: 750 !important;
+    letter-spacing: .02em !important;
+}
+
+/* Common generated line pill inside service cards */
+#bk_serviceMenu .service-card [style*="background"],
+#bk_serviceMenu .service-option [style*="background"] {
+    border-radius: 999px !important;
+}
+
+/* Price emphasis */
+#bk_serviceMenu .service-price,
+#bk_serviceMenu .so-price,
+#bk_serviceMenu .svc-price {
+    font-family: var(--font-sans, Montserrat, sans-serif) !important;
+    color: #9a7a2e !important;
+    font-size: .88rem !important;
+    font-weight: 850 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+/* Description should be quieter */
+#bk_serviceMenu .service-desc,
+#bk_serviceMenu .svc-desc {
+    color: #8b8176 !important;
+    font-size: .78rem !important;
+    line-height: 1.45 !important;
+    margin-top: 5px !important;
+}
+
+/* Quantity/addon controls */
+#bk_serviceMenu input[type="number"] {
+    width: 54px !important;
+    min-height: 38px !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+    font-weight: 750 !important;
+}
+
+#bk_serviceMenu .addon-tag {
+    background: rgba(240,237,232,.86) !important;
+    color: #9a7a2e !important;
+    border-color: rgba(201,168,76,.35) !important;
+    border-radius: 999px !important;
+    font-size: .62rem !important;
+    letter-spacing: .14em !important;
+}
+
+/* Make selected service content feel intentional */
+#bk_serviceMenu .service-card.selected::after,
+#bk_serviceMenu .service-option.selected::after {
+    content: "Selected";
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    color: #9a7a2e;
+    font-size: .58rem;
+    font-weight: 850;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+/* Prevent label collision when selected badge appears */
+#bk_serviceMenu .service-card.selected,
+#bk_serviceMenu .service-option.selected {
+    padding-right: 82px !important;
+}
+
+/* Mobile tuning */
+@media (max-width: 520px) {
+    .dept-toggle {
+        margin: 20px 0 24px !important;
+    }
+
+    #bk_serviceMenu .service-card,
+    #bk_serviceMenu .service-option {
+        min-height: 86px !important;
+        padding: 16px 16px !important;
+        border-radius: 16px !important;
+        grid-template-columns: 30px minmax(0, 1fr) !important;
+    }
+
+    #bk_serviceMenu .service-card.selected,
+    #bk_serviceMenu .service-option.selected {
+        padding-right: 72px !important;
+    }
+
+    #bk_serviceMenu .service-card.selected::after,
+    #bk_serviceMenu .service-option.selected::after {
+        right: 14px;
+        top: 12px;
+        font-size: .52rem;
+    }
+}
