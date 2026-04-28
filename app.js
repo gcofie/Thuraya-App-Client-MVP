@@ -485,7 +485,7 @@ function updateBreakdown() {
 
         serviceRowsHtml += `
             <div class="lux-receipt-service-row">
-                <div>
+                <div class="lux-receipt-service-main">
                     <div class="lux-service-name">${s.name}${qty > 1 ? ' <span class="lux-service-qty">(x'+qty+')</span>' : ''}</div>
                     <div class="lux-service-meta">${lineMins} mins</div>
                 </div>
@@ -550,6 +550,7 @@ function updateBreakdown() {
         if (nextBtn) nextBtn.disabled = true;
     }
 }
+
 window.bk_clearAllSelections = function() {
     bk_selectedServices = [];
     document.querySelectorAll('#bk_serviceMenu input[type="radio"], #bk_serviceMenu input[type="checkbox"]')
