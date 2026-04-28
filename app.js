@@ -474,28 +474,43 @@ window.bk_updateCounter = function(id, price, dur, name, delta) {
 
 function updateBreakdown() {
     let totalMins = 0, subtotal = 0;
-    let rowsHtml = '';
+    let serviceRowsHtml = '';
 
     bk_selectedServices.forEach(s => {
-        const lineTotal = s.price * (s.qty || 1);
-        const lineMins  = s.dur   * (s.qty || 1);
+        const qty = s.qty || 1;
+        const lineTotal = s.price * qty;
+        const lineMins  = s.dur * qty;
         subtotal  += lineTotal;
         totalMins += lineMins;
-        rowsHtml  += `<div class="breakdown-row">
-            <span>${s.name}${s.qty > 1 ? ' <span style="color:var(--text-muted);font-size:0.78rem;">(x'+s.qty+')</span>' : ''}</span>
-            <span style="font-weight:600;">${lineTotal.toFixed(2)} GHC</span>
-        </div>`;
+
+        serviceRowsHtml += `
+            <div class="lux-receipt-service-row">
+                <div>
+                    <div class="lux-service-name">${s.name}${qty > 1 ? ' <span class="lux-service-qty">(x'+qty+')</span>' : ''}</div>
+                    <div class="lux-service-meta">${lineMins} mins</div>
+                </div>
+                <div class="lux-money">${lineTotal.toFixed(2)} <span>GHC</span></div>
+            </div>`;
     });
 
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
 
     let taxHtml = '';
     if (taxLines.length && subtotal > 0) {
-        taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
-            <span>Subtotal (ex. tax)</span><span>${basePrice.toFixed(2)} GHC</span></div>`;
+        taxHtml += `
+            <div class="lux-receipt-divider"></div>
+            <div class="lux-receipt-row lux-subtotal-row">
+                <span>Subtotal <em>(ex. tax)</em></span>
+                <strong>${basePrice.toFixed(2)} <small>GHC</small></strong>
+            </div>
+            <div class="lux-tax-title">Taxes &amp; statutory charges</div>`;
+
         taxLines.forEach(l => {
-            taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;">
-                <span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
+            taxHtml += `
+                <div class="lux-receipt-row lux-tax-row">
+                    <span>${l.name} <em>(${l.rate}%)</em></span>
+                    <strong>${l.amount.toFixed(2)} <small>GHC</small></strong>
+                </div>`;
         });
     }
 
@@ -512,24 +527,29 @@ function updateBreakdown() {
     if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
 
     if (subtotal > 0) {
-        if (brkList)     brkList.innerHTML    = rowsHtml;
-        if (brkTax)      brkTax.innerHTML     = taxHtml;
-        if (durEl)       durEl.textContent    = totalMins;
-        if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
+        if (brkList) brkList.innerHTML = `
+            <div class="lux-receipt-heading">
+                <span>Selected ritual</span>
+                <span>${bk_selectedServices.length} item${bk_selectedServices.length > 1 ? 's' : ''}</span>
+            </div>
+            ${serviceRowsHtml}`;
+
+        if (brkTax) brkTax.innerHTML = taxHtml;
+        if (durEl) durEl.textContent = totalMins;
+        if (costEl) costEl.textContent = grandTotal.toFixed(2);
         if (stickyEmpty) stickyEmpty.style.display = 'none';
-        if (stickyFull)  stickyFull.style.display  = 'block';
-        if (nextBtn)     nextBtn.disabled = false;
+        if (stickyFull) stickyFull.style.display = 'block';
+        if (nextBtn) nextBtn.disabled = false;
     } else {
-        if (brkList)     brkList.innerHTML    = '';
-        if (brkTax)      brkTax.innerHTML     = '';
-        if (durEl)       durEl.textContent    = '0';
-        if (costEl)      costEl.textContent   = '0.00';
+        if (brkList) brkList.innerHTML = '';
+        if (brkTax) brkTax.innerHTML = '';
+        if (durEl) durEl.textContent = '0';
+        if (costEl) costEl.textContent = '0.00';
         if (stickyEmpty) stickyEmpty.style.display = 'block';
-        if (stickyFull)  stickyFull.style.display  = 'none';
-        if (nextBtn)     nextBtn.disabled = true;
+        if (stickyFull) stickyFull.style.display = 'none';
+        if (nextBtn) nextBtn.disabled = true;
     }
 }
-
 window.bk_clearAllSelections = function() {
     bk_selectedServices = [];
     document.querySelectorAll('#bk_serviceMenu input[type="radio"], #bk_serviceMenu input[type="checkbox"]')
