@@ -2315,3 +2315,424 @@ textarea:focus {
         border: none;
     }
 }
+
+
+
+/* ============================================================
+   PAGE 1 — MAISON LOGIN MATCH
+   Screenshot-matched login/welcome page only.
+   Preserves #btnGoogleSignIn, #btnGuestSignIn and P9B email hooks.
+   ============================================================ */
+
+#screen-welcome {
+    background: #050505 !important;
+    overflow: hidden !important;
+}
+
+.maison-login {
+    min-height: 100% !important;
+    height: 100% !important;
+    background: #050505 !important;
+    color: #fff !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    position: relative !important;
+}
+
+.maison-login::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,.03), transparent 28%),
+        linear-gradient(180deg, #060606 0%, #030303 100%);
+    pointer-events: none;
+}
+
+.maison-topbar {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    padding: 25px 25px 0;
+    color: rgba(255,255,255,.62);
+    font-size: 13px;
+    letter-spacing: 2px;
+    font-family: var(--font-sans);
+}
+
+.maison-center {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 0 28px;
+    margin-top: auto;
+    margin-bottom: auto;
+    transform: translateY(28px);
+}
+
+.maison-rings {
+    position: absolute;
+    left: 50%;
+    top: 44%;
+    width: 315px;
+    height: 315px;
+    transform: translate(-50%, -50%);
+    border: .5px solid rgba(255,255,255,.055);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.maison-rings::before {
+    content: "";
+    position: absolute;
+    inset: 52px;
+    border: .5px solid rgba(255,255,255,.07);
+    border-radius: 50%;
+}
+
+.maison-brand {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 86px !important;
+    text-align: center;
+}
+
+.maison-monogram {
+    font-family: var(--font-serif);
+    font-size: 86px;
+    line-height: .72;
+    font-weight: 300;
+    color: #fff;
+    margin-bottom: 48px;
+    position: relative;
+    letter-spacing: 0;
+}
+
+.maison-monogram::before {
+    content: "•••";
+    position: absolute;
+    left: calc(50% + 10px);
+    top: -17px;
+    transform: translateX(-50%);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #fff;
+}
+
+.maison-brand .logo-wordmark {
+    font-family: var(--font-serif) !important;
+    font-size: 42px !important;
+    font-weight: 300 !important;
+    letter-spacing: 17px !important;
+    color: #fff !important;
+    text-align: center;
+    margin: 0 0 14px;
+    padding-left: 17px;
+}
+
+.maison-brand .logo-tagline {
+    font-family: var(--font-serif) !important;
+    font-size: 14px !important;
+    font-style: italic !important;
+    color: rgba(255,255,255,.67) !important;
+    text-align: center;
+    letter-spacing: 1.8px !important;
+    white-space: nowrap;
+}
+
+.maison-actions {
+    position: relative;
+    z-index: 3;
+    display: grid !important;
+    gap: 0 !important;
+    width: 100%;
+}
+
+.maison-google {
+    height: 72px !important;
+    min-height: 72px !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    color: #111 !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 17px;
+    font-size: 17px !important;
+    font-weight: 400 !important;
+    letter-spacing: .7px !important;
+    text-transform: none !important;
+    box-shadow: none !important;
+    margin-bottom: 29px;
+}
+
+.maison-google svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.maison-email-anchor {
+    text-align: center;
+    margin-bottom: 13px;
+}
+
+.maison-email-title {
+    font-size: 13px;
+    color: rgba(255,255,255,.55);
+    letter-spacing: 4px;
+    font-weight: 500;
+}
+
+/* Override dynamically injected email block */
+#screen-welcome .p9b-email-wrap {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+#screen-welcome .p9b-email-toggle {
+    display: none !important;
+}
+
+#screen-welcome .p9b-email-panel {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#screen-welcome .p9b-email-row {
+    display: grid !important;
+    gap: 17px !important;
+    margin: 0 0 23px !important;
+}
+
+#screen-welcome .p9b-email-row::before,
+#screen-welcome .p9b-email-row::after {
+    font-family: var(--font-sans);
+    color: rgba(255,255,255,.78);
+    font-size: 13px;
+    letter-spacing: 4px;
+    font-weight: 500;
+    margin-left: 24px;
+    margin-bottom: -10px;
+    background: #050505;
+    width: max-content;
+    padding: 0 8px 0 0;
+    position: relative;
+    z-index: 2;
+}
+
+#screen-welcome .p9b-email-row::before {
+    content: "EMAIL";
+    order: 0;
+}
+
+#screen-welcome .p9b-email-input {
+    order: 1;
+}
+
+#screen-welcome .p9b-email-row::after {
+    content: "PASSWORD";
+    order: 2;
+}
+
+#screen-welcome .p9b-password-input {
+    order: 3;
+}
+
+#screen-welcome .p9b-email-input,
+#screen-welcome .p9b-password-input {
+    height: 73px !important;
+    min-height: 73px !important;
+    border-radius: 18px !important;
+    border: .5px solid rgba(255,255,255,.17) !important;
+    background: rgba(255,255,255,.065) !important;
+    color: #fff !important;
+    padding: 0 25px !important;
+    font-size: 18px !important;
+    font-weight: 300 !important;
+    letter-spacing: .3px;
+    box-shadow: none !important;
+}
+
+#screen-welcome .p9b-email-input::placeholder,
+#screen-welcome .p9b-password-input::placeholder {
+    color: rgba(255,255,255,.24) !important;
+}
+
+#screen-welcome .p9b-email-actions {
+    display: block !important;
+    margin: 0 !important;
+}
+
+#screen-welcome .p9b-email-btn.primary {
+    width: 100% !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    color: #070707 !important;
+    border: none !important;
+    font-family: var(--font-sans) !important;
+    font-size: 14px !important;
+    letter-spacing: 7px !important;
+    text-transform: uppercase !important;
+    font-weight: 500 !important;
+}
+
+#screen-welcome .p9b-email-btn.primary::after {
+    content: " →";
+    letter-spacing: 0;
+}
+
+#screen-welcome .p9b-email-btn.secondary {
+    display: none !important;
+}
+
+#screen-welcome .p9b-email-reset {
+    margin: 35px 0 0 !important;
+    width: 100% !important;
+    color: rgba(255,255,255,.62) !important;
+    text-decoration: none !important;
+    font-size: 15px !important;
+    letter-spacing: .5px !important;
+}
+
+#screen-welcome .p9b-email-reset::before {
+    content: "OR";
+    display: block;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,.45);
+    margin-bottom: 27px;
+}
+
+#screen-welcome .p9b-email-reset::after {
+    content: " here";
+    color: #fff;
+}
+
+#screen-welcome .p9b-email-reset {
+    font-size: 0 !important;
+}
+
+#screen-welcome .p9b-email-reset::before,
+#screen-welcome .p9b-email-reset::after {
+    font-size: 15px !important;
+}
+
+#screen-welcome .p9b-email-reset::after {
+    content: "Forgot password? Reset here";
+}
+
+#screen-welcome .p9b-email-note {
+    display: none !important;
+}
+
+.maison-guest {
+    display: none !important;
+}
+
+.maison-footer {
+    position: relative;
+    z-index: 3;
+    border-top: .5px solid rgba(255,255,255,.08);
+    padding: 32px 28px 30px;
+    text-align: center;
+}
+
+.maison-new {
+    color: rgba(255,255,255,.62);
+    font-size: 15px;
+    letter-spacing: .8px;
+    margin-bottom: 26px;
+}
+
+.maison-new button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: .5px solid rgba(255,255,255,.45);
+    padding: 0 0 2px;
+}
+
+.maison-footer .welcome-footnote {
+    font-family: var(--font-serif) !important;
+    font-style: italic;
+    color: rgba(255,255,255,.62) !important;
+    font-size: 14px !important;
+    letter-spacing: 1.6px;
+    margin: 0 !important;
+}
+
+#screen-welcome .error-text {
+    margin-top: 16px;
+    text-align: center;
+    color: #ffb8b8 !important;
+}
+
+/* Hide global app header only when welcome is active */
+#app:has(#screen-welcome.active) > .theme-status-bar,
+#app:has(#screen-welcome.active) > .theme-splash,
+#app:has(#screen-welcome.active) > .theme-tabs {
+    display: none !important;
+}
+
+@media (max-width: 420px) {
+    .maison-topbar {
+        padding: 21px 21px 0;
+    }
+
+    .maison-center {
+        padding: 0 22px;
+        transform: translateY(20px);
+    }
+
+    .maison-brand {
+        margin-bottom: 66px !important;
+    }
+
+    .maison-brand .logo-wordmark {
+        font-size: 34px !important;
+        letter-spacing: 13px !important;
+        padding-left: 13px;
+    }
+
+    .maison-brand .logo-tagline {
+        font-size: 12px !important;
+        white-space: normal;
+    }
+
+    .maison-monogram {
+        font-size: 76px;
+        margin-bottom: 38px;
+    }
+
+    .maison-google,
+    #screen-welcome .p9b-email-btn.primary {
+        height: 64px !important;
+        min-height: 64px !important;
+    }
+
+    #screen-welcome .p9b-email-input,
+    #screen-welcome .p9b-password-input {
+        height: 62px !important;
+        min-height: 62px !important;
+    }
+
+    .maison-footer {
+        padding: 25px 22px 24px;
+    }
+}

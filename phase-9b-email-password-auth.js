@@ -249,14 +249,33 @@
   function p9bMountWelcomeEmail() {
     if (P9B.mountedWelcome || document.getElementById("p9bWelcomeEmailWrap")) return;
     const welcomeActions = document.querySelector("#screen-welcome .welcome-actions");
+    const anchor = document.getElementById("maisonEmailAnchor");
     const guestBtn = document.getElementById("btnGuestSignIn");
     if (!welcomeActions || !guestBtn) return;
 
     const holder = document.createElement("div");
     holder.innerHTML = p9bEmailBlock("p9bWelcome");
     const block = holder.firstElementChild;
-    guestBtn.insertAdjacentElement("afterend", block);
+
+    if (anchor) anchor.insertAdjacentElement("afterend", block);
+    else guestBtn.insertAdjacentElement("beforebegin", block);
+
+    const panel = block.querySelector(".p9b-email-panel");
+    if (panel) panel.classList.add("active");
+
+    const toggle = block.querySelector(".p9b-email-toggle");
+    if (toggle) toggle.style.display = "none";
+
     p9bWireEmailBlock(block);
+
+    const createBtn = document.getElementById("maisonCreateAccountBtn");
+    if (createBtn) {
+      createBtn.addEventListener("click", () => {
+        const signup = block.querySelector("[data-p9b-action='signup']");
+        if (signup) signup.click();
+      });
+    }
+
     P9B.mountedWelcome = true;
   }
 
