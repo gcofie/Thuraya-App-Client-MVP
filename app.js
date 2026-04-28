@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     bk_clientProfile = doc.data();
                     // ── EDIT 1: send returning users to mode select, not straight to services ──
                     loadTechs();
+                    startClientCareLibraryListener();
                     goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
@@ -242,6 +243,7 @@ async function saveGuestProfile() {
         }, { merge: true });
 
         loadTechs();
+        startClientCareLibraryListener();
         // ── EDIT 2: guests go to mode select after saving details ──
         goToStep('screen-booking-mode');
         const bar2 = document.getElementById('bk_stickyBar');
@@ -282,6 +284,7 @@ async function saveProfile() {
         }, { merge: true });
         bk_clientProfile = profile;
         loadTechs();
+        startClientCareLibraryListener();
         // ── EDIT 3: new users go to mode select after profile save ──
         goToStep('screen-booking-mode');
     } catch (e) {
