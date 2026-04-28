@@ -29,9 +29,6 @@ let bk_selectedDept   = 'Hand';
 let bk_selectedServices = [];
 let bk_activePromo    = null;
 let bk_confirmedAppt  = null;
-let bk_clientExperienceDocs = [];
-let bk_clientExperienceFilter = 'all';
-let bk_clientExperienceUnsub = null;
 let _screenHistory    = ['screen-welcome'];
 const todayStr        = (() => {
     const n = new Date();
@@ -131,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadTaxConfig();
     loadMenu();
-    startClientExperienceListener();
 
     auth.onAuthStateChanged(async user => {
         if (user) {
@@ -1099,82 +1095,6 @@ window.bk_exitBooking = function() {
     showScreen('screen-welcome');
 };
 
-
-
-
-// ── Client Experience Library ─────────────────────────────
-function bk_escapeHtml(value) {
-    return String(value || '').replace(/[&<>\"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '\"':'&quot;', "'":'&#039;' })[m]);
-}
-
-function bk_formatCxDate(ts) {
-    try {
-        if (!ts) return '';
-        const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
-        return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-    } catch(e) { return ''; }
-}
-
-function startClientExperienceListener() {
-    if (bk_clientExperienceUnsub) return;
-    try {
-        bk_clientExperienceUnsub = db.collection('Client_Experience')
-            .where('visibleToClient', '==', true)
-            .onSnapshot(snapshot => {
-                bk_clientExperienceDocs = [];
-                snapshot.forEach(doc => {
-                    const d = { id: doc.id, ...doc.data() };
-                    if (d.archived === true) return;
-                    bk_clientExperienceDocs.push(d);
-                });
-                bk_clientExperienceDocs.sort((a, b) => {
-                    const ad = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0);
-                    const bd = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0);
-                    return bd - ad;
-                });
-                renderClientExperienceLibrary();
-            }, err => {
-                console.error('Client Experience listener failed:', err);
-                const el = document.getElementById('bk_clientExperienceList');
-                if (el) el.innerHTML = `<div class=\"cx2-empty\" style=\"color:var(--error);\">Could not load client care library: ${bk_escapeHtml(err.message)}</div>`;
-            });
-    } catch(e) { console.error('Client Experience startup failed:', e); }
-}
-
-window.bk_openClientExperience = function(category) {
-    bk_clientExperienceFilter = category || 'all';
-    goToStep('screen-client-experience');
-    renderClientExperienceLibrary();
-};
-
-window.bk_filterClientExperience = function(category) {
-    bk_clientExperienceFilter = category || 'all';
-    renderClientExperienceLibrary();
-};
-
-function renderClientExperienceLibrary() {
-    const listEl = document.getElementById('bk_clientExperienceList');
-    if (!listEl) return;
-    document.querySelectorAll('.cx2-tab').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-cx2-tab') === bk_clientExperienceFilter);
-    });
-    const docs = bk_clientExperienceDocs.filter(d => bk_clientExperienceFilter === 'all' || (d.category || 'info') === bk_clientExperienceFilter);
-    if (!docs.length) {
-        const msg = bk_clientExperienceFilter === 'all' ? 'No client care documents are available yet.' : `No ${bk_clientExperienceFilter} documents are available yet.`;
-        listEl.innerHTML = `<div class=\"cx2-empty\">${bk_escapeHtml(msg)}<br>New uploads from the THURAYA staff app will appear here automatically.</div>`;
-        return;
-    }
-    const labelMap = { selfcare:'Selfcare', info:'Info', loyalty:'Loyalty', promo:'Promo' };
-    listEl.innerHTML = docs.map(d => {
-        const category = d.category || 'info';
-        const label = labelMap[category] || category;
-        const title = bk_escapeHtml(d.title || d.fileName || 'Client document');
-        const desc = d.description ? `<p class=\"cx2-desc\">${bk_escapeHtml(d.description)}</p>` : '';
-        const fileName = d.fileName ? bk_escapeHtml(d.fileName) : 'Document';
-        const dateText = bk_formatCxDate(d.updatedAt || d.createdAt);
-        return `<div class=\"cx2-card\"><div class=\"cx2-card-head\"><div class=\"cx2-card-title\">${title}</div><span class=\"cx2-badge\">${bk_escapeHtml(label)}</span></div>${desc}<button class=\"btn-outline full\" onclick=\"window.open('${bk_escapeHtml(d.fileUrl || '#')}', '_blank')\">Open ${fileName}</button>${dateText ? `<div class=\"cx2-meta\">Updated ${bk_escapeHtml(dateText)}</div>` : ''}</div>`;
-    }).join('');
-}
 
 // Phase 5.5E: Client App availability alignment patch loaded.
 console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
