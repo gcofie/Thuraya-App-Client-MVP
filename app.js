@@ -1177,13 +1177,13 @@ function renderClientCareLibrary() {
         : bk_clientExperienceDocs.filter(d => (d.category || '').toLowerCase() === bk_clientExperienceFilter);
 
     if (!docs.length) {
-        el.innerHTML = `<div class="form-card" style="text-align:center;color:var(--text-muted);">No client care documents available yet.</div>`;
+        el.innerHTML = `<div class="form-card" style="text-align:center;color:var(--text-muted);">No information available yet.</div>`;
         return;
     }
 
     el.innerHTML = docs.map(d => {
         const category = (d.category || 'info').toString();
-        const title = d.title || 'Client Care Document';
+        const title = d.title || 'Information';
         const description = d.description || d.note || '';
         const url = d.fileUrl || d.url || '#';
 
