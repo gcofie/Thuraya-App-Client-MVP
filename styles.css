@@ -1099,3 +1099,68 @@ body {
         min-width: 92px;
     }
 }
+
+/* ===== FINAL BREAKDOWN POLISH ===== */
+
+.breakdown-row{
+  padding:6px 0 !important;
+}
+
+.breakdown-row.primary{
+  font-weight:600;
+}
+
+.breakdown-row.subtotal{
+  font-weight:700;
+}
+
+.breakdown-row.tax{
+  color:#666 !important;
+  font-size:0.95rem;
+}
+
+.breakdown-divider{
+  height:1px;
+  background:rgba(0,0,0,0.08);
+  margin:12px 0 16px;
+}
+
+.breakdown-row span:last-child{
+  display:inline-flex;
+  justify-content:flex-end;
+  gap:6px;
+  min-width:120px;
+  font-variant-numeric:tabular-nums;
+}
+
+.sticky-total-line{
+  margin-top:6px;
+}
+
+.sticky-total-label{
+  font-size:0.8rem;
+  letter-spacing:1px;
+  color:#777;
+}
+
+.sticky-total-value{
+  font-size:1.1rem;
+  font-weight:600;
+}
+
+.sticky-total-value.accent{
+  font-size:1.4rem;
+  font-weight:700;
+  color:#000;
+}
+
+.sticky-total-unit{
+  font-size:0.85rem;
+  color:#777;
+}
+
+.sticky-footer{
+  margin-top:12px !important;
+  padding-top:12px !important;
+}
+
