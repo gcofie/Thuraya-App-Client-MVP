@@ -1311,3 +1311,64 @@ body {
     .sticky-actions { justify-content: space-between !important; }
     #btnToTech { flex: 1; min-width: 0 !important; }
 }
+
+
+
+/* ============================================================
+   COST BREAKDOWN — SAME WIDTH AS SERVICE MENU
+   Align sticky receipt under service menu instead of floating wide.
+   ============================================================ */
+
+#screen-services .screen-inner {
+    position: relative;
+}
+
+/* Keep the cost panel visually aligned to the service menu column */
+#bk_stickyBar {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(100% - 32px, 640px) !important;
+    max-width: 640px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    bottom: 18px !important;
+}
+
+/* The visible receipt now owns the width */
+#bk_stickyFull {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 18px !important;
+}
+
+/* Make the receipt breathe within the same card width */
+#bk_stickyFull {
+    padding: 22px 24px !important;
+}
+
+/* On desktop/tablet keep it aligned to the app content, not full browser */
+@media (min-width: 700px) {
+    #bk_stickyBar {
+        width: min(100% - 80px, 640px) !important;
+        max-width: 640px !important;
+        bottom: 22px !important;
+    }
+}
+
+/* On mobile keep safe side spacing */
+@media (max-width: 520px) {
+    #bk_stickyBar {
+        width: calc(100% - 24px) !important;
+        bottom: 12px !important;
+    }
+
+    #bk_stickyFull {
+        padding: 18px !important;
+        border-radius: 18px !important;
+    }
+}
