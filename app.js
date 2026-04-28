@@ -1288,7 +1288,10 @@ window.openClientDocument = function(url, title) {
         return;
     }
 
-    frame.src = bk_toEmbeddableDocumentUrl(bk_currentDocumentUrl);
+    frame.src = '';
+    setTimeout(() => {
+        frame.src = bk_toEmbeddableDocumentUrl(bk_currentDocumentUrl);
+    }, 50);
 
     _screenHistory.push('screen-doc-viewer');
     showScreen('screen-doc-viewer');
