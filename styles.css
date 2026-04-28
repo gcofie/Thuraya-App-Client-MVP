@@ -935,3 +935,167 @@ body {
     line-height: 1.45;
     border: 1px solid rgba(140, 98, 57, 0.18);
 }
+
+
+
+/* ============================================================
+   COST BREAKDOWN ALIGNMENT POLISH
+   Visual-only patch. No booking/pricing logic changed.
+   ============================================================ */
+
+#bk_stickyBar {
+    box-sizing: border-box;
+}
+
+#bk_stickyFull {
+    width: 100%;
+}
+
+.sticky-summary {
+    margin-bottom: 12px !important;
+}
+
+.sticky-line-items,
+#bk_taxBreakdown {
+    width: 100%;
+}
+
+.breakdown-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) max-content !important;
+    align-items: baseline !important;
+    column-gap: 18px !important;
+    width: 100%;
+    padding: 4px 0 !important;
+    line-height: 1.25;
+}
+
+.breakdown-row span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.breakdown-row span:last-child {
+    min-width: 108px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+#bk_taxBreakdown .breakdown-row {
+    color: var(--primary) !important;
+    font-weight: 650 !important;
+}
+
+#bk_taxBreakdown .breakdown-row:first-child {
+    border-top: 1px dashed var(--border) !important;
+    margin-top: 7px !important;
+    padding-top: 9px !important;
+}
+
+.sticky-footer {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: end !important;
+    gap: 18px !important;
+    padding-top: 10px;
+}
+
+.sticky-totals {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    min-width: 0;
+}
+
+.sticky-total-line {
+    display: grid !important;
+    grid-template-columns: auto auto 1fr !important;
+    align-items: baseline !important;
+    gap: 5px !important;
+    width: 100%;
+}
+
+.sticky-total-label {
+    min-width: 74px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.sticky-total-value {
+    min-width: 54px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.sticky-total-value.accent {
+    min-width: 76px;
+}
+
+.sticky-total-unit {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.sticky-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    flex-shrink: 0;
+}
+
+.sticky-clear-btn {
+    min-width: 54px;
+    text-align: center;
+}
+
+.sticky-actions .btn-primary,
+#btnToTech {
+    min-width: 148px;
+    white-space: nowrap;
+}
+
+/* Wider screens: make the summary feel intentional, not floating awkwardly */
+@media (min-width: 700px) {
+    .sticky-bar {
+        max-width: 640px !important;
+        padding: 18px 24px !important;
+        border-radius: 0 !important;
+    }
+
+    .breakdown-row {
+        font-size: 0.92rem !important;
+    }
+
+    .sticky-footer {
+        grid-template-columns: 1fr auto !important;
+    }
+}
+
+/* Small phones: stack the footer so Continue never squeezes totals */
+@media (max-width: 420px) {
+    .sticky-footer {
+        grid-template-columns: 1fr !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .sticky-actions {
+        width: 100%;
+        justify-content: space-between !important;
+    }
+
+    .sticky-actions .btn-primary,
+    #btnToTech {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .breakdown-row span:last-child {
+        min-width: 92px;
+    }
+}
