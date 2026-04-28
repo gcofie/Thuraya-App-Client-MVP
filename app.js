@@ -29,40 +29,11 @@ let bk_selectedDept   = 'Hand';
 let bk_selectedServices = [];
 let bk_activePromo    = null;
 let bk_confirmedAppt  = null;
-let bk_clientExperienceDocs = [];
-let bk_clientExperienceFilter = 'all';
-let bk_clientExperienceUnsub = null;
 let _screenHistory    = ['screen-welcome'];
 const todayStr        = (() => {
     const n = new Date();
     return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 })();
-
-
-
-function bk_isAuthOrGuestReady() {
-    return !!bk_currentUser || !!bk_clientProfile || bk_isGuest === true;
-}
-
-function bk_showFloatingSignOut(show) {
-    const btn = document.getElementById('bkFloatingSignOut');
-    if (!btn) return;
-    btn.style.display = show ? 'block' : 'none';
-}
-
-
-function bk_moveStagingBannerToBottom() {
-    const selectors = ['#stagingBanner', '.staging-banner', '[data-staging-banner]', '.env-banner'];
-    selectors.forEach(sel => {
-        document.querySelectorAll(sel).forEach(el => {
-            el.style.top = 'auto';
-            el.style.bottom = '0';
-            el.style.left = '0';
-            el.style.right = '0';
-            el.style.zIndex = '9998';
-        });
-    });
-}
 
 // ── Screen navigation ────────────────────────────────────
 
@@ -73,11 +44,6 @@ function showScreen(id) {
     });
     const target = document.getElementById(id);
     if (target) { target.style.display = 'flex'; requestAnimationFrame(() => target.classList.add('active')); }
-
-    // Hide on entry/profile screens. Show after a client has entered the app.
-    const hideOn = ['screen-welcome', 'screen-profile', 'screen-guest'];
-    bk_showFloatingSignOut(!hideOn.includes(id) && bk_isAuthOrGuestReady());
-    bk_moveStagingBannerToBottom();
 }
 
 function goToStep(id) {
@@ -157,14 +123,11 @@ function applyTaxes(listedTotal) {
 // ── Init & Auth ───────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    bk_showFloatingSignOut(false);
-    bk_moveStagingBannerToBottom();
     const dateEl = document.getElementById('bk_date');
     if (dateEl) dateEl.min = todayStr;
 
     loadTaxConfig();
     loadMenu();
-    startClientExperienceListener();
 
     auth.onAuthStateChanged(async user => {
         if (user) {
@@ -175,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     bk_clientProfile = doc.data();
                     // ── EDIT 1: send returning users to mode select, not straight to services ──
                     loadTechs();
-                    startClientCareLibraryListener();
+                    bk_afterClientEntry();
                     goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
@@ -243,7 +206,7 @@ async function saveGuestProfile() {
         }, { merge: true });
 
         loadTechs();
-        startClientCareLibraryListener();
+        bk_afterClientEntry();
         // ── EDIT 2: guests go to mode select after saving details ──
         goToStep('screen-booking-mode');
         const bar2 = document.getElementById('bk_stickyBar');
@@ -284,7 +247,7 @@ async function saveProfile() {
         }, { merge: true });
         bk_clientProfile = profile;
         loadTechs();
-        startClientCareLibraryListener();
+        bk_afterClientEntry();
         // ── EDIT 3: new users go to mode select after profile save ──
         goToStep('screen-booking-mode');
     } catch (e) {
@@ -1137,20 +1100,117 @@ window.bk_exitBooking = function() {
 };
 
 
+// Phase 5.5E: Client App availability alignment patch loaded.
+console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
 
 
-// ── Sign Out / Session Reset ──────────────────────────────
+console.log('Thuraya Phase 8F client-friendly booking status labels loaded.');
+
+
+// ── Client Care Library + Sign Out Safe Patch ─────────────
+let bk_clientExperienceDocs = [];
+let bk_clientExperienceFilter = 'all';
+let bk_clientExperienceUnsub = null;
+
+function bk_showFloatingSignOut(show) {
+    const btn = document.getElementById('bkFloatingSignOut');
+    if (btn) btn.style.display = show ? 'block' : 'none';
+}
+
+function bk_moveStagingBannerToBottom() {
+    ['#stagingBanner', '.staging-banner', '[data-staging-banner]', '.env-banner'].forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+            el.style.top = 'auto';
+            el.style.bottom = '0';
+            el.style.left = '0';
+            el.style.right = '0';
+            el.style.zIndex = '9998';
+        });
+    });
+}
+
+function startClientCareLibraryListener() {
+    try {
+        if (typeof bk_clientExperienceUnsub === 'function') {
+            bk_clientExperienceUnsub();
+        }
+
+        bk_clientExperienceUnsub = db.collection('Client_Experience')
+            .where('visibleToClient', '==', true)
+            .where('archived', '==', false)
+            .onSnapshot(snapshot => {
+                bk_clientExperienceDocs = [];
+                snapshot.forEach(doc => {
+                    bk_clientExperienceDocs.push({ id: doc.id, ...doc.data() });
+                });
+
+                bk_clientExperienceDocs.sort((a, b) => {
+                    const at = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                    const bt = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                    return bt - at;
+                });
+
+                renderClientCareLibrary();
+            }, err => {
+                const el = document.getElementById('bk_clientExperienceList');
+                if (el) el.innerHTML = `<p style="color:var(--error);">Could not load care library: ${err.message}</p>`;
+                console.warn('Client Care Library listener error:', err);
+            });
+    } catch(e) {
+        console.warn('Client Care Library listener skipped:', e);
+    }
+}
+
+window.bk_filterClientExperience = function(category, btn) {
+    bk_clientExperienceFilter = category || 'all';
+    document.querySelectorAll('.cx-client-tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderClientCareLibrary();
+};
+
+function renderClientCareLibrary() {
+    const el = document.getElementById('bk_clientExperienceList');
+    if (!el) return;
+
+    const docs = bk_clientExperienceFilter === 'all'
+        ? bk_clientExperienceDocs
+        : bk_clientExperienceDocs.filter(d => (d.category || '').toLowerCase() === bk_clientExperienceFilter);
+
+    if (!docs.length) {
+        el.innerHTML = `<div class="form-card" style="text-align:center;color:var(--text-muted);">No client care documents available yet.</div>`;
+        return;
+    }
+
+    el.innerHTML = docs.map(d => {
+        const category = (d.category || 'info').toString();
+        const title = d.title || 'Client Care Document';
+        const description = d.description || d.note || '';
+        const url = d.fileUrl || d.url || '#';
+
+        return `
+            <div class="cx-client-card">
+                <div class="cx-client-card-meta">${category}</div>
+                <div class="cx-client-card-title">${title}</div>
+                ${description ? `<div class="cx-client-card-desc">${description}</div>` : ''}
+                <a href="${url}" target="_blank" rel="noopener">Open Document</a>
+            </div>
+        `;
+    }).join('');
+}
+
+function bk_afterClientEntry() {
+    bk_showFloatingSignOut(true);
+    bk_moveStagingBannerToBottom();
+    startClientCareLibraryListener();
+}
+
 window.bk_signOut = async function() {
     try {
         if (typeof bk_clientExperienceUnsub === 'function') {
             bk_clientExperienceUnsub();
             bk_clientExperienceUnsub = null;
         }
-    } catch(e) {
-        console.warn('Client Experience listener cleanup skipped', e);
-    }
 
-    try {
         if (auth && auth.currentUser) {
             await auth.signOut();
         }
@@ -1166,124 +1226,17 @@ window.bk_signOut = async function() {
         _screenHistory = ['screen-welcome'];
 
         try { bk_clearAllSelections(); } catch(e) {}
-        try { selectTechOption('any'); } catch(e) {}
-
-        const fieldsToClear = [
-            'guest_name','guest_phone','guest_gender',
-            'prof_name','prof_phone','prof_gender','prof_email',
-            'bk_date','bk_time','bk_techEmail','bk_techName',
-            'bk_promoCode','bk_promoId','bk_promoCodeVal','bk_discountAmount'
-        ];
-
-        fieldsToClear.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (el.tagName === 'SELECT') el.selectedIndex = 0;
-            else el.value = '';
-        });
-
-        const slotsContainer = document.getElementById('bk_slotsContainer');
-        if (slotsContainer) slotsContainer.style.display = 'none';
-
-        const stickyBar = document.getElementById('bk_stickyBar');
-        if (stickyBar) stickyBar.style.display = 'none';
-
-        const promoPanel = document.getElementById('promoInputPanel');
-        if (promoPanel) promoPanel.style.display = 'none';
-
-        const promoStatus = document.getElementById('bk_promoStatus');
-        if (promoStatus) promoStatus.style.display = 'none';
-
-        const viewBookingsBtn = document.getElementById('btnViewBookings');
-        if (viewBookingsBtn) viewBookingsBtn.style.display = 'none';
 
         bk_showFloatingSignOut(false);
         showScreen('screen-welcome');
         toast('Signed out successfully.', 'success');
-
     } catch(e) {
         toast('Sign out failed: ' + e.message, 'error');
     }
 };
 
-
-
-// ── Client Experience Library ─────────────────────────────
-function bk_escapeHtml(value) {
-    return String(value || '').replace(/[&<>\"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '\"':'&quot;', "'":'&#039;' })[m]);
-}
-
-function bk_formatCxDate(ts) {
-    try {
-        if (!ts) return '';
-        const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
-        return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-    } catch(e) { return ''; }
-}
-
-function startClientExperienceListener() {
-    if (bk_clientExperienceUnsub) return;
-    try {
-        bk_clientExperienceUnsub = db.collection('Client_Experience')
-            .where('visibleToClient', '==', true)
-            .onSnapshot(snapshot => {
-                bk_clientExperienceDocs = [];
-                snapshot.forEach(doc => {
-                    const d = { id: doc.id, ...doc.data() };
-                    if (d.archived === true) return;
-                    bk_clientExperienceDocs.push(d);
-                });
-                bk_clientExperienceDocs.sort((a, b) => {
-                    const ad = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0);
-                    const bd = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0);
-                    return bd - ad;
-                });
-                renderClientExperienceLibrary();
-            }, err => {
-                console.error('Client Experience listener failed:', err);
-                const el = document.getElementById('bk_clientExperienceList');
-                if (el) el.innerHTML = `<div class=\"cx2-empty\" style=\"color:var(--error);\">Could not load client care library: ${bk_escapeHtml(err.message)}</div>`;
-            });
-    } catch(e) { console.error('Client Experience startup failed:', e); }
-}
-
-window.bk_openClientExperience = function(category) {
-    bk_clientExperienceFilter = category || 'all';
-    goToStep('screen-client-experience');
-    renderClientExperienceLibrary();
-};
-
-window.bk_filterClientExperience = function(category) {
-    bk_clientExperienceFilter = category || 'all';
-    renderClientExperienceLibrary();
-};
-
-function renderClientExperienceLibrary() {
-    const listEl = document.getElementById('bk_clientExperienceList');
-    if (!listEl) return;
-    document.querySelectorAll('.cx2-tab').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-cx2-tab') === bk_clientExperienceFilter);
-    });
-    const docs = bk_clientExperienceDocs.filter(d => bk_clientExperienceFilter === 'all' || (d.category || 'info') === bk_clientExperienceFilter);
-    if (!docs.length) {
-        const msg = bk_clientExperienceFilter === 'all' ? 'No client care documents are available yet.' : `No ${bk_clientExperienceFilter} documents are available yet.`;
-        listEl.innerHTML = `<div class=\"cx2-empty\">${bk_escapeHtml(msg)}<br>New uploads from the THURAYA staff app will appear here automatically.</div>`;
-        return;
-    }
-    const labelMap = { selfcare:'Selfcare', info:'Info', loyalty:'Loyalty', promo:'Promo' };
-    listEl.innerHTML = docs.map(d => {
-        const category = d.category || 'info';
-        const label = labelMap[category] || category;
-        const title = bk_escapeHtml(d.title || d.fileName || 'Client document');
-        const desc = d.description ? `<p class=\"cx2-desc\">${bk_escapeHtml(d.description)}</p>` : '';
-        const fileName = d.fileName ? bk_escapeHtml(d.fileName) : 'Document';
-        const dateText = bk_formatCxDate(d.updatedAt || d.createdAt);
-        return `<div class=\"cx2-card\"><div class=\"cx2-card-head\"><div class=\"cx2-card-title\">${title}</div><span class=\"cx2-badge\">${bk_escapeHtml(label)}</span></div>${desc}<button class=\"btn-outline full\" onclick=\"window.open('${bk_escapeHtml(d.fileUrl || '#')}', '_blank')\">Open ${fileName}</button>${dateText ? `<div class=\"cx2-meta\">Updated ${bk_escapeHtml(dateText)}</div>` : ''}</div>`;
-    }).join('');
-}
-
-// Phase 5.5E: Client App availability alignment patch loaded.
-console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
-
-
-console.log('Thuraya Phase 8F client-friendly booking status labels loaded.');
+document.addEventListener('DOMContentLoaded', () => {
+    bk_showFloatingSignOut(false);
+    setTimeout(bk_moveStagingBannerToBottom, 300);
+    setTimeout(bk_moveStagingBannerToBottom, 1000);
+});

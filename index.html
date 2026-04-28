@@ -10,11 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    <style id="clientExperiencePhase2Styles">
-        .cx2-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 18px}.cx2-tab{border:1px solid var(--border);background:rgba(255,255,255,.72);color:var(--text-muted);border-radius:999px;padding:9px 13px;font-family:var(--font-sans);font-size:.74rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}.cx2-tab.active{background:var(--charcoal,#111);color:#fff;border-color:var(--charcoal,#111)}.cx2-list{display:flex;flex-direction:column;gap:12px}.cx2-card{background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 10px 28px rgba(0,0,0,.045)}.cx2-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}.cx2-card-title{color:var(--text-main,#171717);font-weight:700;font-size:.96rem;line-height:1.3}.cx2-badge{flex-shrink:0;border-radius:999px;padding:4px 8px;background:#f4f4f4;color:var(--text-muted);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700}.cx2-desc{color:var(--text-muted);font-size:.82rem;line-height:1.55;margin:0 0 12px}.cx2-meta{color:var(--text-muted);font-size:.72rem;margin-top:8px}.cx2-empty{text-align:center;color:var(--text-muted);padding:28px 10px;font-size:.9rem;line-height:1.6}
-    </style>
-
-    <style id="bkFloatingSignOutStyles">
+    <style id="thurayaClientCareSafePatchStyles">
+        /* Visible only after login/guest entry */
         .bk-floating-signout {
             position: fixed;
             top: 58px;
@@ -34,40 +31,14 @@
             cursor: pointer;
             box-shadow: 0 10px 24px rgba(0,0,0,0.18);
         }
-        .bk-floating-signout:active { transform: scale(0.97); }
 
-        /* Push staging environment banner to bottom so it does not cover Sign Out */
-        #stagingBanner,
-        .staging-banner,
-        [data-staging-banner],
-        .env-banner {
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 9998 !important;
-        }
-
-        body[data-env="staging"] #app,
-        body.staging #app {
-            padding-top: 18px;
-        }
-
-        body[data-env="staging"] .screen-inner,
-        body.staging .screen-inner {
-            padding-top: 20px;
-        }
-    </style>
-
-
-
-    <style id="clientCareLibraryAfterLoginStyles">
         .cx-client-tabs {
             display:flex;
             gap:8px;
             flex-wrap:wrap;
             margin: 4px 0 18px;
         }
+
         .cx-client-tab {
             border:1px solid var(--border);
             background:rgba(255,255,255,.72);
@@ -79,11 +50,13 @@
             font-weight:700;
             cursor:pointer;
         }
+
         .cx-client-tab.active {
             background:var(--primary);
             color:#fff;
             border-color:var(--primary);
         }
+
         .cx-client-card {
             background:rgba(255,255,255,.86);
             border:1px solid var(--border);
@@ -92,12 +65,14 @@
             margin-bottom:12px;
             box-shadow:0 10px 28px rgba(0,0,0,.045);
         }
+
         .cx-client-card-title {
             color:var(--primary);
             font-weight:700;
             font-size:.98rem;
             margin-bottom:5px;
         }
+
         .cx-client-card-meta {
             color:var(--text-muted);
             font-size:.76rem;
@@ -105,12 +80,14 @@
             letter-spacing:.08em;
             margin-bottom:10px;
         }
+
         .cx-client-card-desc {
             color:var(--text-muted);
             font-size:.86rem;
             line-height:1.55;
             margin-bottom:12px;
         }
+
         .cx-client-card a {
             display:inline-flex;
             align-items:center;
@@ -123,6 +100,21 @@
             font-size:.78rem;
             font-weight:700;
         }
+
+        #stagingBanner,
+        .staging-banner,
+        [data-staging-banner],
+        .env-banner {
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9998 !important;
+        }
+
+        #app {
+            padding-top: 14px;
+        }
     </style>
 
 </head>
@@ -134,8 +126,7 @@
     <!-- ── APP SHELL ──────────────────────────────── -->
     <div id="app">
 
-        <!-- Floating sign-out for testing -->
-        <button id="bkFloatingSignOut" class="bk-floating-signout" onclick="bk_signOut()" style="display:none">
+        <button id="bkFloatingSignOut" class="bk-floating-signout" onclick="bk_signOut()" style="display:none;">
             Sign Out
         </button>
 
@@ -165,7 +156,6 @@
                         Continue as Guest
                     </button>
                     <button class="btn-ghost" id="btnViewBookings" style="display:none;">View My Bookings</button>
-                    <button class="btn-ghost" id="btnClientCare" onclick="bk_openClientExperience('all')">Client Care Library</button>
                 </div>
                 <p id="welcomeError" class="error-text" style="display:none;"></p>
                 <p class="welcome-footnote">By booking you agree to our cancellation policy.</p>
@@ -204,7 +194,7 @@
                         <div class="mode-card-icon">✦</div>
                         <div class="mode-card-body">
                             <strong>Client Care Library</strong>
-                            <span>View selfcare, pre-arrival guides, loyalty and salon information</span>
+                            <span>Selfcare, pre-arrival guides, loyalty and THURAYA information</span>
                         </div>
                         <div class="mode-card-arrow">›</div>
                     </button>
@@ -472,14 +462,8 @@
                     <button class="btn-outline full" onclick="bk_viewMyBookings()">
                         View My Bookings
                     </button>
-                    <button class="btn-outline full" onclick="bk_openClientExperience('selfcare')">
-                        View Aftercare &amp; Client Guides
-                    </button>
                     <button class="btn-ghost full" onclick="bk_bookAgain()">
                         Book Another Visit
-                    </button>
-                    <button class="btn-ghost full" onclick="bk_signOut()">
-                        Sign Out
                     </button>
                     <button class="btn-ghost full" style="color:var(--error); border-color:var(--error);" onclick="bk_exitBooking()">
                         Exit
@@ -507,28 +491,6 @@
                     <button class="btn-ghost full" onclick="bk_signOut()" style="margin-top:10px;">
                         Sign Out
                     </button>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- CLIENT EXPERIENCE LIBRARY -->
-        <div class="screen" id="screen-client-experience">
-            <div class="screen-inner">
-                <button class="back-btn" onclick="goBack()">← Back</button>
-                <div class="step-header">
-                    <div class="step-badge">Client Care</div>
-                    <h2>THURAYA Client Library</h2>
-                    <p>Aftercare, pre-arrival information, loyalty cards and client documents curated by THURAYA.</p>
-                </div>
-                <div class="cx2-tabs">
-                    <button class="cx2-tab active" data-cx2-tab="all" onclick="bk_filterClientExperience('all')">All</button>
-                    <button class="cx2-tab" data-cx2-tab="selfcare" onclick="bk_filterClientExperience('selfcare')">Selfcare</button>
-                    <button class="cx2-tab" data-cx2-tab="info" onclick="bk_filterClientExperience('info')">Info</button>
-                    <button class="cx2-tab" data-cx2-tab="loyalty" onclick="bk_filterClientExperience('loyalty')">Loyalty</button>
-                </div>
-                <div id="bk_clientExperienceList" class="cx2-list">
-                    <div class="loading-pulse">Loading client care library...</div>
                 </div>
             </div>
         </div>
