@@ -69,14 +69,15 @@ function slugifyMenuId(name) {
 }
 
 window.seedThurayaWebsiteMenu = async function() {
-  if (!window.db || !window.firebase) {
+  if (!window.firebase || !firebase.firestore) {
     alert('Firebase is not ready yet. Open the app page, wait for it to load, then run seedThurayaWebsiteMenu().');
     return;
   }
-  const batch = db.batch();
+  const menuDb = firebase.firestore();
+  const batch = menuDb.batch();
   THURAYA_WEBSITE_MENU.forEach((item, index) => {
     const id = slugifyMenuId(`${item.department}-${item.mainCategory}-${item.subCategory}-${item.name}`);
-    const ref = db.collection('Menu_Services').doc(id);
+    const ref = menuDb.collection('Menu_Services').doc(id);
     batch.set(ref, {
       ...item,
       category: item.subCategory,
@@ -91,4 +92,17 @@ window.seedThurayaWebsiteMenu = async function() {
   alert(`✅ Thuraya website menu seeded: ${THURAYA_WEBSITE_MENU.length} services updated.`);
 };
 
-console.log('Thuraya website menu seed loaded. Run seedThurayaWebsiteMenu() once to update Menu_Services.');
+window.syncThurayaWebsiteMenu = window.seedThurayaWebsiteMenu;
+
+window.addEventListener('load', () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('seedMenu') === '1') {
+      setTimeout(() => window.seedThurayaWebsiteMenu(), 1200);
+    }
+  } catch (e) {
+    console.warn('Menu seed trigger skipped:', e);
+  }
+});
+
+console.log('Thuraya website menu sync loaded. Run seedThurayaWebsiteMenu() or open with ?seedMenu=1 once.');
