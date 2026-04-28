@@ -2736,3 +2736,191 @@ textarea:focus {
         padding: 25px 22px 24px;
     }
 }
+
+
+
+/* ============================================================
+   PAGE 2 — VISITING MODE MATCH
+   Visual-only patch for #screen-booking-mode.
+   Existing onclick handlers preserved.
+   ============================================================ */
+
+#screen-booking-mode {
+    background: var(--off-white) !important;
+}
+
+.visit-inner {
+    padding: 18px 16px 100px !important;
+}
+
+.visit-section-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin: 4px 0 12px;
+}
+
+.visit-hero {
+    margin-bottom: 28px;
+}
+
+.visit-hero h2 {
+    font-family: var(--font-serif);
+    font-size: 38px;
+    line-height: 1.02;
+    font-weight: 400;
+    color: var(--black);
+    letter-spacing: .2px;
+    margin-bottom: 10px;
+}
+
+.visit-hero p {
+    font-size: 14px;
+    line-height: 1.55;
+    color: #777;
+    max-width: 310px;
+}
+
+.visit-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--warm-white);
+    border: .5px solid var(--light-line);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.visit-option {
+    width: 100%;
+    min-height: 96px !important;
+    display: grid !important;
+    grid-template-columns: 44px 1fr 18px;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px !important;
+    border: 0 !important;
+    border-bottom: .5px solid var(--light-line) !important;
+    border-radius: 0 !important;
+    background: var(--warm-white) !important;
+    box-shadow: none !important;
+    text-align: left;
+    cursor: pointer;
+}
+
+.visit-option:last-child {
+    border-bottom: 0 !important;
+}
+
+.visit-option-meta {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--light-line);
+    line-height: 1;
+}
+
+.visit-option-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.visit-option-body strong {
+    font-size: 18px !important;
+    font-weight: 500 !important;
+    color: var(--black) !important;
+    letter-spacing: .2px;
+}
+
+.visit-option-body span {
+    font-size: 12px !important;
+    line-height: 1.45;
+    color: #777 !important;
+}
+
+.visit-arrow {
+    color: var(--mid) !important;
+    font-size: 26px !important;
+    font-weight: 300;
+}
+
+.visit-option-dark {
+    background: var(--black) !important;
+    border-color: rgba(255,255,255,.08) !important;
+}
+
+.visit-option-dark .visit-option-meta {
+    color: rgba(255,255,255,.25) !important;
+}
+
+.visit-option-dark .visit-option-body strong {
+    color: #fff !important;
+}
+
+.visit-option-dark .visit-option-body span {
+    color: rgba(255,255,255,.45) !important;
+}
+
+.visit-option-dark .visit-arrow {
+    color: rgba(255,255,255,.55) !important;
+}
+
+.visit-option-dark .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: rgba(255,255,255,.78);
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.visit-note {
+    margin-top: 16px;
+    padding: 15px 16px;
+    border: .5px solid var(--light-line);
+    border-radius: 12px;
+    background: rgba(250,250,248,.55);
+}
+
+.visit-note span {
+    display: block;
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: #777;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+@media (min-width: 900px) {
+    .visit-inner {
+        padding: 18px 16px 100px !important;
+    }
+
+    .visit-hero h2 {
+        font-size: 38px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .visit-hero h2 {
+        font-size: 34px;
+    }
+
+    .visit-option {
+        min-height: 88px !important;
+        grid-template-columns: 38px 1fr 16px;
+        padding: 16px 14px !important;
+    }
+
+    .visit-option-body strong {
+        font-size: 16px !important;
+    }
+}

@@ -316,121 +316,48 @@
 
         <!-- ── BOOKING MODE SELECT (new) ─────────────────────── -->
         <div class="screen" id="screen-booking-mode">
-            <div class="screen-inner">
-                <div class="step-header">
-                    <div class="step-badge">New Booking</div>
+            <div class="screen-inner visit-inner">
+                <div class="visit-section-label">New Booking</div>
+                <div class="visit-hero">
                     <h2>How are you visiting?</h2>
-                    <p>Book for yourself or bring a group along.</p>
+                    <p>Choose the way you would like to reserve your THURAYA ritual.</p>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
-                    <button class="mode-card" onclick="grp_soloMode()">
-                        <div class="mode-card-icon">🪑</div>
-                        <div class="mode-card-body">
+
+                <div class="visit-options">
+                    <button class="mode-card visit-option" onclick="grp_soloMode()">
+                        <div class="visit-option-meta">01</div>
+                        <div class="mode-card-body visit-option-body">
                             <strong>Just Me</strong>
                             <span>Single appointment, standard flow</span>
                         </div>
-                        <div class="mode-card-arrow">›</div>
+                        <div class="mode-card-arrow visit-arrow">›</div>
                     </button>
-                    <button class="mode-card mode-card--highlight" onclick="goToStep('screen-group-size')">
-                        <div class="mode-card-icon">👥</div>
-                        <div class="mode-card-body">
+
+                    <button class="mode-card mode-card--highlight visit-option visit-option-dark" onclick="goToStep('screen-group-size')">
+                        <div class="visit-option-meta">02</div>
+                        <div class="mode-card-body visit-option-body">
                             <strong>
                                 Book for a Group
                                 <span class="mode-badge">New</span>
                             </strong>
                             <span>Everyone picks their service — one shared time</span>
                         </div>
-                        <div class="mode-card-arrow" style="color:var(--gold);">›</div>
+                        <div class="mode-card-arrow visit-arrow">›</div>
                     </button>
-                    <button class="mode-card" onclick="goToStep('screen-client-care-library')">
-                        <div class="mode-card-icon">✦</div>
-                        <div class="mode-card-body">
+
+                    <button class="mode-card visit-option" onclick="goToStep('screen-client-care-library')">
+                        <div class="visit-option-meta">03</div>
+                        <div class="mode-card-body visit-option-body">
                             <strong>Your Info</strong>
-                            <span>Selfcare, pre-arrival guides, loyalty and useful THURAYA information</span>
+                            <span>Selfcare, pre-arrival guides, loyalty and THURAYA information</span>
                         </div>
-                        <div class="mode-card-arrow">›</div>
+                        <div class="mode-card-arrow visit-arrow">›</div>
                     </button>
                 </div>
-            </div>
-        </div>
 
-        <!-- PROFILE SETUP (first time only) -->
-        <div class="screen" id="screen-profile">
-            <div class="screen-inner">
-                <div class="step-header">
-                    <div class="step-badge">Welcome</div>
-                    <h2>Complete Your Profile</h2>
-                    <p>Just a few details so we can take care of you properly.</p>
+                <div class="visit-note">
+                    <span>Private bookings, group visits and pre-arrival care — all in one calm flow.</span>
                 </div>
-                <div class="form-card">
-                    <div class="form-group">
-                        <label>Full Name <span class="req">*</span></label>
-                        <input type="text" id="prof_name" placeholder="Your full name" autocomplete="name">
-                    </div>
-                    <div class="form-group">
-                        <label>Phone Number <span class="req">*</span></label>
-                        <input type="tel" id="prof_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
-                    </div>
-                    <div class="form-group">
-                        <label>Date of Birth <span class="req">*</span></label>
-                        <input type="date" id="prof_dob" autocomplete="bday">
-                        <small class="field-hint">Used for birthday surprises and a more personal THURAYA experience.</small>
-                    </div>
-                    <div class="form-group">
-                        <label>Gender <span class="optional">(optional)</span></label>
-                        <select id="prof_gender">
-                            <option value="" disabled selected>Select...</option>
-                            <option value="Female">Female</option>
-                            <option value="Male">Male</option>
-                            <option value="Other">Other / Prefer not to say</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="prof_email" readonly style="opacity:0.6; cursor:not-allowed;">
-                    </div>
-                    <button class="btn-primary full" id="btnSaveProfile">
-                        <span class="btn-text">Save &amp; Continue</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- GUEST DETAILS -->
-        <div class="screen" id="screen-guest">
-            <div class="screen-inner">
-                <button class="back-btn" onclick="goBack()">← Back</button>
-                <div class="step-header">
-                    <div class="step-badge">Guest Booking</div>
-                    <h2>Your Details</h2>
-                    <p>We just need your name and number so we can confirm your visit.</p>
-                </div>
-                <div class="form-card">
-                    <div class="form-group">
-                        <label>Full Name <span class="req">*</span></label>
-                        <input type="text" id="guest_name" placeholder="Your full name" autocomplete="name">
-                    </div>
-                    <div class="form-group">
-                        <label>Phone Number <span class="req">*</span></label>
-                        <input type="tel" id="guest_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
-                    </div>
-                    <div class="form-group">
-                        <label>Gender <span class="optional">(optional)</span></label>
-                        <select id="guest_gender">
-                            <option value="" disabled selected>Select...</option>
-                            <option value="Female">Female</option>
-                            <option value="Male">Male</option>
-                            <option value="Other">Other / Prefer not to say</option>
-                        </select>
-                    </div>
-                    <button class="btn-primary full" id="btnSaveGuest">
-                        <span class="btn-text">Continue to Book</span>
-                    </button>
-                </div>
-                <p style="text-align:center; font-size:0.78rem; color:var(--text-muted); margin-top:14px;">
-                    Want to save your details for next time?
-                    <button onclick="showScreen('screen-welcome')" style="background:none;border:none;color:var(--gold-dark);font-size:0.78rem;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline;">Sign in with Google</button>
-                </p>
             </div>
         </div>
 
