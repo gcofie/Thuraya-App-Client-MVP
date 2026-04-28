@@ -888,6 +888,81 @@ function bk_showPromoStatus(msg, success) {
     el.style.display = 'block';
 }
 
+
+// ── Phase 9B.2: Book for Someone Else ──────────────────────
+window.bk_toggleBookForSomeone = function() {
+    const isSomeoneElse = document.getElementById('bookForSomeone')?.checked === true;
+    const panel = document.getElementById('bookForSomeonePanel');
+    const myselfLabel = document.getElementById('bookForMyselfLabel');
+    const someoneLabel = document.getElementById('bookForSomeoneLabel');
+
+    if (panel) panel.style.display = isSomeoneElse ? 'block' : 'none';
+    if (myselfLabel) myselfLabel.classList.toggle('active', !isSomeoneElse);
+    if (someoneLabel) someoneLabel.classList.toggle('active', isSomeoneElse);
+};
+
+function bk_getBookForDetails() {
+    const isSomeoneElse = document.getElementById('bookForSomeone')?.checked === true;
+
+    const base = {
+        bookingFor: isSomeoneElse ? 'someone_else' : 'myself',
+        paymentResponsibility: isSomeoneElse
+            ? (document.getElementById('paymentResponsibility')?.value || 'recipient')
+            : 'booker',
+        paymentStatus: isSomeoneElse && (document.getElementById('paymentResponsibility')?.value === 'recipient')
+            ? 'pay_at_checkout'
+            : 'pending_or_paid_by_booker'
+    };
+
+    if (!isSomeoneElse) {
+        return {
+            ...base,
+            recipientName: bk_clientProfile?.name || '',
+            recipientPhone: bk_clientProfile?.phone || '',
+            recipientNote: '',
+            bookedByName: bk_clientProfile?.name || '',
+            bookedByPhone: bk_clientProfile?.phone || '',
+            bookedByEmail: bk_isGuest ? '' : (bk_currentUser?.email || '')
+        };
+    }
+
+    const recipientName = (document.getElementById('recipientName')?.value || '').trim();
+    const recipientPhone = (document.getElementById('recipientPhone')?.value || '').trim();
+    const recipientNote = (document.getElementById('recipientNote')?.value || '').trim();
+
+    return {
+        ...base,
+        recipientName,
+        recipientPhone,
+        recipientNote,
+        bookedByName: bk_clientProfile?.name || '',
+        bookedByPhone: bk_clientProfile?.phone || '',
+        bookedByEmail: bk_isGuest ? '' : (bk_currentUser?.email || '')
+    };
+}
+
+function bk_validateBookForDetails() {
+    const details = bk_getBookForDetails();
+
+    if (details.bookingFor !== 'someone_else') return details;
+
+    if (!details.recipientName) {
+        toast('Please enter the recipient full name.', 'warning');
+        document.getElementById('recipientName')?.focus();
+        return null;
+    }
+
+    const phoneDigits = String(details.recipientPhone || '').replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+        toast('Please enter a valid recipient phone number.', 'warning');
+        document.getElementById('recipientPhone')?.focus();
+        return null;
+    }
+
+    return details;
+}
+
+
 // ── Confirm Booking ───────────────────────────────────────
 
 window.bk_confirmBooking = async function() {
@@ -902,6 +977,9 @@ window.bk_confirmBooking = async function() {
 
     if (!date || !time) { toast('Please select a date and time.', 'warning'); return; }
     if (!bk_selectedServices.length) { toast('Please select at least one service.', 'warning'); return; }
+
+    const bookForDetails = bk_validateBookForDetails();
+    if (!bookForDetails) return;
 
     const services  = bk_selectedServices.map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
     const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
@@ -934,6 +1012,15 @@ window.bk_confirmBooking = async function() {
             status:              'Scheduled',
             source:              'client-booking',
             bookedBy:            bk_isGuest ? ('guest:' + (bk_clientProfile.phone || '')) : (bk_currentUser?.email || ''),
+            bookingFor:          bookForDetails.bookingFor,
+            bookedByName:        bookForDetails.bookedByName,
+            bookedByPhone:       bookForDetails.bookedByPhone,
+            bookedByEmail:       bookForDetails.bookedByEmail,
+            recipientName:       bookForDetails.recipientName,
+            recipientPhone:      bookForDetails.recipientPhone,
+            recipientNote:       bookForDetails.recipientNote,
+            paymentResponsibility: bookForDetails.paymentResponsibility,
+            paymentStatus:       bookForDetails.paymentStatus,
             createdAt:           firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt:           firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -966,6 +1053,12 @@ window.bk_confirmBooking = async function() {
 
 function populateSuccessScreen(appt) {
     document.getElementById('suc_services').textContent = appt.bookedService || '—';
+    const successSub = document.querySelector('#screen-success .success-sub');
+    if (successSub && appt.bookingFor === 'someone_else') {
+        successSub.textContent = `Booking confirmed for ${appt.recipientName || 'the recipient'}. Payment: ${appt.paymentResponsibility === 'recipient' ? 'recipient pays at checkout' : 'booker pays'}.`;
+    } else if (successSub) {
+        successSub.textContent = 'We look forward to seeing you.';
+    }
     const techDisplay = appt.assignedTechName && appt.assignedTechEmail ? appt.assignedTechName : 'To be assigned';
     document.getElementById('suc_tech').textContent = techDisplay;
     let dateFormatted = appt.dateString;

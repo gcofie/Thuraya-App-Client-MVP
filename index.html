@@ -511,6 +511,52 @@
                         <span class="confirm-value accent-text" id="conf_total">—</span>
                     </div>
                 </div>
+
+                <!-- Phase 9B.2: Book for Someone Else -->
+                <div class="book-for-card" id="bookForCard">
+                    <div class="book-for-head">
+                        <div>
+                            <div class="book-for-kicker">Appointment recipient</div>
+                            <h3>Who is this appointment for?</h3>
+                        </div>
+                    </div>
+
+                    <div class="book-for-options">
+                        <label class="book-for-option active" id="bookForMyselfLabel">
+                            <input type="radio" name="bookForOption" id="bookForMyself" value="myself" checked onchange="bk_toggleBookForSomeone()">
+                            <span>Myself</span>
+                        </label>
+                        <label class="book-for-option" id="bookForSomeoneLabel">
+                            <input type="radio" name="bookForOption" id="bookForSomeone" value="someone_else" onchange="bk_toggleBookForSomeone()">
+                            <span>Someone else</span>
+                        </label>
+                    </div>
+
+                    <div id="bookForSomeonePanel" class="book-for-panel" style="display:none;">
+                        <div class="form-group">
+                            <label>Recipient Full Name <span class="req">*</span></label>
+                            <input type="text" id="recipientName" placeholder="Name of the person receiving the service">
+                        </div>
+                        <div class="form-group">
+                            <label>Recipient Phone Number <span class="req">*</span></label>
+                            <input type="tel" id="recipientPhone" placeholder="Recipient phone number">
+                        </div>
+                        <div class="form-group">
+                            <label>Note for staff <span class="optional">(optional)</span></label>
+                            <textarea id="recipientNote" rows="3" placeholder="Example: birthday surprise, preferred treatment note, or anything staff should know"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Who will pay?</label>
+                            <select id="paymentResponsibility">
+                                <option value="booker">I will pay</option>
+                                <option value="recipient" selected>They will pay at checkout</option>
+                            </select>
+                            <small class="field-hint">Staff will see who the service is for and who is expected to pay.</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="promo-block">
                     <button class="promo-toggle-btn" id="btnTogglePromo" onclick="bk_togglePromoInput()">
                         🎟 I have a promo code

@@ -854,3 +854,71 @@ body {
     }
 }
 
+
+
+/* Phase 9B.2 — Book for Someone Else */
+.book-for-card {
+    margin: 18px 0;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 250, 245, 0.92);
+    border: 1px solid rgba(140, 98, 57, 0.18);
+    box-shadow: 0 12px 32px rgba(45, 34, 26, 0.08);
+}
+.book-for-head h3 {
+    margin: 4px 0 14px;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+.book-for-kicker {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+}
+.book-for-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.book-for-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(140, 98, 57, 0.22);
+    background: rgba(255,255,255,.72);
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text);
+}
+.book-for-option.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.book-for-option input {
+    accent-color: var(--accent);
+}
+.book-for-panel {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(140, 98, 57, 0.25);
+}
+.book-for-panel textarea {
+    width: 100%;
+    resize: vertical;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    font-family: inherit;
+    background: #fff;
+}
+@media (max-width: 520px) {
+    .book-for-options {
+        grid-template-columns: 1fr;
+    }
+}
