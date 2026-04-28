@@ -1,3 +1,11 @@
+
+// Early BookFor Selection
+window.bk_earlyBookFor = 'myself';
+
+window.bk_setEarlyBookFor = function(val){
+    window.bk_earlyBookFor = val;
+};
+
 // ============================================================
 //  THURAYA — CLIENT SELF-BOOKING   app.js
 //  Same Firebase backend as the Staff OS.
@@ -978,7 +986,12 @@ window.bk_confirmBooking = async function() {
     if (!date || !time) { toast('Please select a date and time.', 'warning'); return; }
     if (!bk_selectedServices.length) { toast('Please select at least one service.', 'warning'); return; }
 
-    const bookForDetails = bk_validateBookForDetails();
+    
+if(window.bk_earlyBookFor==='someone_else'){
+    document.getElementById('bookForSomeone').checked = true;
+}
+const bookForDetails = bk_validateBookForDetails();
+
     if (!bookForDetails) return;
 
     const services  = bk_selectedServices.map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
