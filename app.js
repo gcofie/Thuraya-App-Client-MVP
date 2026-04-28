@@ -38,6 +38,13 @@ const todayStr        = (() => {
     return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 })();
 
+
+function bk_showFloatingSignOut(show) {
+    const btn = document.getElementById('bkFloatingSignOut');
+    if (!btn) return;
+    btn.style.display = show ? 'block' : 'none';
+}
+
 // ── Screen navigation ────────────────────────────────────
 
 function showScreen(id) {
@@ -47,6 +54,9 @@ function showScreen(id) {
     });
     const target = document.getElementById(id);
     if (target) { target.style.display = 'flex'; requestAnimationFrame(() => target.classList.add('active')); }
+
+    // Keep sign-out visible after login/guest entry, hidden on welcome.
+    bk_showFloatingSignOut(id !== 'screen-welcome' && (!!bk_currentUser || !!bk_clientProfile || bk_isGuest));
 }
 
 function goToStep(id) {
@@ -156,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             bk_currentUser   = null;
             bk_clientProfile = null;
+            bk_showFloatingSignOut(false);
             showScreen('screen-welcome');
         }
     });
@@ -1160,6 +1171,7 @@ window.bk_signOut = async function() {
         const viewBookingsBtn = document.getElementById('btnViewBookings');
         if (viewBookingsBtn) viewBookingsBtn.style.display = 'none';
 
+        bk_showFloatingSignOut(false);
         showScreen('screen-welcome');
         toast('Signed out successfully.', 'success');
 
