@@ -284,8 +284,48 @@ function loadTaxConfig() {
 const CATEGORY_ALIASES = {
     'I. HAND THERAPIES':  'I. HAND THERAPY RITUALS',
     'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
+    'O FOOT THERAPY RITUALS': 'FOOT THERAPY RITUALS',
+    'O ADD ONS & UPGRADES': 'ADD ONS & UPGRADES',
+    'O HAND THERAPY & ENHANCEMENT RITUALS': 'HAND THERAPY & ENHANCEMENT RITUALS',
 };
 const TYPE_ORDER = { radio: 0, checkbox: 1, counter: 2 };
+const MENU_MAIN_ORDER = {
+    'FOOT THERAPY RITUALS': 10,
+    'I. FOOT THERAPIES': 20,
+    'ADD ONS & UPGRADES': 30,
+    'HAND THERAPY & ENHANCEMENT RITUALS': 40,
+    'I. HAND THERAPY RITUALS': 50,
+    'II. PLEIADES STUDIO': 60,
+    'NAIL ARCHITECTURE': 70,
+    'DESIGNER CANVAS': 80,
+    'EMBELLISHMENTS DRAWERS': 90,
+};
+function _cleanMenuText(v, fallback='Uncategorized') {
+    return ((v || fallback) + '').trim().replace(/\s+/g, ' ');
+}
+function _normaliseCategory(cat) {
+    const clean = _cleanMenuText(cat);
+    return CATEGORY_ALIASES[clean] ?? CATEGORY_ALIASES[clean.toUpperCase()] ?? clean;
+}
+function _menuOrder(s, field, fallback=999) {
+    const n = Number(s?.[field]);
+    return Number.isFinite(n) ? n : fallback;
+}
+function _inferMainCategory(s, cat, dept) {
+    if (s.mainCategory) return _normaliseCategory(s.mainCategory);
+    const c = cat.toUpperCase();
+    if (c.includes('FOOT')) return c.includes('ADD') ? 'ADD ONS & UPGRADES' : 'I. FOOT THERAPIES';
+    if (c.includes('ADD') || c.includes('POLISH') || c.includes('FINISH')) return 'ADD ONS & UPGRADES';
+    if (c.includes('PLEIADES')) return 'II. PLEIADES STUDIO';
+    if (c.includes('NAIL ARCHITECTURE') || c.includes('ACRYLIC') || c.includes('GEL EXTENSION')) return 'NAIL ARCHITECTURE';
+    if (c.includes('DESIGNER') || c.includes('ART')) return 'DESIGNER CANVAS';
+    if (c.includes('EMBELLISH')) return 'EMBELLISHMENTS DRAWERS';
+    return dept === 'Foot' ? 'I. FOOT THERAPIES' : 'I. HAND THERAPY RITUALS';
+}
+function _inferSubCategory(s, cat) {
+    if (s.subCategory) return _cleanMenuText(s.subCategory);
+    return cat;
+}
 
 function loadMenu() {
     db.collection('Menu_Services').onSnapshot(snap => {
@@ -314,41 +354,37 @@ function renderMenuForDept(dept) {
 
     const dbData = { Hand: {}, Foot: {} };
     bk_menuServices.forEach(s => {
-        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
-        cat = CATEGORY_ALIASES[cat] ?? CATEGORY_ALIASES[cat.toUpperCase()] ?? cat;
-        if (s.department === 'Both') {
-            ['Hand','Foot'].forEach(d => {
-                if (!dbData[d][cat]) dbData[d][cat] = [];
-                dbData[d][cat].push(s);
-            });
-        } else {
-            const d = s.department || 'Hand';
+        let cat = _normaliseCategory(s.category || s.subCategory || 'Uncategorized');
+        const targets = (s.department === 'Both') ? ['Hand','Foot'] : [s.department || 'Hand'];
+        targets.forEach(d => {
             if (!dbData[d]) dbData[d] = {};
-            if (!dbData[d][cat]) dbData[d][cat] = [];
-            dbData[d][cat].push(s);
-        }
+            const main = _inferMainCategory(s, cat, d);
+            const sub  = _inferSubCategory(s, cat);
+            if (!dbData[d][main]) dbData[d][main] = {};
+            if (!dbData[d][main][sub]) dbData[d][main][sub] = [];
+            dbData[d][main][sub].push(s);
+        });
     });
 
-    Object.values(dbData).forEach(dObj =>
-        Object.values(dObj).forEach(arr =>
-            arr.sort((a, b) => (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1))
+    Object.values(dbData).forEach(mainObj =>
+        Object.values(mainObj).forEach(subObj =>
+            Object.values(subObj).forEach(arr =>
+                arr.sort((a, b) =>
+                    _menuOrder(a, 'sortOrder') - _menuOrder(b, 'sortOrder') ||
+                    (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1) ||
+                    (a.name || '').localeCompare(b.name || '')
+                )
+            )
         )
     );
 
-    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
-    const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
-        const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
-        const aNum = numRe.test(aU), bNum = numRe.test(bU);
-        if (aNum && !bNum) return -1;
-        if (!aNum && bNum) return  1;
-        const aR = (dbData[dept][a][0]?.inputType || 'checkbox') === 'radio';
-        const bR = (dbData[dept][b][0]?.inputType || 'checkbox') === 'radio';
-        if (aR && !bR) return -1;
-        if (!aR && bR) return  1;
-        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
+    const mainKeys = Object.keys(dbData[dept] || {}).sort((a, b) => {
+        const oa = MENU_MAIN_ORDER[a.toUpperCase()] ?? MENU_MAIN_ORDER[a] ?? 999;
+        const ob = MENU_MAIN_ORDER[b.toUpperCase()] ?? MENU_MAIN_ORDER[b] ?? 999;
+        return oa - ob || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
 
-    if (!sortedCats.length) {
+    if (!mainKeys.length) {
         container.innerHTML =
             '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available for this category.</p>';
         updateBreakdown();
@@ -356,23 +392,22 @@ function renderMenuForDept(dept) {
     }
 
     let html = '';
-    sortedCats.forEach(cat => {
-        const items   = dbData[dept][cat];
-        const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
-        const multis  = items.filter(s => (s.inputType || 'radio') !== 'radio');
+    mainKeys.forEach(main => {
+        const subObj = dbData[dept][main];
+        html += `<div class="menu-main-block"><div class="menu-main-heading">${main}</div>`;
 
-        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
+        const subKeys = Object.keys(subObj).sort((a, b) => {
+            const ao = _menuOrder(subObj[a][0], 'subSortOrder', 999);
+            const bo = _menuOrder(subObj[b][0], 'subSortOrder', 999);
+            return ao - bo || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        });
 
-        if (singles.length && multis.length) {
-            html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
-            singles.forEach(s => { html += _buildCard(s, dept); });
-            html += `<div class="menu-subgroup-divider"></div>`;
-            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
-            multis.forEach(s => { html += _buildCard(s, dept); });
-        } else {
+        subKeys.forEach(sub => {
+            const items = subObj[sub];
+            html += `<div class="menu-section"><div class="menu-section-heading">${sub}</div>`;
             items.forEach(s => { html += _buildCard(s, dept); });
-        }
-
+            html += `</div>`;
+        });
         html += `</div>`;
     });
 
@@ -474,43 +509,28 @@ window.bk_updateCounter = function(id, price, dur, name, delta) {
 
 function updateBreakdown() {
     let totalMins = 0, subtotal = 0;
-    let serviceRowsHtml = '';
+    let rowsHtml = '';
 
     bk_selectedServices.forEach(s => {
-        const qty = s.qty || 1;
-        const lineTotal = s.price * qty;
-        const lineMins  = s.dur * qty;
+        const lineTotal = s.price * (s.qty || 1);
+        const lineMins  = s.dur   * (s.qty || 1);
         subtotal  += lineTotal;
         totalMins += lineMins;
-
-        serviceRowsHtml += `
-            <div class="lux-receipt-service-row">
-                <div class="lux-receipt-service-main">
-                    <div class="lux-service-name">${s.name}${qty > 1 ? ' <span class="lux-service-qty">(x'+qty+')</span>' : ''}</div>
-                    <div class="lux-service-meta">${lineMins} mins</div>
-                </div>
-                <div class="lux-money">${lineTotal.toFixed(2)} <span>GHC</span></div>
-            </div>`;
+        rowsHtml  += `<div class="breakdown-row">
+            <span>${s.name}${s.qty > 1 ? ' <span style="color:var(--text-muted);font-size:0.78rem;">(x'+s.qty+')</span>' : ''}</span>
+            <span style="font-weight:600;">${lineTotal.toFixed(2)} GHC</span>
+        </div>`;
     });
 
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
 
     let taxHtml = '';
     if (taxLines.length && subtotal > 0) {
-        taxHtml += `
-            <div class="lux-receipt-divider"></div>
-            <div class="lux-receipt-row lux-subtotal-row">
-                <span>Subtotal <em>(ex. tax)</em></span>
-                <strong>${basePrice.toFixed(2)} <small>GHC</small></strong>
-            </div>
-            <div class="lux-tax-title">Taxes &amp; statutory charges</div>`;
-
+        taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
+            <span>Subtotal (ex. tax)</span><span>${basePrice.toFixed(2)} GHC</span></div>`;
         taxLines.forEach(l => {
-            taxHtml += `
-                <div class="lux-receipt-row lux-tax-row">
-                    <span>${l.name} <em>(${l.rate}%)</em></span>
-                    <strong>${l.amount.toFixed(2)} <small>GHC</small></strong>
-                </div>`;
+            taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;">
+                <span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
         });
     }
 
@@ -527,27 +547,21 @@ function updateBreakdown() {
     if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
 
     if (subtotal > 0) {
-        if (brkList) brkList.innerHTML = `
-            <div class="lux-receipt-heading">
-                <span>Selected ritual</span>
-                <span>${bk_selectedServices.length} item${bk_selectedServices.length > 1 ? 's' : ''}</span>
-            </div>
-            ${serviceRowsHtml}`;
-
-        if (brkTax) brkTax.innerHTML = taxHtml;
-        if (durEl) durEl.textContent = totalMins;
-        if (costEl) costEl.textContent = grandTotal.toFixed(2);
+        if (brkList)     brkList.innerHTML    = rowsHtml;
+        if (brkTax)      brkTax.innerHTML     = taxHtml;
+        if (durEl)       durEl.textContent    = totalMins;
+        if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
         if (stickyEmpty) stickyEmpty.style.display = 'none';
-        if (stickyFull) stickyFull.style.display = 'block';
-        if (nextBtn) nextBtn.disabled = false;
+        if (stickyFull)  stickyFull.style.display  = 'block';
+        if (nextBtn)     nextBtn.disabled = false;
     } else {
-        if (brkList) brkList.innerHTML = '';
-        if (brkTax) brkTax.innerHTML = '';
-        if (durEl) durEl.textContent = '0';
-        if (costEl) costEl.textContent = '0.00';
+        if (brkList)     brkList.innerHTML    = '';
+        if (brkTax)      brkTax.innerHTML     = '';
+        if (durEl)       durEl.textContent    = '0';
+        if (costEl)      costEl.textContent   = '0.00';
         if (stickyEmpty) stickyEmpty.style.display = 'block';
-        if (stickyFull) stickyFull.style.display = 'none';
-        if (nextBtn) nextBtn.disabled = true;
+        if (stickyFull)  stickyFull.style.display  = 'none';
+        if (nextBtn)     nextBtn.disabled = true;
     }
 }
 
