@@ -1107,7 +1107,7 @@ console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
 console.log('Thuraya Phase 8F client-friendly booking status labels loaded.');
 
 
-// ── Client Care Library + Sign Out Safe Patch ─────────────
+// ── Your Info + Sign Out Safe Patch ─────────────
 let bk_clientExperienceDocs = [];
 let bk_clientExperienceFilter = 'all';
 let bk_clientExperienceUnsub = null;
@@ -1154,10 +1154,10 @@ function startClientCareLibraryListener() {
             }, err => {
                 const el = document.getElementById('bk_clientExperienceList');
                 if (el) el.innerHTML = `<p style="color:var(--error);">Could not load care library: ${err.message}</p>`;
-                console.warn('Client Care Library listener error:', err);
+                console.warn('Your Info listener error:', err);
             });
     } catch(e) {
-        console.warn('Client Care Library listener skipped:', e);
+        console.warn('Your Info listener skipped:', e);
     }
 }
 
@@ -1183,7 +1183,7 @@ function renderClientCareLibrary() {
 
     el.innerHTML = docs.map(d => {
         const category = (d.category || 'info').toString();
-        const title = d.title || 'Information';
+        const title = d.title || 'Your Info Document';
         const description = d.description || d.note || '';
         const url = d.fileUrl || d.url || '#';
 
