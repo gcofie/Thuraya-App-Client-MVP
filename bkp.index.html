@@ -4,220 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta name="thuraya-env" content="production">
+    <meta name="thuraya-env" content="staging">
     <title>THURAYA — Book Your Visit</title>
     <link rel="stylesheet" href="styles.css?v=phase8-smart-booking-20260427">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <style id="thurayaClientCareSafePatchStyles">
-        /* Visible only after login/guest entry */
-        .bk-floating-signout {
-            position: fixed;
-            top: 58px;
-            right: 14px;
-            z-index: 9999;
-            border: 1px solid rgba(255,255,255,0.22);
-            background: rgba(10,10,10,0.72);
-            color: #fff;
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-radius: 999px;
-            padding: 9px 14px;
-            font-size: 0.72rem;
-            font-family: var(--font-sans, Arial, sans-serif);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-        }
-
-        .cx-client-tabs {
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-            margin: 4px 0 18px;
-        }
-
-        .cx-client-tab {
-            border:1px solid var(--border);
-            background:rgba(255,255,255,.72);
-            color:var(--primary);
-            border-radius:999px;
-            padding:9px 13px;
-            font-size:.76rem;
-            font-family:var(--font-sans);
-            font-weight:700;
-            cursor:pointer;
-        }
-
-        .cx-client-tab.active {
-            background:var(--primary);
-            color:#fff;
-            border-color:var(--primary);
-        }
-
-        .cx-client-card {
-            background:rgba(255,255,255,.86);
-            border:1px solid var(--border);
-            border-radius:18px;
-            padding:16px;
-            margin-bottom:12px;
-            box-shadow:0 10px 28px rgba(0,0,0,.045);
-        }
-
-        .cx-client-card-title {
-            color:var(--primary);
-            font-weight:700;
-            font-size:.98rem;
-            margin-bottom:5px;
-        }
-
-        .cx-client-card-meta {
-            color:var(--text-muted);
-            font-size:.76rem;
-            text-transform:uppercase;
-            letter-spacing:.08em;
-            margin-bottom:10px;
-        }
-
-        .cx-client-card-desc {
-            color:var(--text-muted);
-            font-size:.86rem;
-            line-height:1.55;
-            margin-bottom:12px;
-        }
-
-        .cx-client-card a {
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            border-radius:999px;
-            padding:10px 14px;
-            background:var(--primary);
-            color:#fff;
-            text-decoration:none;
-            font-size:.78rem;
-            font-weight:700;
-        }
-
-        #stagingBanner,
-        .staging-banner,
-        [data-staging-banner],
-        .env-banner {
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 9998 !important;
-        }
-
-        #app {
-            padding-top: 14px;
-        }
-    </style>
-
-    <style id="thurayaInAppDocViewerStyles">
-        #screen-doc-viewer {
-            position: fixed !important;
-            inset: 0 !important;
-            z-index: 9997 !important;
-            background: #f7f3ec !important;
-            padding: 0 !important;
-            align-items: stretch !important;
-            justify-content: stretch !important;
-        }
-
-        #screen-doc-viewer.active {
-            display: flex !important;
-        }
-
-        .doc-viewer-inner {
-            width: 100vw !important;
-            height: 100dvh !important;
-            max-width: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            background: #f7f3ec !important;
-            overflow: hidden !important;
-        }
-
-        .doc-viewer-header {
-            flex: 0 0 64px !important;
-            height: 64px !important;
-            display: grid !important;
-            grid-template-columns: 90px 1fr 76px !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 10px 14px !important;
-            background: rgba(255,255,255,.96) !important;
-            border-bottom: 1px solid var(--border) !important;
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            position: relative;
-            z-index: 2;
-        }
-
-        .doc-viewer-header .back-btn {
-            margin: 0 !important;
-            font-size: .82rem !important;
-            color: var(--primary) !important;
-        }
-
-        .doc-viewer-title {
-            text-align: center;
-            color: var(--primary);
-            font-family: var(--font-serif);
-            font-size: 1.05rem;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .doc-viewer-open {
-            border: 1px solid var(--border);
-            background: #fff;
-            color: var(--primary);
-            border-radius: 999px;
-            padding: 8px 10px;
-            font-size: .72rem;
-            font-family: var(--font-sans);
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .doc-viewer-frame-wrap {
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
-            width: 100vw !important;
-            height: calc(100dvh - 64px) !important;
-            background: #1f1f1f !important;
-            overflow: hidden !important;
-        }
-
-        #docViewerFrame {
-            width: 100vw !important;
-            height: calc(100dvh - 64px) !important;
-            min-height: calc(100dvh - 64px) !important;
-            border: none !important;
-            display: block !important;
-            background: #fff !important;
-        }
-
-        @supports not (height: 100dvh) {
-            .doc-viewer-inner { height: 100vh !important; }
-            .doc-viewer-frame-wrap,
-            #docViewerFrame {
-                height: calc(100vh - 64px) !important;
-                min-height: calc(100vh - 64px) !important;
-            }
-        }
-    </style>
-
-
 </head>
 <body>
 
@@ -226,10 +17,6 @@
 
     <!-- ── APP SHELL ──────────────────────────────── -->
     <div id="app">
-
-        <button id="bkFloatingSignOut" class="bk-floating-signout" onclick="bk_signOut()" style="display:none;">
-            Sign Out
-        </button>
 
         <!-- WELCOME -->
         <div class="screen active" id="screen-welcome">
@@ -291,14 +78,6 @@
                         </div>
                         <div class="mode-card-arrow" style="color:var(--gold);">›</div>
                     </button>
-                    <button class="mode-card" onclick="goToStep('screen-client-care-library')">
-                        <div class="mode-card-icon">✦</div>
-                        <div class="mode-card-body">
-                            <strong>Your Info</strong>
-                            <span>Selfcare, pre-arrival guides, loyalty and useful THURAYA information</span>
-                        </div>
-                        <div class="mode-card-arrow">›</div>
-                    </button>
                 </div>
             </div>
         </div>
@@ -319,11 +98,6 @@
                     <div class="form-group">
                         <label>Phone Number <span class="req">*</span></label>
                         <input type="tel" id="prof_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
-                    </div>
-                    <div class="form-group">
-                        <label>Date of Birth <span class="req">*</span></label>
-                        <input type="date" id="prof_dob" autocomplete="bday">
-                        <small class="field-hint">Used for birthday surprises and a more personal THURAYA experience.</small>
                     </div>
                     <div class="form-group">
                         <label>Gender <span class="optional">(optional)</span></label>
@@ -390,7 +164,7 @@
                 <div class="step-header">
                     <div class="step-badge">Step 1 of 4</div>
                     <h2>Choose Your Services</h2>
-                    <p>Select your treatment, then continue to choose your technician.</p>
+                    <p>Select your treatments below. Your cost and time summary updates as you go.</p>
                 </div>
                 <div class="dept-toggle">
                     <button class="dept-btn active" data-dept="Hand" onclick="switchDept('Hand', this)">✋ Hand Therapy</button>
@@ -399,22 +173,11 @@
                 <div id="bk_serviceMenu">
                     <div class="loading-pulse">Loading services...</div>
                 </div>
-                <div class="step-footer service-continue-footer">
-                    <button class="btn-primary full" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
-                        Continue →
-                    </button>
-                </div>
+                <div style="height:160px;"></div>
             </div>
         </div>
 
-        
-<!-- Early Toggle: Book For -->
-<div class="early-bookfor">
-    <label><input type="radio" name="earlyBookFor" value="myself" checked onchange="bk_setEarlyBookFor('myself')"> Myself</label>
-    <label><input type="radio" name="earlyBookFor" value="someone_else" onchange="bk_setEarlyBookFor('someone_else')"> Someone else</label>
-</div>
-
-<!-- STEP 2 OF 4: TECHNICIAN -->
+        <!-- STEP 2 OF 4: TECHNICIAN -->
         <div class="screen" id="screen-technician">
             <div class="screen-inner">
                 <button class="back-btn" onclick="goBack()">← Back</button>
@@ -522,52 +285,6 @@
                         <span class="confirm-value accent-text" id="conf_total">—</span>
                     </div>
                 </div>
-
-                <!-- Phase 9B.2: Book for Someone Else -->
-                <div class="book-for-card" id="bookForCard">
-                    <div class="book-for-head">
-                        <div>
-                            <div class="book-for-kicker">Appointment recipient</div>
-                            <h3>Who is this appointment for?</h3>
-                        </div>
-                    </div>
-
-                    <div class="book-for-options">
-                        <label class="book-for-option active" id="bookForMyselfLabel">
-                            <input type="radio" name="bookForOption" id="bookForMyself" value="myself" checked onchange="bk_toggleBookForSomeone()">
-                            <span>Myself</span>
-                        </label>
-                        <label class="book-for-option" id="bookForSomeoneLabel">
-                            <input type="radio" name="bookForOption" id="bookForSomeone" value="someone_else" onchange="bk_toggleBookForSomeone()">
-                            <span>Someone else</span>
-                        </label>
-                    </div>
-
-                    <div id="bookForSomeonePanel" class="book-for-panel" style="display:none;">
-                        <div class="form-group">
-                            <label>Recipient Full Name <span class="req">*</span></label>
-                            <input type="text" id="recipientName" placeholder="Name of the person receiving the service">
-                        </div>
-                        <div class="form-group">
-                            <label>Recipient Phone Number <span class="req">*</span></label>
-                            <input type="tel" id="recipientPhone" placeholder="Recipient phone number">
-                        </div>
-                        <div class="form-group">
-                            <label>Note for staff <span class="optional">(optional)</span></label>
-                            <textarea id="recipientNote" rows="3" placeholder="Example: birthday surprise, preferred treatment note, or anything staff should know"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Who will pay?</label>
-                            <select id="paymentResponsibility">
-                                <option value="booker">I will pay</option>
-                                <option value="recipient" selected>They will pay at checkout</option>
-                            </select>
-                            <small class="field-hint">Staff will see who the service is for and who is expected to pay.</small>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="promo-block">
                     <button class="promo-toggle-btn" id="btnTogglePromo" onclick="bk_togglePromoInput()">
                         🎟 I have a promo code
@@ -651,48 +368,6 @@
                     <button class="btn-primary full" onclick="goToStep('screen-booking-mode')">
                         Book a New Visit
                     </button>
-                    <button class="btn-ghost full" onclick="bk_signOut()" style="margin-top:10px;">
-                        Sign Out
-                    </button>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- CLIENT CARE LIBRARY -->
-        <div class="screen" id="screen-client-care-library">
-            <div class="screen-inner">
-                <button class="back-btn" onclick="goBack()">← Back</button>
-                <div class="step-header">
-                    <div class="step-badge">Your Info</div>
-                    <h2>Your Info</h2>
-                    <p>Selfcare, pre-arrival guidance, loyalty and useful THURAYA information.</p>
-                </div>
-
-                <div class="cx-client-tabs">
-                    <button class="cx-client-tab active" onclick="bk_filterClientExperience('all', this)">All</button>
-                    <button class="cx-client-tab" onclick="bk_filterClientExperience('selfcare', this)">Selfcare</button>
-                    <button class="cx-client-tab" onclick="bk_filterClientExperience('info', this)">Info</button>
-                    <button class="cx-client-tab" onclick="bk_filterClientExperience('loyalty', this)">Loyalty</button>
-                </div>
-
-                <div id="bk_clientExperienceList">
-                    <div class="loading-pulse">Loading your info...</div>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- IN-APP DOCUMENT VIEWER -->
-        <div class="screen" id="screen-doc-viewer">
-            <div class="screen-inner doc-viewer-inner">
-                <div class="doc-viewer-header">
-                    <button class="back-btn" onclick="bk_closeDocumentViewer()">← Back</button>
-                    <div class="doc-viewer-title" id="docViewerTitle">Document</div>
-                    <button class="doc-viewer-open" id="docViewerOpenExternal" onclick="bk_openDocumentExternal()">Open</button>
-                </div>
-                <div class="doc-viewer-frame-wrap">
-                    <iframe id="docViewerFrame" title="THURAYA Document Viewer"></iframe>
                 </div>
             </div>
         </div>
@@ -743,13 +418,16 @@
                     <button class="dept-btn" data-dept="Foot" onclick="grp_switchDept('Foot', this)">🦶 Foot Therapy</button>
                 </div>
                 <div id="grp_serviceList" style="margin-top:16px;"></div>
-                <div class="grp-progress-row" style="display:none !important;">
-                    <span id="grp_progressText" style="display:none !important;"></span>
-                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()" style="display:none !important;">Next person →</button>
+                <div class="grp-progress-row">
+                    <span id="grp_progressText">0 of 2 selected</span>
+                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()"
+                        style="background:none;border:none;color:var(--gold-dark);font-size:0.85rem;cursor:pointer;font-family:inherit;display:none;">
+                        Next person →
+                    </button>
                 </div>
-                <div class="step-footer grp-continue-footer">
-                    <button class="btn-primary full grp-continue-btn" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
-                        Continue →
+                <div class="step-footer">
+                    <button class="btn-primary full" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
+                        Choose a Time →
                     </button>
                 </div>
             </div>
@@ -851,16 +529,46 @@
 
     </div><!-- /#app -->
 
+    <!-- STICKY BREAKDOWN BAR -->
+    <div id="bk_stickyBar" class="sticky-bar" style="display:none;">
+        <div id="bk_stickyEmpty" class="sticky-empty">
+            Tap a service above to see your price breakdown
+        </div>
+        <div id="bk_stickyFull" style="display:none;">
+            <div class="sticky-summary">
+                <div id="bk_breakdownList" class="sticky-line-items"></div>
+                <div id="bk_taxBreakdown"></div>
+            </div>
+            <div class="sticky-footer">
+                <div class="sticky-totals">
+                    <div class="sticky-total-line">
+                        <span class="sticky-total-label">⏱ Duration</span>
+                        <span class="sticky-total-value" id="bk_totalDuration">0</span>
+                        <span class="sticky-total-unit">mins</span>
+                    </div>
+                    <div class="sticky-total-line">
+                        <span class="sticky-total-label">💰 Total</span>
+                        <span class="sticky-total-value accent" id="bk_totalCost">0.00</span>
+                        <span class="sticky-total-unit">GHC</span>
+                    </div>
+                </div>
+                <div class="sticky-actions">
+                    <button class="sticky-clear-btn" onclick="bk_clearAllSelections()">Clear</button>
+                    <button class="btn-primary" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
+                        Continue →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="thuraya-menu-from-website.js?v=website-menu-20260428"></script>
-    <script src="app.js?v=website-menu-20260428"></script>
+    <script src="app.js?v=phase8-smart-booking-20260427"></script>
     <script src="group-booking.js?v=phase8-smart-booking-20260427"></script>
     <script src="availability.js?v=phase8-smart-booking-20260427"></script>
-    <script src="phase-9a-soft-login-gate.js?v=phase9a-full-20260428"></script>
-    <script src="phase-9b-email-password-auth.js?v=phase9b-email-20260428"></script>
 </body>
 </html>

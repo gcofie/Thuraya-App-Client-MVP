@@ -105,7 +105,50 @@ function av_renderSmartHeader(ranked, container, onSelect) {
 }
 
 // ── Helper: render slot buttons into a container ─────────────
+function av_getSlotLabel(t, info, slotMap) {
+    const techCount = (slotMap[t] || []).length;
+    if (info.rank === 1) return { text: 'Best Time', cls: 'smart-best' };
+    const firstSlot = Math.min(...Object.keys(slotMap).map(Number));
+    if (t === firstSlot) return { text: 'Earliest', cls: 'smart-earliest' };
+    if (techCount >= 3) return { text: 'More Choice', cls: 'smart-choice' };
+    if (t >= 10 * 60 && t <= 15 * 60) return { text: 'Quiet Time', cls: 'smart-quiet' };
+    return null;
+}
+
+function av_injectSmartStyles() {
+    if (document.getElementById('thuraya-phase8b-smart-style')) return;
+    const style = document.createElement('style');
+    style.id = 'thuraya-phase8b-smart-style';
+    style.textContent = `
+        .slot-btn.smart-recommended {
+            border-color: rgba(180,132,58,.85) !important;
+            box-shadow: 0 8px 22px rgba(180,132,58,.16);
+            transform: translateY(-1px);
+        }
+        .slot-btn .slot-smart-tag {
+            display:block;
+            font-size:.61rem;
+            line-height:1;
+            margin-top:4px;
+            font-weight:800;
+            letter-spacing:.02em;
+            color:var(--gold-dark,#9a6a18);
+        }
+        .smart-booking-card {
+            animation: thurayaSmartFade .28s ease both;
+        }
+        @keyframes thurayaSmartFade {
+            from { opacity:0; transform:translateY(6px); }
+            to { opacity:1; transform:translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ── Helper: render slot buttons into a container ─────────────
 function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
+    av_injectSmartStyles();
+
     const loadMap = smartOptions.loadMap || {};
     const rankedInput = smartOptions.ranked || av_rankSlotMap(slotMap, loadMap).ranked;
     const rankedByMin = {};
@@ -122,10 +165,11 @@ function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
         const t24  = `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`;
         const info = rankedByMin[t] || { score: 0, rank: 99 };
         const techList = av_escapeAttr(JSON.stringify(slotMap[t] || []));
-        const recommended = info.rank === 1 ? '<span style="display:block;font-size:.62rem;margin-top:2px;color:var(--gold-dark);font-weight:700;letter-spacing:.02em;">Recommended</span>' : '';
+        const label = av_getSlotLabel(t, info, slotMap);
+        const labelHtml = label ? `<span class="slot-smart-tag ${label.cls}">${label.text}</span>` : '';
         const manyTechs = (slotMap[t] || []).length > 1 ? ` title="${slotMap[t].length} technicians available"` : '';
         return `<button class="slot-btn ${info.rank === 1 ? 'smart-recommended' : ''}" data-time="${t24}" data-smart-score="${info.score}" data-techs='${techList}'${manyTechs}
-            onclick="${onSelect}('${t24}', this)">${av_formatTimeFromMins(t)}${recommended}</button>`;
+            onclick="${onSelect}('${t24}', this)">${av_formatTimeFromMins(t)}${labelHtml}</button>`;
     }).join('');
 }
 
@@ -465,6 +509,42 @@ window.grp_generateSlots = async function() {
 
 
 // ============================================================
+//  PHASE 8B SAFETY — GROUP SLOT SELECTOR FALLBACK
+//  Keeps group slots clickable even if group-booking.js does not
+//  expose grp_selectSlot globally before availability.js renders.
+// ============================================================
+window.grp_selectSlot = window.grp_selectSlot || function(time, btn) {
+    try {
+        document.querySelectorAll('#grp_slots .slot-btn').forEach(b => b.classList.remove('selected'));
+        if (btn) btn.classList.add('selected');
+
+        const timeEl = document.getElementById('grp_time');
+        if (timeEl) timeEl.value = time;
+
+        let availableTechs = [];
+        try {
+            availableTechs = JSON.parse(btn?.getAttribute('data-techs') || '[]');
+        } catch (e) {
+            availableTechs = [];
+        }
+
+        const loadMap = window.av_lastGroupSlotContext?.loadMap || {};
+        window.grp_selectedTime = time;
+        window.grp_selectedSlotTechs = [...availableTechs].sort((a, b) => (loadMap[a] || 0) - (loadMap[b] || 0));
+
+        const confirmBtn = document.getElementById('grp_toConfirmBtn');
+        if (confirmBtn) confirmBtn.disabled = false;
+
+        console.log('Phase 8B group slot selected:', { time, availableTechs: window.grp_selectedSlotTechs });
+    } catch (e) {
+        console.error('grp_selectSlot fallback failed:', e);
+        if (typeof toast === 'function') toast('Could not select this time. Please try again.', 'error');
+    }
+};
+
+
+
+// ============================================================
 //  UTILITIES
 // ============================================================
 
@@ -496,45 +576,10 @@ window.av_dayAbbr      = av_dayAbbr;
 window.av_getDailyLoadMap = av_getDailyLoadMap;
 window.av_rankSlotMap  = av_rankSlotMap;
 window.av_formatTimeFromMins = av_formatTimeFromMins;
-
-
-// ============================================================
-//  PHASE 8A FIX — GROUP SLOT SELECTOR SAFETY
-//  Fixes: Uncaught ReferenceError: grp_selectSlot is not defined
-//  Cause: availability.js renders group slot buttons with onclick="grp_selectSlot(...)"
-//  before/without group-booking.js exposing that function globally.
-// ============================================================
-window.grp_selectSlot = window.grp_selectSlot || function(time, btn) {
-    try {
-        document.querySelectorAll('#grp_slots .slot-btn').forEach(b => b.classList.remove('selected'));
-        if (btn) btn.classList.add('selected');
-
-        const timeEl = document.getElementById('grp_time');
-        if (timeEl) timeEl.value = time;
-
-        let availableTechs = [];
-        try {
-            availableTechs = JSON.parse(btn?.getAttribute('data-techs') || '[]');
-        } catch (e) {
-            availableTechs = [];
-        }
-
-        // Store context for group-booking confirm logic if it needs it later.
-        window.grp_selectedTime = time;
-        window.grp_selectedSlotTechs = availableTechs;
-
-        const confirmBtn = document.getElementById('grp_toConfirmBtn');
-        if (confirmBtn) confirmBtn.disabled = false;
-
-        console.log('Group slot selected:', { time, availableTechs });
-    } catch (e) {
-        console.error('grp_selectSlot fallback failed:', e);
-        if (typeof toast === 'function') toast('Could not select this time. Please try again.', 'error');
-    }
-};
+window.av_getSlotLabel = av_getSlotLabel;
 
 console.log('Thuraya availability engine 4b loaded.');
 
 
 // Phase 5.5E: Unified solo/group availability alignment loaded.
-console.log('Thuraya availability engine Phase 8 Smart Booking loaded.');
+console.log('Thuraya availability engine Phase 8B Client Intelligence loaded.');

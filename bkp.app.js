@@ -1,11 +1,3 @@
-
-// Early BookFor Selection
-window.bk_earlyBookFor = 'myself';
-
-window.bk_setEarlyBookFor = function(val){
-    window.bk_earlyBookFor = val;
-};
-
 // ============================================================
 //  THURAYA — CLIENT SELF-BOOKING   app.js
 //  Same Firebase backend as the Staff OS.
@@ -146,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     bk_clientProfile = doc.data();
                     // ── EDIT 1: send returning users to mode select, not straight to services ──
                     loadTechs();
-                    bk_afterClientEntry();
                     goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
@@ -161,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             bk_currentUser   = null;
             bk_clientProfile = null;
-            bk_showFloatingSignOut(false);
             showScreen('screen-welcome');
         }
     });
@@ -214,7 +204,6 @@ async function saveGuestProfile() {
         }, { merge: true });
 
         loadTechs();
-        bk_afterClientEntry();
         // ── EDIT 2: guests go to mode select after saving details ──
         goToStep('screen-booking-mode');
         const bar2 = document.getElementById('bk_stickyBar');
@@ -233,18 +222,15 @@ async function saveProfile() {
     const name   = document.getElementById('prof_name').value.trim();
     const phone  = document.getElementById('prof_phone').value.replace(/\D/g, '');
     const gender = document.getElementById('prof_gender').value;
-    const dob    = document.getElementById('prof_dob')?.value || '';
     const email  = bk_currentUser?.email?.toLowerCase() || '';
 
     if (!name)          { toast('Please enter your full name.', 'warning'); return; }
     if (phone.length !== 10) { toast('Phone number must be 10 digits.', 'warning'); return; }
-    if (!dob)           { toast('Please enter your date of birth.', 'warning'); return; }
 
     setBtnLoading(btn, true, 'Save & Continue');
     try {
         const profile = {
-            name, phone, gender, dob, email,
-            profileComplete: true,
+            name, phone, gender, email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await db.collection('Client_Users').doc(email).set(profile, { merge: true });
@@ -254,12 +240,10 @@ async function saveProfile() {
             Tel_Number:  phone,
             Email:       email,
             Gender:      gender,
-            Date_Of_Birth: dob,
             Last_Updated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         bk_clientProfile = profile;
         loadTechs();
-        bk_afterClientEntry();
         // ── EDIT 3: new users go to mode select after profile save ──
         goToStep('screen-booking-mode');
     } catch (e) {
@@ -284,48 +268,8 @@ function loadTaxConfig() {
 const CATEGORY_ALIASES = {
     'I. HAND THERAPIES':  'I. HAND THERAPY RITUALS',
     'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
-    'O FOOT THERAPY RITUALS': 'FOOT THERAPY RITUALS',
-    'O ADD ONS & UPGRADES': 'ADD ONS & UPGRADES',
-    'O HAND THERAPY & ENHANCEMENT RITUALS': 'HAND THERAPY & ENHANCEMENT RITUALS',
 };
 const TYPE_ORDER = { radio: 0, checkbox: 1, counter: 2 };
-const MENU_MAIN_ORDER = {
-    'FOOT THERAPY RITUALS': 10,
-    'I. FOOT THERAPIES': 20,
-    'ADD ONS & UPGRADES': 30,
-    'HAND THERAPY & ENHANCEMENT RITUALS': 40,
-    'I. HAND THERAPY RITUALS': 50,
-    'II. PLEIADES STUDIO': 60,
-    'NAIL ARCHITECTURE': 70,
-    'DESIGNER CANVAS': 80,
-    'EMBELLISHMENTS DRAWERS': 90,
-};
-function _cleanMenuText(v, fallback='Uncategorized') {
-    return ((v || fallback) + '').trim().replace(/\s+/g, ' ');
-}
-function _normaliseCategory(cat) {
-    const clean = _cleanMenuText(cat);
-    return CATEGORY_ALIASES[clean] ?? CATEGORY_ALIASES[clean.toUpperCase()] ?? clean;
-}
-function _menuOrder(s, field, fallback=999) {
-    const n = Number(s?.[field]);
-    return Number.isFinite(n) ? n : fallback;
-}
-function _inferMainCategory(s, cat, dept) {
-    if (s.mainCategory) return _normaliseCategory(s.mainCategory);
-    const c = cat.toUpperCase();
-    if (c.includes('FOOT')) return c.includes('ADD') ? 'ADD ONS & UPGRADES' : 'I. FOOT THERAPIES';
-    if (c.includes('ADD') || c.includes('POLISH') || c.includes('FINISH')) return 'ADD ONS & UPGRADES';
-    if (c.includes('PLEIADES')) return 'II. PLEIADES STUDIO';
-    if (c.includes('NAIL ARCHITECTURE') || c.includes('ACRYLIC') || c.includes('GEL EXTENSION')) return 'NAIL ARCHITECTURE';
-    if (c.includes('DESIGNER') || c.includes('ART')) return 'DESIGNER CANVAS';
-    if (c.includes('EMBELLISH')) return 'EMBELLISHMENTS DRAWERS';
-    return dept === 'Foot' ? 'I. FOOT THERAPIES' : 'I. HAND THERAPY RITUALS';
-}
-function _inferSubCategory(s, cat) {
-    if (s.subCategory) return _cleanMenuText(s.subCategory);
-    return cat;
-}
 
 function loadMenu() {
     db.collection('Menu_Services').onSnapshot(snap => {
@@ -354,37 +298,41 @@ function renderMenuForDept(dept) {
 
     const dbData = { Hand: {}, Foot: {} };
     bk_menuServices.forEach(s => {
-        let cat = _normaliseCategory(s.category || s.subCategory || 'Uncategorized');
-        const targets = (s.department === 'Both') ? ['Hand','Foot'] : [s.department || 'Hand'];
-        targets.forEach(d => {
+        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
+        cat = CATEGORY_ALIASES[cat] ?? CATEGORY_ALIASES[cat.toUpperCase()] ?? cat;
+        if (s.department === 'Both') {
+            ['Hand','Foot'].forEach(d => {
+                if (!dbData[d][cat]) dbData[d][cat] = [];
+                dbData[d][cat].push(s);
+            });
+        } else {
+            const d = s.department || 'Hand';
             if (!dbData[d]) dbData[d] = {};
-            const main = _inferMainCategory(s, cat, d);
-            const sub  = _inferSubCategory(s, cat);
-            if (!dbData[d][main]) dbData[d][main] = {};
-            if (!dbData[d][main][sub]) dbData[d][main][sub] = [];
-            dbData[d][main][sub].push(s);
-        });
+            if (!dbData[d][cat]) dbData[d][cat] = [];
+            dbData[d][cat].push(s);
+        }
     });
 
-    Object.values(dbData).forEach(mainObj =>
-        Object.values(mainObj).forEach(subObj =>
-            Object.values(subObj).forEach(arr =>
-                arr.sort((a, b) =>
-                    _menuOrder(a, 'sortOrder') - _menuOrder(b, 'sortOrder') ||
-                    (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1) ||
-                    (a.name || '').localeCompare(b.name || '')
-                )
-            )
+    Object.values(dbData).forEach(dObj =>
+        Object.values(dObj).forEach(arr =>
+            arr.sort((a, b) => (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1))
         )
     );
 
-    const mainKeys = Object.keys(dbData[dept] || {}).sort((a, b) => {
-        const oa = MENU_MAIN_ORDER[a.toUpperCase()] ?? MENU_MAIN_ORDER[a] ?? 999;
-        const ob = MENU_MAIN_ORDER[b.toUpperCase()] ?? MENU_MAIN_ORDER[b] ?? 999;
-        return oa - ob || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
+        const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
+        const aNum = numRe.test(aU), bNum = numRe.test(bU);
+        if (aNum && !bNum) return -1;
+        if (!aNum && bNum) return  1;
+        const aR = (dbData[dept][a][0]?.inputType || 'checkbox') === 'radio';
+        const bR = (dbData[dept][b][0]?.inputType || 'checkbox') === 'radio';
+        if (aR && !bR) return -1;
+        if (!aR && bR) return  1;
+        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
     });
 
-    if (!mainKeys.length) {
+    if (!sortedCats.length) {
         container.innerHTML =
             '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available for this category.</p>';
         updateBreakdown();
@@ -392,22 +340,23 @@ function renderMenuForDept(dept) {
     }
 
     let html = '';
-    mainKeys.forEach(main => {
-        const subObj = dbData[dept][main];
-        html += `<div class="menu-main-block"><div class="menu-main-heading">${main}</div>`;
+    sortedCats.forEach(cat => {
+        const items   = dbData[dept][cat];
+        const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
+        const multis  = items.filter(s => (s.inputType || 'radio') !== 'radio');
 
-        const subKeys = Object.keys(subObj).sort((a, b) => {
-            const ao = _menuOrder(subObj[a][0], 'subSortOrder', 999);
-            const bo = _menuOrder(subObj[b][0], 'subSortOrder', 999);
-            return ao - bo || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-        });
+        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
 
-        subKeys.forEach(sub => {
-            const items = subObj[sub];
-            html += `<div class="menu-section"><div class="menu-section-heading">${sub}</div>`;
+        if (singles.length && multis.length) {
+            html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
+            singles.forEach(s => { html += _buildCard(s, dept); });
+            html += `<div class="menu-subgroup-divider"></div>`;
+            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
+            multis.forEach(s => { html += _buildCard(s, dept); });
+        } else {
             items.forEach(s => { html += _buildCard(s, dept); });
-            html += `</div>`;
-        });
+        }
+
         html += `</div>`;
     });
 
@@ -534,12 +483,35 @@ function updateBreakdown() {
         });
     }
 
-    const nextBtn = document.getElementById('btnToTech');
+    const stickyBar   = document.getElementById('bk_stickyBar');
+    const stickyEmpty = document.getElementById('bk_stickyEmpty');
+    const stickyFull  = document.getElementById('bk_stickyFull');
+    const brkList     = document.getElementById('bk_breakdownList');
+    const brkTax      = document.getElementById('bk_taxBreakdown');
+    const durEl       = document.getElementById('bk_totalDuration');
+    const costEl      = document.getElementById('bk_totalCost');
+    const nextBtn     = document.getElementById('btnToTech');
 
-    // Page 1 behaves like the group-booking service step:
-    // no cost breakdown, no selected-count text, no floating summary.
-    // The only action is the in-page Continue button, enabled after selection.
-    if (nextBtn) nextBtn.disabled = !(subtotal > 0);
+    const onServicesScreen = document.getElementById('screen-services')?.classList.contains('active');
+    if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
+
+    if (subtotal > 0) {
+        if (brkList)     brkList.innerHTML    = rowsHtml;
+        if (brkTax)      brkTax.innerHTML     = taxHtml;
+        if (durEl)       durEl.textContent    = totalMins;
+        if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
+        if (stickyEmpty) stickyEmpty.style.display = 'none';
+        if (stickyFull)  stickyFull.style.display  = 'block';
+        if (nextBtn)     nextBtn.disabled = false;
+    } else {
+        if (brkList)     brkList.innerHTML    = '';
+        if (brkTax)      brkTax.innerHTML     = '';
+        if (durEl)       durEl.textContent    = '0';
+        if (costEl)      costEl.textContent   = '0.00';
+        if (stickyEmpty) stickyEmpty.style.display = 'block';
+        if (stickyFull)  stickyFull.style.display  = 'none';
+        if (nextBtn)     nextBtn.disabled = true;
+    }
 }
 
 window.bk_clearAllSelections = function() {
@@ -778,6 +750,9 @@ window.goToStep = function(id) {
     _screenHistory.push(id);
     showScreen(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Show sticky bar only on solo services screen
+    const bar = document.getElementById('bk_stickyBar');
+    if (bar) bar.style.display = (id === 'screen-services') ? 'block' : 'none';
     if (id === 'screen-services') updateBreakdown();
 };
 
@@ -827,7 +802,6 @@ function populateConfirmScreen() {
 
     document.getElementById('conf_priceBreakdown').innerHTML = priceHtml;
     document.getElementById('conf_total').textContent = finalTotal.toFixed(2) + ' GHC';
-    bk_showSlotHoldNotice();
 }
 
 // ── Promo code ────────────────────────────────────────────
@@ -906,146 +880,6 @@ function bk_showPromoStatus(msg, success) {
     el.style.display = 'block';
 }
 
-
-// ── Phase 9B.2: Book for Someone Else ──────────────────────
-window.bk_toggleBookForSomeone = function() {
-    const isSomeoneElse = document.getElementById('bookForSomeone')?.checked === true;
-    const panel = document.getElementById('bookForSomeonePanel');
-    const myselfLabel = document.getElementById('bookForMyselfLabel');
-    const someoneLabel = document.getElementById('bookForSomeoneLabel');
-
-    if (panel) panel.style.display = isSomeoneElse ? 'block' : 'none';
-    if (myselfLabel) myselfLabel.classList.toggle('active', !isSomeoneElse);
-    if (someoneLabel) someoneLabel.classList.toggle('active', isSomeoneElse);
-};
-
-function bk_getBookForDetails() {
-    const isSomeoneElse = document.getElementById('bookForSomeone')?.checked === true;
-
-    const base = {
-        bookingFor: isSomeoneElse ? 'someone_else' : 'myself',
-        paymentResponsibility: isSomeoneElse
-            ? (document.getElementById('paymentResponsibility')?.value || 'recipient')
-            : 'booker',
-        paymentStatus: isSomeoneElse && (document.getElementById('paymentResponsibility')?.value === 'recipient')
-            ? 'pay_at_checkout'
-            : 'pending_or_paid_by_booker'
-    };
-
-    if (!isSomeoneElse) {
-        return {
-            ...base,
-            recipientName: bk_clientProfile?.name || '',
-            recipientPhone: bk_clientProfile?.phone || '',
-            recipientNote: '',
-            bookedByName: bk_clientProfile?.name || '',
-            bookedByPhone: bk_clientProfile?.phone || '',
-            bookedByEmail: bk_isGuest ? '' : (bk_currentUser?.email || '')
-        };
-    }
-
-    const recipientName = (document.getElementById('recipientName')?.value || '').trim();
-    const recipientPhone = (document.getElementById('recipientPhone')?.value || '').trim();
-    const recipientNote = (document.getElementById('recipientNote')?.value || '').trim();
-
-    return {
-        ...base,
-        recipientName,
-        recipientPhone,
-        recipientNote,
-        bookedByName: bk_clientProfile?.name || '',
-        bookedByPhone: bk_clientProfile?.phone || '',
-        bookedByEmail: bk_isGuest ? '' : (bk_currentUser?.email || '')
-    };
-}
-
-function bk_validateBookForDetails() {
-    const details = bk_getBookForDetails();
-
-    if (details.bookingFor !== 'someone_else') return details;
-
-    if (!details.recipientName) {
-        toast('Please enter the recipient full name.', 'warning');
-        document.getElementById('recipientName')?.focus();
-        return null;
-    }
-
-    const phoneDigits = String(details.recipientPhone || '').replace(/\D/g, '');
-    if (phoneDigits.length < 10) {
-        toast('Please enter a valid recipient phone number.', 'warning');
-        document.getElementById('recipientPhone')?.focus();
-        return null;
-    }
-
-    return details;
-}
-
-
-
-// ── Phase 9C: Smart Availability Engine ─────────────────────
-async function bk_hasSlotConflict(techEmail, date, time) {
-    if (!date || !time) return false;
-
-    // If technician is not assigned, do not block; staff can assign later.
-    if (!techEmail || techEmail === 'any' || techEmail === 'ANY') return false;
-
-    const activeStatuses = ['Scheduled', 'Confirmed', 'Arrived', 'In Progress'];
-
-    try {
-        const snap = await db.collection('Appointments')
-            .where('assignedTechEmail', '==', techEmail)
-            .where('dateString', '==', date)
-            .where('timeString', '==', time)
-            .where('status', 'in', activeStatuses)
-            .limit(1)
-            .get();
-
-        return !snap.empty;
-    } catch (e) {
-        console.warn('Phase 9C conflict check failed:', e);
-
-        // Firestore may require a composite index. If the indexed query fails,
-        // fall back to a safer date/time check and filter locally.
-        try {
-            const fallback = await db.collection('Appointments')
-                .where('dateString', '==', date)
-                .where('timeString', '==', time)
-                .limit(20)
-                .get();
-
-            let conflict = false;
-            fallback.forEach(doc => {
-                const a = doc.data() || {};
-                if (
-                    String(a.assignedTechEmail || '').toLowerCase() === String(techEmail || '').toLowerCase() &&
-                    activeStatuses.includes(a.status || '')
-                ) {
-                    conflict = true;
-                }
-            });
-
-            return conflict;
-        } catch (fallbackError) {
-            console.warn('Phase 9C fallback conflict check failed:', fallbackError);
-            toast('We could not verify this slot. Please try again.', 'error');
-            return true;
-        }
-    }
-}
-
-function bk_showSlotHoldNotice() {
-    const confirmBtn = document.getElementById('btnConfirmBooking');
-    if (!confirmBtn || document.getElementById('bkSlotHoldNotice')) return;
-
-    const notice = document.createElement('div');
-    notice.id = 'bkSlotHoldNotice';
-    notice.className = 'slot-hold-notice';
-    notice.innerHTML = '⚡ We will re-check this slot before confirming to prevent double bookings.';
-
-    confirmBtn.insertAdjacentElement('beforebegin', notice);
-}
-
-
 // ── Confirm Booking ───────────────────────────────────────
 
 window.bk_confirmBooking = async function() {
@@ -1061,14 +895,6 @@ window.bk_confirmBooking = async function() {
     if (!date || !time) { toast('Please select a date and time.', 'warning'); return; }
     if (!bk_selectedServices.length) { toast('Please select at least one service.', 'warning'); return; }
 
-    
-if(window.bk_earlyBookFor==='someone_else'){
-    document.getElementById('bookForSomeone').checked = true;
-}
-const bookForDetails = bk_validateBookForDetails();
-
-    if (!bookForDetails) return;
-
     const services  = bk_selectedServices.map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
     const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
     const subtotal  = bk_selectedServices.reduce((s, x) => s + (x.price * (x.qty || 1)), 0);
@@ -1078,12 +904,6 @@ const bookForDetails = bk_validateBookForDetails();
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
-        const conflict = await bk_hasSlotConflict(techEmail, date, time);
-        if (conflict) {
-            toast('This time slot has just been booked. Please choose another time.', 'error');
-            return;
-        }
-
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
@@ -1106,15 +926,6 @@ const bookForDetails = bk_validateBookForDetails();
             status:              'Scheduled',
             source:              'client-booking',
             bookedBy:            bk_isGuest ? ('guest:' + (bk_clientProfile.phone || '')) : (bk_currentUser?.email || ''),
-            bookingFor:          bookForDetails.bookingFor,
-            bookedByName:        bookForDetails.bookedByName,
-            bookedByPhone:       bookForDetails.bookedByPhone,
-            bookedByEmail:       bookForDetails.bookedByEmail,
-            recipientName:       bookForDetails.recipientName,
-            recipientPhone:      bookForDetails.recipientPhone,
-            recipientNote:       bookForDetails.recipientNote,
-            paymentResponsibility: bookForDetails.paymentResponsibility,
-            paymentStatus:       bookForDetails.paymentStatus,
             createdAt:           firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt:           firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -1147,12 +958,6 @@ const bookForDetails = bk_validateBookForDetails();
 
 function populateSuccessScreen(appt) {
     document.getElementById('suc_services').textContent = appt.bookedService || '—';
-    const successSub = document.querySelector('#screen-success .success-sub');
-    if (successSub && appt.bookingFor === 'someone_else') {
-        successSub.textContent = `Booking confirmed for ${appt.recipientName || 'the recipient'}. Payment: ${appt.paymentResponsibility === 'recipient' ? 'recipient pays at checkout' : 'booker pays'}.`;
-    } else if (successSub) {
-        successSub.textContent = 'We look forward to seeing you.';
-    }
     const techDisplay = appt.assignedTechName && appt.assignedTechEmail ? appt.assignedTechName : 'To be assigned';
     document.getElementById('suc_tech').textContent = techDisplay;
     let dateFormatted = appt.dateString;
@@ -1296,215 +1101,3 @@ console.log('Thuraya Client App Phase 5.5E availability aligned app.js loaded');
 
 
 console.log('Thuraya Phase 8F client-friendly booking status labels loaded.');
-
-
-// ── Your Info + Sign Out Safe Patch ─────────────
-let bk_clientExperienceDocs = [];
-let bk_clientExperienceFilter = 'all';
-let bk_clientExperienceUnsub = null;
-
-function bk_showFloatingSignOut(show) {
-    const btn = document.getElementById('bkFloatingSignOut');
-    if (btn) btn.style.display = show ? 'block' : 'none';
-}
-
-function bk_moveStagingBannerToBottom() {
-    ['#stagingBanner', '.staging-banner', '[data-staging-banner]', '.env-banner'].forEach(sel => {
-        document.querySelectorAll(sel).forEach(el => {
-            el.style.top = 'auto';
-            el.style.bottom = '0';
-            el.style.left = '0';
-            el.style.right = '0';
-            el.style.zIndex = '9998';
-        });
-    });
-}
-
-function startClientCareLibraryListener() {
-    try {
-        if (typeof bk_clientExperienceUnsub === 'function') {
-            bk_clientExperienceUnsub();
-        }
-
-        bk_clientExperienceUnsub = db.collection('Client_Experience')
-            .where('visibleToClient', '==', true)
-            .where('archived', '==', false)
-            .onSnapshot(snapshot => {
-                bk_clientExperienceDocs = [];
-                snapshot.forEach(doc => {
-                    bk_clientExperienceDocs.push({ id: doc.id, ...doc.data() });
-                });
-
-                bk_clientExperienceDocs.sort((a, b) => {
-                    const at = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-                    const bt = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-                    return bt - at;
-                });
-
-                renderClientCareLibrary();
-            }, err => {
-                const el = document.getElementById('bk_clientExperienceList');
-                if (el) el.innerHTML = `<p style="color:var(--error);">Could not load care library: ${err.message}</p>`;
-                console.warn('Your Info listener error:', err);
-            });
-    } catch(e) {
-        console.warn('Your Info listener skipped:', e);
-    }
-}
-
-window.bk_filterClientExperience = function(category, btn) {
-    bk_clientExperienceFilter = category || 'all';
-    document.querySelectorAll('.cx-client-tab').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    renderClientCareLibrary();
-};
-
-function renderClientCareLibrary() {
-    const el = document.getElementById('bk_clientExperienceList');
-    if (!el) return;
-
-    const docs = bk_clientExperienceFilter === 'all'
-        ? bk_clientExperienceDocs
-        : bk_clientExperienceDocs.filter(d => (d.category || '').toLowerCase() === bk_clientExperienceFilter);
-
-    if (!docs.length) {
-        el.innerHTML = `<div class="form-card" style="text-align:center;color:var(--text-muted);">No information available yet.</div>`;
-        return;
-    }
-
-    el.innerHTML = docs.map(d => {
-        const category = (d.category || 'info').toString();
-        const title = d.title || 'Your Info Document';
-        const description = d.description || d.note || '';
-        const url = d.fileUrl || d.url || '#';
-
-        return `
-            <div class="cx-client-card">
-                <div class="cx-client-card-meta">${category}</div>
-                <div class="cx-client-card-title">${title}</div>
-                ${description ? `<div class="cx-client-card-desc">${description}</div>` : ''}
-                <a href="#" onclick="event.preventDefault(); openClientDocument(\`${url}\`, \`${title}\`)">Open Document</a>
-            </div>
-        `;
-    }).join('');
-}
-
-function bk_afterClientEntry() {
-    bk_showFloatingSignOut(true);
-    bk_moveStagingBannerToBottom();
-    startClientCareLibraryListener();
-}
-
-window.bk_signOut = async function() {
-    try {
-        if (typeof bk_clientExperienceUnsub === 'function') {
-            bk_clientExperienceUnsub();
-            bk_clientExperienceUnsub = null;
-        }
-
-        if (auth && auth.currentUser) {
-            await auth.signOut();
-        }
-
-        bk_currentUser = null;
-        bk_clientProfile = null;
-        bk_isGuest = false;
-        bk_selectedServices = [];
-        bk_activePromo = null;
-        bk_confirmedAppt = null;
-        bk_clientExperienceDocs = [];
-        bk_clientExperienceFilter = 'all';
-        _screenHistory = ['screen-welcome'];
-
-        try { bk_clearAllSelections(); } catch(e) {}
-
-        bk_showFloatingSignOut(false);
-        showScreen('screen-welcome');
-        toast('Signed out successfully.', 'success');
-    } catch(e) {
-        toast('Sign out failed: ' + e.message, 'error');
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    bk_showFloatingSignOut(false);
-    setTimeout(bk_moveStagingBannerToBottom, 300);
-    setTimeout(bk_moveStagingBannerToBottom, 1000);
-});
-
-
-
-// ── In-App Document Viewer ────────────────────────────────
-let bk_currentDocumentUrl = '';
-let bk_currentDocumentTitle = '';
-
-function bk_escapeAttr(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-}
-
-function bk_toEmbeddableDocumentUrl(url) {
-    if (!url) return '';
-
-    if (url.includes('drive.google.com')) {
-        const fileMatch = url.match(/\/file\/d\/([^/]+)/);
-        if (fileMatch && fileMatch[1]) {
-            return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
-        }
-
-        const idMatch = url.match(/[?&]id=([^&]+)/);
-        if (idMatch && idMatch[1]) {
-            return `https://drive.google.com/file/d/${idMatch[1]}/preview`;
-        }
-    }
-
-    return url;
-}
-
-window.openClientDocument = function(url, title) {
-    bk_currentDocumentUrl = url || '';
-    bk_currentDocumentTitle = title || 'Document';
-
-    const frame = document.getElementById('docViewerFrame');
-    const titleEl = document.getElementById('docViewerTitle');
-
-    if (titleEl) titleEl.textContent = bk_currentDocumentTitle;
-
-    if (!frame || !bk_currentDocumentUrl) {
-        toast('Document link unavailable.', 'warning');
-        return;
-    }
-
-    frame.src = '';
-    setTimeout(() => {
-        frame.src = bk_toEmbeddableDocumentUrl(bk_currentDocumentUrl);
-    }, 50);
-
-    _screenHistory.push('screen-doc-viewer');
-    showScreen('screen-doc-viewer');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-window.bk_closeDocumentViewer = function() {
-    const frame = document.getElementById('docViewerFrame');
-    if (frame) frame.src = '';
-
-    if (_screenHistory[_screenHistory.length - 1] === 'screen-doc-viewer') {
-        _screenHistory.pop();
-    }
-
-    const prev = _screenHistory[_screenHistory.length - 1] || 'screen-booking-mode';
-    showScreen(prev);
-};
-
-window.bk_openDocumentExternal = function() {
-    if (!bk_currentDocumentUrl) {
-        toast('Document link unavailable.', 'warning');
-        return;
-    }
-    window.open(bk_currentDocumentUrl, '_blank', 'noopener');
-};

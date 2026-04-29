@@ -216,11 +216,30 @@ body {
 }
 
 /* ── Service cards ──────────────────────────────────────── */
-.menu-section { margin-bottom: 8px; }
+
+.menu-main-block {
+    margin: 18px 0 24px;
+    padding: 12px;
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(252,248,239,0.78));
+    box-shadow: 0 10px 28px rgba(34,30,20,0.05);
+}
+.menu-main-heading {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+    padding: 4px 2px 10px;
+    border-bottom: 1px solid rgba(201,168,76,0.18);
+    margin-bottom: 4px;
+}
+.menu-section { margin-bottom: 14px; }
 .menu-section-heading {
     font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.1em; color: var(--gold-dark);
-    padding: 14px 0 8px;
+    padding: 14px 2px 8px;
 }
 .menu-subgroup-label {
     font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
@@ -854,3 +873,183 @@ body {
     }
 }
 
+
+
+/* Phase 9B.2 — Book for Someone Else */
+.book-for-card {
+    margin: 18px 0;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 250, 245, 0.92);
+    border: 1px solid rgba(140, 98, 57, 0.18);
+    box-shadow: 0 12px 32px rgba(45, 34, 26, 0.08);
+}
+.book-for-head h3 {
+    margin: 4px 0 14px;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+.book-for-kicker {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+}
+.book-for-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.book-for-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(140, 98, 57, 0.22);
+    background: rgba(255,255,255,.72);
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text);
+}
+.book-for-option.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.book-for-option input {
+    accent-color: var(--accent);
+}
+.book-for-panel {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(140, 98, 57, 0.25);
+}
+.book-for-panel textarea {
+    width: 100%;
+    resize: vertical;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    font-family: inherit;
+    background: #fff;
+}
+@media (max-width: 520px) {
+    .book-for-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Phase 9C — Smart Availability Notice */
+.slot-hold-notice {
+    margin: 12px 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fff8ef;
+    color: #6a4b2f;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    border: 1px solid rgba(140, 98, 57, 0.18);
+}
+
+/* Page 1 clean Continue-only bar */
+.sticky-continue-only {
+    padding: 14px 20px 18px;
+}
+.sticky-continue-only .sticky-continue-wrap {
+    width: 100%;
+}
+.sticky-continue-only .btn-primary {
+    width: 100%;
+    border-radius: 18px;
+    padding: 15px 18px;
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+
+/* Final premium continue-only bottom action polish */
+.sticky-bar.sticky-continue-only {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    z-index: 90;
+    padding: 16px 20px 20px;
+    background: rgba(255,255,255,0.92);
+    border-top: 1px solid rgba(40,40,40,0.06);
+    box-shadow: 0 -16px 42px rgba(35,30,20,0.13);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+.sticky-continue-only .sticky-empty,
+.sticky-continue-only .sticky-summary,
+.sticky-continue-only .sticky-footer,
+.sticky-continue-only .sticky-totals,
+.sticky-continue-only .sticky-actions {
+    display: none !important;
+}
+.sticky-continue-only .sticky-continue-wrap {
+    width: 100%;
+    display: block;
+}
+.sticky-continue-only .btn-primary,
+.grp-continue-btn {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 24px;
+    border: 0;
+    background: linear-gradient(145deg, #293244, #3a455c);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 850;
+    letter-spacing: 0.01em;
+    box-shadow: 0 14px 30px rgba(41,50,68,0.26);
+}
+.sticky-continue-only .btn-primary:not(:disabled):active,
+.grp-continue-btn:not(:disabled):active {
+    transform: scale(0.985);
+}
+.sticky-continue-only .btn-primary:disabled,
+.grp-continue-btn:disabled {
+    opacity: 0.42;
+    background: linear-gradient(145deg, #8f949d, #a0a5ad);
+    box-shadow: none;
+}
+.grp-progress-row,
+#grp_progressText,
+#grp_nextPersonBtn {
+    display: none !important;
+}
+#screen-group-services .screen-inner {
+    padding-bottom: 104px;
+}
+#screen-group-services .grp-continue-footer {
+    position: sticky;
+    bottom: 0;
+    margin: 22px -4px 0;
+    padding: 16px 0 20px;
+    background: linear-gradient(180deg, rgba(247,242,233,0), rgba(247,242,233,0.96) 28%, rgba(247,242,233,1));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+#screen-group-services .grp-continue-footer .btn-primary.full {
+    display: flex;
+}
+
+/* Individual service step: match group-booking footer behavior */
+.service-continue-footer {
+    margin-top: 24px;
+    padding-bottom: 28px;
+}
+.service-continue-footer .btn-primary.full {
+    min-height: 54px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
