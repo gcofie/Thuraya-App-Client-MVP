@@ -411,6 +411,7 @@ window.bk_generateSlots = async function() {
 
         window.av_lastSlotContext = { date, loadMap, ranked: rankedResult.ranked, slotMap: rankedResult.normalized };
         av_renderSlots(rankedResult.normalized, slotsEl, 'bk_selectSlot', { loadMap, ranked: rankedResult.ranked });
+        if (typeof bk_finalSyncCTAs === 'function') setTimeout(bk_finalSyncCTAs, 80);
 
     } catch (e) {
         slotsEl.innerHTML = `<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">Error loading slots: ${e.message}</p>`;
@@ -438,6 +439,7 @@ window.bk_selectSlot = function(time, btn) {
         } catch (e) { /* silent */ }
     }
     document.getElementById('btnToConfirm').disabled = false;
+    if (typeof bk_finalSyncCTAs === 'function') bk_finalSyncCTAs();
 };
 
 

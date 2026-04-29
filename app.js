@@ -52,7 +52,7 @@ function showScreen(id) {
     });
     const target = document.getElementById(id);
     if (target) { target.style.display = 'flex'; requestAnimationFrame(() => target.classList.add('active')); }
-    setTimeout(bk_patchSyncCTAs, 60);
+    setTimeout(bk_finalSyncCTAs, 80);
 }
 
 function goToStep(id) {
@@ -413,7 +413,7 @@ function renderMenuForDept(dept) {
     });
 
     container.innerHTML = html;
-    bk_patchSyncCTAs();
+    bk_finalSyncCTAs();
 
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
@@ -510,10 +510,9 @@ window.bk_updateCounter = function(id, price, dur, name, delta) {
 };
 
 
-// ── THURAYA SAFE CTA SYSTEM PATCH ─────────────────────────
-// Added to keep service and time-step Continue buttons visible.
-// Safe: does not change Firebase or booking write logic.
-function bk_patchStyleCTA(btn, active) {
+// ── THURAYA FINAL SAFE CTA HELPERS ───────────────────────
+// Minimal patch: no observers, no date picker override, no Firebase changes.
+function bk_finalStyleCTA(btn, active) {
     if (!btn) return;
     btn.className = 'btn-primary full';
     btn.style.display = 'flex';
@@ -522,26 +521,23 @@ function bk_patchStyleCTA(btn, active) {
     btn.style.width = '100%';
     btn.style.minHeight = '56px';
     btn.style.borderRadius = '22px';
-    btn.style.background = active ? 'linear-gradient(180deg,#151515 0%,#050505 100%)' : '#CEC8BE';
-    btn.style.color = active ? '#fff' : '#756F66';
-    btn.style.border = active ? '1px solid #050505' : '1px solid #CEC8BE';
     btn.style.fontWeight = '900';
     btn.style.letterSpacing = '.14em';
     btn.style.textTransform = 'uppercase';
+    btn.style.background = active ? 'linear-gradient(180deg,#151515 0%,#050505 100%)' : '#CEC8BE';
+    btn.style.color = active ? '#fff' : '#756F66';
+    btn.style.border = active ? '1px solid #050505' : '1px solid #CEC8BE';
     btn.style.boxShadow = active ? '0 18px 40px rgba(10,10,10,.24)' : 'none';
-    btn.style.opacity = '1';
     btn.style.cursor = active ? 'pointer' : 'not-allowed';
 }
 
-function bk_patchEnsureServiceCTA() {
+function bk_finalEnsureServiceCTA() {
     const menu = document.getElementById('bk_serviceMenu');
     if (!menu) return null;
 
-    // Remove old fallback duplicates if they exist
-    document.querySelectorAll('#thurayaInlineContinueServices, .thuraya-inline-continue').forEach(el => el.remove());
-    document.querySelectorAll('#bk_inlineServiceContinueWrap').forEach((el, idx) => { if (idx > 0) el.remove(); });
-
+    let wrap = document.getElementById('bk_inlineServiceContinueWrap');
     let btn = document.getElementById('btnToTech');
+
     if (!btn) {
         btn = document.createElement('button');
         btn.id = 'btnToTech';
@@ -554,14 +550,13 @@ function bk_patchEnsureServiceCTA() {
         goToStep('screen-technician');
     };
 
-    let wrap = document.getElementById('bk_inlineServiceContinueWrap');
     if (!wrap) {
         wrap = document.createElement('div');
         wrap.id = 'bk_inlineServiceContinueWrap';
-        wrap.className = 'step-footer bk-inline-service-continue';
+        wrap.className = 'step-footer';
+        wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
     }
 
-    wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
     if (!wrap.contains(btn)) wrap.appendChild(btn);
     if (wrap.parentElement !== menu.parentElement || wrap.previousElementSibling !== menu) {
         menu.insertAdjacentElement('afterend', wrap);
@@ -570,78 +565,62 @@ function bk_patchEnsureServiceCTA() {
     return btn;
 }
 
-function bk_patchEnsureTimeCTA() {
-    const slots = document.getElementById('bk_slots');
-    const container = document.getElementById('bk_slotsContainer');
-    if (!slots && !container) return null;
-
-    // If index already has btnToConfirm inside step-footer, use it and move it after slots if needed.
-    let btn = document.getElementById('btnToConfirm');
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'btnToConfirm';
-        btn.type = 'button';
-    }
-
-    btn.textContent = 'Continue →';
-    btn.onclick = function () {
-        if (btn.disabled) return;
-        goToStep('screen-confirm');
-    };
+function bk_finalEnsureTimeCTA() {
+    const slotsContainer = document.getElementById('bk_slotsContainer');
+    const footerBtn = document.getElementById('btnToConfirm');
+    if (!slotsContainer || !footerBtn) return null;
 
     let wrap = document.getElementById('bk_timeContinueWrap');
     if (!wrap) {
         wrap = document.createElement('div');
         wrap.id = 'bk_timeContinueWrap';
-        wrap.className = 'step-footer bk-time-continue';
+        wrap.className = 'step-footer';
+        wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
     }
 
-    wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
-    if (!wrap.contains(btn)) wrap.appendChild(btn);
+    footerBtn.textContent = 'Continue →';
+    footerBtn.onclick = function () {
+        if (footerBtn.disabled) return;
+        goToStep('screen-confirm');
+    };
 
-    const anchor = slots || container;
-    if (anchor && (wrap.parentElement !== anchor.parentElement || wrap.previousElementSibling !== anchor)) {
-        anchor.insertAdjacentElement('afterend', wrap);
+    if (!wrap.contains(footerBtn)) wrap.appendChild(footerBtn);
+    if (wrap.parentElement !== slotsContainer.parentElement || wrap.previousElementSibling !== slotsContainer) {
+        slotsContainer.insertAdjacentElement('afterend', wrap);
     }
 
-    return btn;
+    return footerBtn;
 }
 
-function bk_patchSyncCTAs() {
+function bk_finalSyncCTAs() {
     const stickyBar = document.getElementById('bk_stickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
 
-    const serviceBtn = bk_patchEnsureServiceCTA();
+    const serviceBtn = bk_finalEnsureServiceCTA();
     if (serviceBtn) {
         const hasService = Array.isArray(bk_selectedServices) && bk_selectedServices.length > 0;
         serviceBtn.disabled = !hasService;
-        bk_patchStyleCTA(serviceBtn, hasService);
+        bk_finalStyleCTA(serviceBtn, hasService);
     }
 
-    const timeBtn = bk_patchEnsureTimeCTA();
+    const timeBtn = bk_finalEnsureTimeCTA();
     if (timeBtn) {
-        const timeVal = document.getElementById('bk_time')?.value || '';
-        const hasTime = !!timeVal;
+        const hasTime = !!(document.getElementById('bk_time')?.value || '');
         timeBtn.disabled = !hasTime;
-        bk_patchStyleCTA(timeBtn, hasTime);
+        bk_finalStyleCTA(timeBtn, hasTime);
     }
 }
-// ── END SAFE CTA SYSTEM PATCH ─────────────────────────────
+// ── END THURAYA FINAL SAFE CTA HELPERS ───────────────────
 
 function updateBreakdown() {
     let totalMins = 0, subtotal = 0;
 
     bk_selectedServices.forEach(s => {
-        const lineTotal = (Number(s.price) || 0) * (s.qty || 1);
-        const lineMins  = (Number(s.dur) || 0) * (s.qty || 1);
-        subtotal  += lineTotal;
-        totalMins += lineMins;
+        subtotal += (Number(s.price) || 0) * (s.qty || 1);
+        totalMins += (Number(s.dur) || 0) * (s.qty || 1);
     });
 
-    // Page 1 behaves like the group-booking service step:
-    // no cost breakdown, no selected-count text, no floating summary.
-    // The only action is the in-page Continue button, enabled after selection.
-    bk_patchSyncCTAs();
+    bk_finalSyncCTAs();
 }
 
 window.bk_clearAllSelections = function() {
@@ -870,7 +849,7 @@ window.bk_selectSlot = function(time, btn) {
     }
 
     document.getElementById('btnToConfirm').disabled = false;
-    bk_patchSyncCTAs();
+    bk_finalSyncCTAs();
 };
 
 // ── goToStep override — confirm screen + sticky bar ───────
@@ -1613,101 +1592,11 @@ window.bk_openDocumentExternal = function() {
 };
 
 
-// ── THURAYA SAFE FINAL DOM PATCHES ────────────────────────
-// Guest fallback: only used if another script removed/overrode the original.
-window.continueAsGuest = window.continueAsGuest || function () {
-    bk_isGuest = true;
-    _screenHistory.push('screen-guest');
-    showScreen('screen-guest');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-// Keep CTAs in sync when availability.js renders slots or user clicks a time.
-document.addEventListener('click', function(e) {
-    if (e.target && e.target.closest && e.target.closest('#bk_slots .slot-btn, #bk_slots button')) {
-        setTimeout(function() {
-            const btn = document.getElementById('btnToConfirm');
-            if (btn) {
-                btn.disabled = false;
-                bk_patchStyleCTA(btn, true);
-            }
-            bk_patchSyncCTAs();
-        }, 40);
-    }
+// ── THURAYA FINAL SAFE DOM SYNC ───────────────────────────
+// One-time sync only. No date override. No MutationObserver.
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+        if (typeof bk_finalSyncCTAs === 'function') bk_finalSyncCTAs();
+    }, 600);
 });
-
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(bk_patchSyncCTAs, 500);
-
-    const obs = new MutationObserver(function() {
-        const slots = document.getElementById('bk_slots');
-        if (slots && slots.children.length > 0) {
-            bk_patchSyncCTAs();
-        }
-    });
-
-    obs.observe(document.body, { childList: true, subtree: true });
-});
-// ── END THURAYA SAFE FINAL DOM PATCHES ────────────────────
-
-
-// ── THURAYA SAFE DATE FIELD PATCH v2 ──────────────────────
-// Fixes date selection without aggressive showPicker loops.
-// Safe: no repeated picker calls, no focus loop, no MutationObserver freeze.
-(function () {
-    function patchDateFieldOnce() {
-        const dateInput = document.getElementById('bk_date');
-        if (!dateInput || dateInput.dataset.thurayaSafeDate === 'true') return;
-
-        dateInput.dataset.thurayaSafeDate = 'true';
-        dateInput.type = 'date';
-
-        try {
-            if (typeof todayStr !== 'undefined' && todayStr) {
-                dateInput.min = todayStr;
-            }
-        } catch (e) {}
-
-        // Only generate slots when a date is actually selected.
-        dateInput.addEventListener('change', function () {
-            if (!dateInput.value) return;
-
-            if (typeof bk_generateSlots === 'function') {
-                bk_generateSlots();
-            }
-
-            if (typeof bk_patchSyncCTAs === 'function') {
-                setTimeout(bk_patchSyncCTAs, 150);
-            }
-        });
-
-        // Simple click helper only. No focus loop.
-        dateInput.addEventListener('click', function () {
-            try {
-                if (typeof dateInput.showPicker === 'function') {
-                    dateInput.showPicker();
-                }
-            } catch (e) {
-                // Browser may block showPicker; native input still works.
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        setTimeout(patchDateFieldOnce, 300);
-    });
-
-    // Re-run only when the user enters the date screen.
-    document.addEventListener('click', function (e) {
-        if (e.target && e.target.closest && (
-            e.target.closest('[onclick*="screen-datetime"]') ||
-            e.target.closest('#bk_date')
-        )) {
-            setTimeout(patchDateFieldOnce, 150);
-        }
-    });
-
-    // Expose manual safe hook for existing navigation code.
-    window.bk_patchDateFieldOnce = patchDateFieldOnce;
-})();
-// ── END THURAYA SAFE DATE FIELD PATCH v2 ──────────────────
+// ── END THURAYA FINAL SAFE DOM SYNC ───────────────────────
