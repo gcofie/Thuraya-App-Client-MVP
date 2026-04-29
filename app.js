@@ -412,7 +412,7 @@ function renderMenuForDept(dept) {
     });
 
     container.innerHTML = html;
-    bk_ensureServiceContinueButton();
+    bk_syncStepCTAs();
 
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
@@ -509,88 +509,119 @@ window.bk_updateCounter = function(id, price, dur, name, delta) {
 };
 
 
-// ── Safe inline Continue button for Service Selection ───────
-// Keeps Page 1 CTA visible and prevents duplicate CTAs.
+// ── Unified CTA System for Client Booking Flow ─────────────
+// Safe DOM layer: keeps step CTAs visible without changing Firebase/booking logic.
+function bk_styleInlineCTA(btn, active) {
+    if (!btn) return;
+    btn.className = 'btn-primary full';
+    btn.style.cssText = [
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'width:100%',
+        'min-height:56px',
+        'border-radius:22px',
+        'background:linear-gradient(180deg,#151515 0%,#050505 100%)',
+        'color:#fff',
+        'border:1px solid #050505',
+        'font-weight:900',
+        'letter-spacing:.14em',
+        'text-transform:uppercase',
+        'box-shadow:0 18px 40px rgba(10,10,10,.24)',
+        active ? 'opacity:1' : 'opacity:.45',
+        active ? 'cursor:pointer' : 'cursor:not-allowed'
+    ].join(';') + ';';
+}
+
+function bk_makeInlineCTA(id, label, targetScreen) {
+    let btn = document.getElementById(id);
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = id;
+        btn.type = 'button';
+    }
+    btn.textContent = label || 'Continue →';
+    btn.onclick = function() {
+        if (btn.disabled) return;
+        goToStep(targetScreen);
+    };
+    bk_styleInlineCTA(btn, !btn.disabled);
+    return btn;
+}
+
+function bk_insertAfter(anchor, wrapId, btn) {
+    if (!anchor || !btn) return null;
+    let wrap = document.getElementById(wrapId);
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = wrapId;
+        wrap.className = 'step-footer thuraya-unified-cta';
+    }
+    wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
+    if (!wrap.contains(btn)) wrap.appendChild(btn);
+    if (wrap.parentElement !== anchor.parentElement || wrap.previousElementSibling !== anchor) {
+        anchor.insertAdjacentElement('afterend', wrap);
+    }
+    return wrap;
+}
+
 function bk_ensureServiceContinueButton() {
     const menu = document.getElementById('bk_serviceMenu');
     if (!menu) return null;
 
     document.querySelectorAll('#thurayaInlineContinueServices, .thuraya-inline-continue').forEach(el => el.remove());
+    document.querySelectorAll('#bk_inlineServiceContinueWrap').forEach((el, idx) => { if (idx > 0) el.remove(); });
 
-    const wrappers = Array.from(document.querySelectorAll('#bk_inlineServiceContinueWrap'));
-    wrappers.slice(1).forEach(el => el.remove());
-
-    let wrap = document.getElementById('bk_inlineServiceContinueWrap');
-    let btn = document.getElementById('btnToTech');
-
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'btnToTech';
-        btn.type = 'button';
-    }
-
-    btn.className = 'btn-primary full';
-    btn.textContent = 'Continue →';
-    btn.onclick = function() { goToStep('screen-technician'); };
-
-    if (!wrap) {
-        wrap = document.createElement('div');
-        wrap.id = 'bk_inlineServiceContinueWrap';
-        wrap.className = 'step-footer bk-inline-service-continue';
-    }
-
-    wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
-    btn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border-radius:22px;background:linear-gradient(180deg,#151515 0%,#050505 100%);color:#fff;border:1px solid #050505;font-weight:900;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 18px 40px rgba(10,10,10,.24);';
-
-    if (!wrap.contains(btn)) wrap.appendChild(btn);
-    if (wrap.parentElement !== menu.parentElement || wrap.previousElementSibling !== menu) {
-        menu.insertAdjacentElement('afterend', wrap);
-    }
-
+    const btn = bk_makeInlineCTA('btnToTech', 'Continue →', 'screen-technician');
+    bk_insertAfter(menu, 'bk_inlineServiceContinueWrap', btn);
     return btn;
+}
+
+function bk_ensureTimeContinueButton() {
+    const slots = document.getElementById('bk_slots');
+    const container = document.getElementById('bk_slotsContainer');
+    const anchor = slots || container;
+    if (!anchor) return null;
+
+    document.querySelectorAll('#bk_timeContinueWrap').forEach((el, idx) => { if (idx > 0) el.remove(); });
+
+    const btn = bk_makeInlineCTA('btnToConfirm', 'Continue →', 'screen-confirm');
+    bk_insertAfter(anchor, 'bk_timeContinueWrap', btn);
+    return btn;
+}
+
+function bk_syncStepCTAs() {
+    const stickyBar = document.getElementById('bk_stickyBar');
+    if (stickyBar) stickyBar.style.display = 'none';
+
+    const serviceBtn = bk_ensureServiceContinueButton();
+    if (serviceBtn) {
+        const valid = Array.isArray(bk_selectedServices) && bk_selectedServices.length > 0;
+        serviceBtn.disabled = !valid;
+        bk_styleInlineCTA(serviceBtn, valid);
+    }
+
+    const timeBtn = bk_ensureTimeContinueButton();
+    if (timeBtn) {
+        const timeVal = document.getElementById('bk_time')?.value || '';
+        const validTime = !!timeVal;
+        timeBtn.disabled = !validTime;
+        bk_styleInlineCTA(timeBtn, validTime);
+    }
 }
 
 function updateBreakdown() {
     let totalMins = 0, subtotal = 0;
-    let rowsHtml = '';
 
     bk_selectedServices.forEach(s => {
-        const lineTotal = s.price * (s.qty || 1);
-        const lineMins  = s.dur   * (s.qty || 1);
-        subtotal  += lineTotal;
-        totalMins += lineMins;
-        rowsHtml  += `<div class="breakdown-row">
-            <span>${s.name}${s.qty > 1 ? ' <span style="color:var(--text-muted);font-size:0.78rem;">(x'+s.qty+')</span>' : ''}</span>
-            <span style="font-weight:600;">${lineTotal.toFixed(2)} GHC</span>
-        </div>`;
+        subtotal += (Number(s.price) || 0) * (s.qty || 1);
+        totalMins += (Number(s.dur) || 0) * (s.qty || 1);
     });
-
-    const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
-
-    let taxHtml = '';
-    if (taxLines.length && subtotal > 0) {
-        taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;border-top:1px dashed var(--border);padding-top:5px;margin-top:5px;">
-            <span>Subtotal (ex. tax)</span><span>${basePrice.toFixed(2)} GHC</span></div>`;
-        taxLines.forEach(l => {
-            taxHtml += `<div class="breakdown-row" style="font-size:0.82rem;color:var(--primary);font-weight:600;">
-                <span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
-        });
-    }
-
-    const stickyBar = document.getElementById('bk_stickyBar');
-    if (stickyBar) stickyBar.style.display = 'none';
-
-    const nextBtn = bk_ensureServiceContinueButton();
 
     // Page 1 behaves like the group-booking service step:
     // no cost breakdown, no selected-count text, no floating summary.
     // The only action is the in-page Continue button, enabled after selection.
-    if (nextBtn) {
-        const isValidSelection = bk_selectedServices.length > 0;
-        nextBtn.disabled = !isValidSelection;
-        nextBtn.style.opacity = isValidSelection ? '1' : '.45';
-        nextBtn.style.cursor = isValidSelection ? 'pointer' : 'not-allowed';
-    }
+    bk_syncStepCTAs();
 }
 
 window.bk_clearAllSelections = function() {
@@ -819,6 +850,7 @@ window.bk_selectSlot = function(time, btn) {
     }
 
     document.getElementById('btnToConfirm').disabled = false;
+    bk_syncStepCTAs();
 };
 
 // ── goToStep override — confirm screen + sticky bar ───────
@@ -830,6 +862,7 @@ window.goToStep = function(id) {
     showScreen(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (id === 'screen-services') updateBreakdown();
+    setTimeout(bk_syncStepCTAs, 50);
 };
 
 function populateConfirmScreen() {
@@ -1559,3 +1592,13 @@ window.bk_openDocumentExternal = function() {
     }
     window.open(bk_currentDocumentUrl, '_blank', 'noopener');
 };
+
+
+// Backup listener: any time slot click syncs the Date/Time CTA.
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.closest && e.target.closest('#bk_slots .slot-btn')) {
+        setTimeout(bk_syncStepCTAs, 30);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => setTimeout(bk_syncStepCTAs, 800));
