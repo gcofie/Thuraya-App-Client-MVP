@@ -1649,3 +1649,80 @@ document.addEventListener('DOMContentLoaded', function() {
     obs.observe(document.body, { childList: true, subtree: true });
 });
 // ── END THURAYA SAFE FINAL DOM PATCHES ────────────────────
+
+
+// ── THURAYA SAFE DATE PICKER FALLBACK ─────────────────────
+// Fixes cases where clicking the calendar icon/date field does not open picker.
+// Safe: does not change booking logic.
+(function () {
+    function bk_patchDatePicker() {
+        const dateInput = document.getElementById('bk_date');
+        if (!dateInput || dateInput.dataset.thurayaDatePatched === 'true') return;
+
+        dateInput.dataset.thurayaDatePatched = 'true';
+        dateInput.type = 'date';
+
+        // Ensure minimum date is today if available.
+        try {
+            if (typeof todayStr !== 'undefined' && todayStr && !dateInput.min) {
+                dateInput.min = todayStr;
+            }
+        } catch (e) {}
+
+        // Clicking anywhere on the input should open the native picker where supported.
+        dateInput.addEventListener('click', function () {
+            try {
+                if (typeof dateInput.showPicker === 'function') {
+                    dateInput.showPicker();
+                } else {
+                    dateInput.focus();
+                }
+            } catch (e) {
+                dateInput.focus();
+            }
+        });
+
+        // Focus fallback for browsers that need focus before picker opens.
+        dateInput.addEventListener('focus', function () {
+            try {
+                if (typeof dateInput.showPicker === 'function') {
+                    setTimeout(function () { dateInput.showPicker(); }, 30);
+                }
+            } catch (e) {}
+        });
+
+        // When date changes, generate available slots.
+        dateInput.addEventListener('change', function () {
+            if (typeof bk_generateSlots === 'function') {
+                bk_generateSlots();
+            }
+            if (typeof bk_patchSyncCTAs === 'function') {
+                setTimeout(bk_patchSyncCTAs, 80);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(bk_patchDatePicker, 300);
+        setTimeout(bk_patchDatePicker, 1000);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.closest && e.target.closest('#bk_date')) {
+            bk_patchDatePicker();
+        }
+    });
+
+    // Repatch after screen changes/render changes.
+    const obs = new MutationObserver(function () {
+        const dateInput = document.getElementById('bk_date');
+        if (dateInput && dateInput.dataset.thurayaDatePatched !== 'true') {
+            bk_patchDatePicker();
+        }
+    });
+
+    try {
+        obs.observe(document.body, { childList: true, subtree: true });
+    } catch (e) {}
+})();
+// ── END THURAYA SAFE DATE PICKER FALLBACK ─────────────────
