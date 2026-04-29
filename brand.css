@@ -1,0 +1,445 @@
+
+/* =========================================================
+   THURAYA BRAND.CSS v1
+   Shared premium UI layer for Client App + Staff App
+   ---------------------------------------------------------
+   Deployment principle:
+   - Additive CSS only
+   - Do not rename IDs/classes
+   - Do not change Firebase, booking, auth, or staff logic
+   ========================================================= */
+
+/* ---------- Brand Tokens ---------- */
+:root{
+  --th-black:#0A0A0A;
+  --th-ink:#111111;
+  --th-text:#1A1A1A;
+  --th-secondary:#2A2A2A;
+  --th-muted:#6B6B6B;
+  --th-line:#D8D5D0;
+  --th-soft-line:rgba(10,10,10,.10);
+  --th-cream:#F0EDE8;
+  --th-warm:#FAFAF8;
+  --th-card:#FFFFFF;
+  --th-soft-card:#F7F6F3;
+  --th-shadow:0 14px 30px rgba(10,10,10,.10);
+  --th-shadow-soft:0 10px 22px rgba(10,10,10,.06);
+  --th-radius-sm:10px;
+  --th-radius-md:14px;
+  --th-radius-lg:18px;
+  --th-radius-xl:24px;
+  --th-font-serif:"Cormorant Garamond", Georgia, serif;
+  --th-font-sans:"Montserrat", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ---------- Optional Font Import ---------- */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap");
+
+/* ---------- Global Base ---------- */
+html,
+body{
+  font-family:var(--th-font-sans);
+  color:var(--th-text);
+  background:var(--th-cream);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+*{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ---------- Typography Hierarchy ---------- */
+h1,h2,h3,
+.logo-wordmark,
+.brand-name,
+.confirm-title{
+  font-family:var(--th-font-serif);
+  color:var(--th-ink);
+  letter-spacing:.02em;
+}
+
+p,
+.field-hint,
+.confirm-note,
+.sticky-empty,
+.grp-info-box,
+.cx-help,
+.att-sub,
+.myatt-sub,
+.perf-empty,
+.cx-empty{
+  color:var(--th-secondary);
+  line-height:1.65;
+}
+
+.sec-label,
+.book-section-title,
+.slots-label,
+.confirm-label,
+.sticky-total-label,
+.field-label,
+.form-group label,
+.cip-metric-lbl,
+.metric-card small,
+.my-profile-section-title{
+  color:var(--th-muted);
+  font-weight:500;
+  letter-spacing:1.35px;
+  text-transform:uppercase;
+}
+
+/* ---------- Cards / Surfaces ---------- */
+.form-card,
+.confirm-card,
+.book-for-card,
+.book-for-panel,
+.mode-card,
+.promo-block,
+.sticky-bar,
+.card,
+.metric-card,
+.module-box,
+.login-card,
+.perf-card,
+.cx-card,
+.cx-shell,
+.cx-hero,
+.intel54c-card,
+.intel54c-shell,
+.my-profile-hero,
+.my-profile-details-card,
+.my-profile-photo-card,
+.my-profile-attendance-card{
+  background:var(--th-card);
+  border:1px solid var(--th-line);
+  border-radius:var(--th-radius-lg);
+  box-shadow:var(--th-shadow-soft);
+}
+
+.screen-inner,
+.container{
+  color:var(--th-text);
+}
+
+/* ---------- Buttons ---------- */
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+.btn-ghost,
+.btn-google,
+.btn-logout,
+.btn-auto,
+.btn-sm,
+.btn-text,
+#btnToTech,
+#btnToDateTime,
+#btnToConfirm,
+#btnConfirmBooking,
+#grp_toDateTimeBtn,
+#grp_toConfirmBtn,
+#grp_btnConfirm,
+#btnGoogleSignIn,
+#btnGuestSignIn,
+#btnSaveGuest,
+#btnSaveProfile,
+#btnViewBookings,
+#btnAddToCalendar,
+#btnApplyBkPromo,
+#btnTogglePromo{
+  font-family:var(--th-font-sans);
+  border-radius:var(--th-radius-md);
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    opacity .16s ease,
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease;
+}
+
+.btn-primary,
+#btnToTech,
+#btnToDateTime,
+#btnToConfirm,
+#btnConfirmBooking,
+#grp_toDateTimeBtn,
+#grp_toConfirmBtn,
+#grp_btnConfirm,
+#btnSaveGuest,
+#btnSaveProfile{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border:1px solid var(--th-black) !important;
+  min-height:48px;
+  font-weight:600;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  box-shadow:0 12px 26px rgba(10,10,10,.16);
+}
+
+.btn-secondary,
+.btn-outline,
+#btnGuestSignIn,
+#btnViewBookings,
+#btnAddToCalendar,
+#btnApplyBkPromo,
+#btnTogglePromo{
+  background:var(--th-card) !important;
+  color:var(--th-ink) !important;
+  border:1px solid var(--th-line) !important;
+}
+
+.btn-google,
+#btnGoogleSignIn{
+  background:#FFFFFF !important;
+  color:var(--th-ink) !important;
+  border:1px solid var(--th-line) !important;
+  box-shadow:var(--th-shadow-soft);
+}
+
+button:not(:disabled):active,
+.btn:not(:disabled):active,
+.btn-primary:not(:disabled):active,
+.btn-secondary:not(:disabled):active,
+.btn-outline:not(:disabled):active,
+.btn-google:not(:disabled):active,
+.book-for-option:active,
+.mode-card:active,
+.service-card:active,
+.tech-card:active,
+.slot-btn:active,
+.grp-size-btn:active{
+  transform:scale(.985);
+}
+
+button:disabled,
+.btn:disabled,
+.btn-primary:disabled{
+  opacity:1 !important;
+  background:#CFCBC4 !important;
+  color:#7A756D !important;
+  border-color:#CFCBC4 !important;
+  box-shadow:none !important;
+  cursor:not-allowed !important;
+}
+
+/* ---------- Inputs / Forms ---------- */
+input,
+select,
+textarea,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.cx-field,
+#guest_name,
+#guest_phone,
+#guest_gender,
+#bk_date,
+#bk_promoCode,
+#grp_date{
+  font-family:var(--th-font-sans);
+  color:var(--th-text);
+  background:#FFFFFF;
+  border:1px solid var(--th-line);
+  border-radius:var(--th-radius-md);
+  min-height:44px;
+  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.cx-field:focus{
+  outline:none;
+  border-color:rgba(10,10,10,.42);
+  box-shadow:0 0 0 3px rgba(10,10,10,.06);
+}
+
+/* ---------- Client Booking Selection States ---------- */
+.book-for-option,
+.mode-card,
+.service-card,
+.tech-card,
+.slot-btn,
+.grp-size-btn,
+.dept-btn,
+.cx-client-tab,
+.promo-toggle-btn{
+  border-radius:var(--th-radius-md);
+  transition:
+    transform .16s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    color .18s ease;
+}
+
+.book-for-option.selected,
+.mode-card.selected,
+.service-card.selected,
+.tech-card.selected,
+.slot-btn.selected,
+.grp-size-btn.selected,
+.dept-btn.active,
+.cx-client-tab.active,
+.promo-toggle-btn.active{
+  background:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+  box-shadow:var(--th-shadow) !important;
+  transform:translateY(-1px);
+}
+
+.service-card.selected,
+.tech-card.selected,
+.mode-card.selected,
+.book-for-option.selected{
+  position:relative;
+}
+
+.service-card.selected::before,
+.tech-card.selected::before,
+.mode-card.selected::before,
+.book-for-option.selected::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:12px;
+  bottom:12px;
+  width:3px;
+  border-radius:0 6px 6px 0;
+  background:var(--th-black);
+}
+
+.slot-btn.selected,
+.slot-btn.active{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+}
+
+/* ---------- Sticky Summary / Booking Footer ---------- */
+.sticky-actions,
+.sticky-footer,
+.step-footer{
+  background:rgba(250,250,248,.96);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--th-line);
+}
+
+.sticky-total-line,
+.sticky-line-items,
+.confirm-row,
+.promo-row{
+  color:var(--th-text);
+}
+
+.sticky-total-unit,
+.confirm-value{
+  color:var(--th-ink);
+  font-weight:600;
+}
+
+/* ---------- Booking Progress ---------- */
+.step-badge,
+.grp-progress-row{
+  border-radius:999px;
+}
+
+.step-badge.active,
+.step-badge.done{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+}
+
+/* ---------- Success / Confirmation ---------- */
+.confirm-card{
+  overflow:hidden;
+}
+
+.confirm-note{
+  color:var(--th-secondary);
+}
+
+/* ---------- Staff App Navigation / Utility ---------- */
+.nav-tab,
+.cip-tab,
+.category-tabs button,
+.dept-tabs button{
+  border-radius:999px;
+  transition:background .16s ease, color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.nav-tab.active,
+.cip-tab--active,
+.category-tabs button.active,
+.dept-tabs button.active{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+}
+
+/* ---------- Staff App Data Cards ---------- */
+.metric-value,
+.cip-metric-val,
+.perf-kpi,
+.intel54c-kpi,
+.my-profile-name{
+  color:var(--th-ink);
+  font-weight:600;
+}
+
+.table,
+.breakdown-table{
+  border-color:var(--th-line);
+}
+
+/* ---------- Login / Auth Surfaces ---------- */
+.login-card{
+  border-radius:var(--th-radius-xl);
+}
+
+.logo-tagline,
+.logo-block p{
+  color:var(--th-muted);
+}
+
+/* ---------- Accessibility ---------- */
+button:focus-visible,
+.btn:focus-visible,
+.book-for-option:focus-visible,
+.mode-card:focus-visible,
+.service-card:focus-visible,
+.tech-card:focus-visible,
+.slot-btn:focus-visible,
+.nav-tab:focus-visible{
+  outline:2px solid rgba(10,10,10,.45);
+  outline-offset:3px;
+}
+
+/* ---------- Mobile Polish ---------- */
+@media (max-width: 640px){
+  .form-card,
+  .confirm-card,
+  .book-for-card,
+  .book-for-panel,
+  .mode-card,
+  .promo-block,
+  .card,
+  .metric-card,
+  .module-box{
+    border-radius:var(--th-radius-md);
+  }
+
+  .sticky-actions,
+  .sticky-footer,
+  .step-footer{
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+}

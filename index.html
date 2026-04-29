@@ -218,6 +218,8 @@
     </style>
 
 
+  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="client-engagement.css">
 </head>
 <body>
 
@@ -390,7 +392,7 @@
                 <div class="step-header">
                     <div class="step-badge">Step 1 of 4</div>
                     <h2>Choose Your Services</h2>
-                    <p>Select your treatment, then continue to choose your technician.</p>
+                    <p>Select your treatments below. Your cost and time summary updates as you go.</p>
                 </div>
                 <div class="dept-toggle">
                     <button class="dept-btn active" data-dept="Hand" onclick="switchDept('Hand', this)">✋ Hand Therapy</button>
@@ -399,11 +401,7 @@
                 <div id="bk_serviceMenu">
                     <div class="loading-pulse">Loading services...</div>
                 </div>
-                <div class="step-footer service-continue-footer">
-                    <button class="btn-primary full" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
-                        Continue →
-                    </button>
-                </div>
+                <div style="height:160px;"></div>
             </div>
         </div>
 
@@ -743,13 +741,16 @@
                     <button class="dept-btn" data-dept="Foot" onclick="grp_switchDept('Foot', this)">🦶 Foot Therapy</button>
                 </div>
                 <div id="grp_serviceList" style="margin-top:16px;"></div>
-                <div class="grp-progress-row" style="display:none !important;">
-                    <span id="grp_progressText" style="display:none !important;"></span>
-                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()" style="display:none !important;">Next person →</button>
+                <div class="grp-progress-row">
+                    <span id="grp_progressText">0 of 2 selected</span>
+                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()"
+                        style="background:none;border:none;color:var(--gold-dark);font-size:0.85rem;cursor:pointer;font-family:inherit;display:none;">
+                        Next person →
+                    </button>
                 </div>
-                <div class="step-footer grp-continue-footer">
-                    <button class="btn-primary full grp-continue-btn" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
-                        Continue →
+                <div class="step-footer">
+                    <button class="btn-primary full" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
+                        Choose a Time →
                     </button>
                 </div>
             </div>
@@ -851,6 +852,39 @@
 
     </div><!-- /#app -->
 
+    <!-- STICKY BREAKDOWN BAR -->
+    <div id="bk_stickyBar" class="sticky-bar" style="display:none;">
+        <div id="bk_stickyEmpty" class="sticky-empty">
+            Tap a service above to see your price breakdown
+        </div>
+        <div id="bk_stickyFull" style="display:none;">
+            <div class="sticky-summary">
+                <div id="bk_breakdownList" class="sticky-line-items"></div>
+                <div id="bk_taxBreakdown"></div>
+            </div>
+            <div class="sticky-footer">
+                <div class="sticky-totals">
+                    <div class="sticky-total-line">
+                        <span class="sticky-total-label">⏱ Duration</span>
+                        <span class="sticky-total-value" id="bk_totalDuration">0</span>
+                        <span class="sticky-total-unit">mins</span>
+                    </div>
+                    <div class="sticky-total-line">
+                        <span class="sticky-total-label">💰 Total</span>
+                        <span class="sticky-total-value accent" id="bk_totalCost">0.00</span>
+                        <span class="sticky-total-unit">GHC</span>
+                    </div>
+                </div>
+                <div class="sticky-actions">
+                    <button class="sticky-clear-btn" onclick="bk_clearAllSelections()">Clear</button>
+                    <button class="btn-primary" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
+                        Continue →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -862,5 +896,24 @@
     <script src="availability.js?v=phase8-smart-booking-20260427"></script>
     <script src="phase-9a-soft-login-gate.js?v=phase9a-full-20260428"></script>
     <script src="phase-9b-email-password-auth.js?v=phase9b-email-20260428"></script>
+  <script src="client-engagement.js"></script>
+
+<template id="thUpcomingAppointmentTemplate">
+
+<!-- THURAYA ENGAGEMENT PATCH: Upcoming appointment card (safe UI block)
+     Production note: render this dynamically when user has an upcoming appointment. -->
+<section class="th-upcoming-card" id="thUpcomingAppointmentPreview" aria-label="Upcoming appointment preview">
+  <div class="th-kicker">Upcoming appointment</div>
+  <div class="th-upcoming-title">Your next Thuraya visit</div>
+  <div class="th-upcoming-sub">When a client has an upcoming booking, show the service, date, time, and reminder status here.</div>
+  <div class="th-upcoming-actions">
+    <button class="th-mini-btn th-light" type="button" onclick="thurayaEngagementAction('rebook')">Rebook</button>
+    <button class="th-mini-btn" type="button" onclick="thurayaEngagementAction('directions')">Directions</button>
+    <button class="th-mini-btn" type="button" onclick="thurayaEngagementAction('whatsapp')">WhatsApp</button>
+  </div>
+</section>
+
+</template>
+
 </body>
 </html>
