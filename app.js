@@ -516,10 +516,9 @@ function updateBreakdown() {
         const lineMins  = s.dur   * (s.qty || 1);
         subtotal  += lineTotal;
         totalMins += lineMins;
-        rowsHtml  += `<div class="breakdown-row">
-            <span>${s.name}${s.qty > 1 ? ' <span style="color:var(--text-muted);font-size:0.78rem;">(x'+s.qty+')</span>' : ''}</span>
-            <span style="font-weight:600;">${lineTotal.toFixed(2)} GHC</span>
-        </div>`;
+        // Page 1 no-duplicate pricing UX:
+        // keep line totals for final review, but do not render full cost breakdown during service selection.
+        rowsHtml  += '';
     });
 
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
@@ -547,8 +546,11 @@ function updateBreakdown() {
     if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
 
     if (subtotal > 0) {
-        if (brkList)     brkList.innerHTML    = rowsHtml;
-        if (brkTax)      brkTax.innerHTML     = taxHtml;
+        if (brkList) {
+            const itemCount = bk_selectedServices.reduce((n, x) => n + (x.qty || 1), 0);
+            brkList.innerHTML = `<div class="sticky-mini-selected">${itemCount} service${itemCount === 1 ? '' : 's'} selected</div>`;
+        }
+        if (brkTax)      brkTax.innerHTML     = '';
         if (durEl)       durEl.textContent    = totalMins;
         if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
         if (stickyEmpty) stickyEmpty.style.display = 'none';

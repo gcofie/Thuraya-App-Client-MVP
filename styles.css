@@ -954,3 +954,18 @@ body {
     line-height: 1.45;
     border: 1px solid rgba(140, 98, 57, 0.18);
 }
+
+
+/* Phase 9D — No-duplicate pricing UX
+   Page 1 shows only a compact mini summary. Full line-item tax breakdown remains on Page 4. */
+#bk_stickyBar .sticky-summary { margin-bottom: 6px; }
+#bk_stickyBar #bk_taxBreakdown { display: none; }
+.sticky-mini-selected {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+}
+#bk_stickyBar .sticky-footer { align-items: center; }
+#bk_stickyBar .sticky-totals { gap: 4px; }
+#bk_stickyBar .sticky-empty { font-weight: 600; }
