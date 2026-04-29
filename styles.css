@@ -969,3 +969,75 @@ body {
     font-size: 0.98rem;
     font-weight: 800;
 }
+
+/* Final premium continue-only bottom action polish */
+.sticky-bar.sticky-continue-only {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    z-index: 90;
+    padding: 16px 20px 20px;
+    background: rgba(255,255,255,0.92);
+    border-top: 1px solid rgba(40,40,40,0.06);
+    box-shadow: 0 -16px 42px rgba(35,30,20,0.13);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+.sticky-continue-only .sticky-empty,
+.sticky-continue-only .sticky-summary,
+.sticky-continue-only .sticky-footer,
+.sticky-continue-only .sticky-totals,
+.sticky-continue-only .sticky-actions {
+    display: none !important;
+}
+.sticky-continue-only .sticky-continue-wrap {
+    width: 100%;
+    display: block;
+}
+.sticky-continue-only .btn-primary,
+.grp-continue-btn {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 24px;
+    border: 0;
+    background: linear-gradient(145deg, #293244, #3a455c);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 850;
+    letter-spacing: 0.01em;
+    box-shadow: 0 14px 30px rgba(41,50,68,0.26);
+}
+.sticky-continue-only .btn-primary:not(:disabled):active,
+.grp-continue-btn:not(:disabled):active {
+    transform: scale(0.985);
+}
+.sticky-continue-only .btn-primary:disabled,
+.grp-continue-btn:disabled {
+    opacity: 0.42;
+    background: linear-gradient(145deg, #8f949d, #a0a5ad);
+    box-shadow: none;
+}
+.grp-progress-row,
+#grp_progressText,
+#grp_nextPersonBtn {
+    display: none !important;
+}
+#screen-group-services .screen-inner {
+    padding-bottom: 104px;
+}
+#screen-group-services .grp-continue-footer {
+    position: sticky;
+    bottom: 0;
+    margin: 22px -4px 0;
+    padding: 16px 0 20px;
+    background: linear-gradient(180deg, rgba(247,242,233,0), rgba(247,242,233,0.96) 28%, rgba(247,242,233,1));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+#screen-group-services .grp-continue-footer .btn-primary.full {
+    display: flex;
+}

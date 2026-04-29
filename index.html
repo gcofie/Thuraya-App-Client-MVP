@@ -739,12 +739,12 @@
                     <button class="dept-btn" data-dept="Foot" onclick="grp_switchDept('Foot', this)">🦶 Foot Therapy</button>
                 </div>
                 <div id="grp_serviceList" style="margin-top:16px;"></div>
-                <div class="grp-progress-row" style="display:none;">
-                    <span id="grp_progressText">0 of 2 selected</span>
-                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()" style="display:none;">Next person →</button>
+                <div class="grp-progress-row" style="display:none !important;">
+                    <span id="grp_progressText" style="display:none !important;"></span>
+                    <button id="grp_nextPersonBtn" onclick="grp_nextPerson()" style="display:none !important;">Next person →</button>
                 </div>
-                <div class="step-footer">
-                    <button class="btn-primary full" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
+                <div class="step-footer grp-continue-footer">
+                    <button class="btn-primary full grp-continue-btn" id="grp_toDateTimeBtn" onclick="grp_goToDateTime()" disabled>
                         Continue →
                     </button>
                 </div>

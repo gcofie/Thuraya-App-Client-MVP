@@ -439,10 +439,10 @@ function grp_updateProgress() {
     const progressEl = document.getElementById('grp_progressText');
     const nextBtn = document.getElementById('grp_nextPersonBtn');
     const continueBtn = document.getElementById('grp_toDateTimeBtn');
-    if (progressEl) progressEl.textContent = `${done} of ${total} selected`;
+    if (progressEl) progressEl.textContent = ""; // hidden by final premium UI
     const currentDone = grp_members[grp_activeMember]?.selectedServices?.length > 0;
     const isLast = grp_activeMember === total - 1;
-    if (nextBtn) nextBtn.style.display = (currentDone && !isLast) ? 'inline-flex' : 'none';
+    if (nextBtn) nextBtn.style.display = 'none'; // removed from final premium UI
     if (continueBtn) continueBtn.disabled = done !== total;
 }
 
