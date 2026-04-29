@@ -412,6 +412,7 @@ function renderMenuForDept(dept) {
     });
 
     container.innerHTML = html;
+    bk_ensureServiceContinueButton();
 
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
@@ -507,6 +508,42 @@ window.bk_updateCounter = function(id, price, dur, name, delta) {
     updateBreakdown();
 };
 
+
+// ── Safe inline Continue button for Service Selection ───────
+// Keeps Page 1 CTA visible without relying on the hidden sticky bar.
+function bk_ensureServiceContinueButton() {
+    const serviceScreen = document.querySelector('#screen-services .screen-inner');
+    const menu = document.getElementById('bk_serviceMenu');
+    if (!serviceScreen || !menu) return null;
+
+    let wrap = document.getElementById('bk_inlineServiceContinueWrap');
+    let btn = document.getElementById('btnToTech');
+
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'bk_inlineServiceContinueWrap';
+        wrap.className = 'step-footer bk-inline-service-continue';
+        wrap.style.cssText = 'margin:28px 0 140px;width:100%;';
+
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'btnToTech';
+            btn.type = 'button';
+            btn.className = 'btn-primary full';
+            btn.disabled = true;
+            btn.textContent = 'Continue →';
+            btn.onclick = function() { goToStep('screen-technician'); };
+        }
+
+        wrap.appendChild(btn);
+        menu.insertAdjacentElement('afterend', wrap);
+    } else if (btn && !wrap.contains(btn)) {
+        wrap.appendChild(btn);
+    }
+
+    return document.getElementById('btnToTech');
+}
+
 function updateBreakdown() {
     let totalMins = 0, subtotal = 0;
     let rowsHtml = '';
@@ -534,12 +571,20 @@ function updateBreakdown() {
         });
     }
 
-    const nextBtn = document.getElementById('btnToTech');
+    const stickyBar = document.getElementById('bk_stickyBar');
+    if (stickyBar) stickyBar.style.display = 'none';
+
+    const nextBtn = bk_ensureServiceContinueButton();
 
     // Page 1 behaves like the group-booking service step:
     // no cost breakdown, no selected-count text, no floating summary.
     // The only action is the in-page Continue button, enabled after selection.
-    if (nextBtn) nextBtn.disabled = !(subtotal > 0);
+    if (nextBtn) {
+        nextBtn.disabled = !(subtotal > 0);
+        nextBtn.style.display = 'flex';
+        nextBtn.style.alignItems = 'center';
+        nextBtn.style.justifyContent = 'center';
+    }
 }
 
 window.bk_clearAllSelections = function() {
