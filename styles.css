@@ -1,29 +1,35 @@
 /* =========================================================
-   THURAYA FINAL STYLES.CSS (FORCED BRAND LOAD)
+   THURAYA MERGED STYLES (FINAL - NO DEPENDENCIES)
    ========================================================= */
 
-/* 🔥 FORCE BRAND SYSTEM */
-@import "brand.css";
-
-/* =========================================================
-   BASE RESET
-   ========================================================= */
+/* ---------- RESET ---------- */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* ---------- BASE ---------- */
 body {
   font-family: 'Montserrat', sans-serif;
-  background: #F0EDE8; /* fallback if brand.css fails */
+  background: #F0EDE8;
   color: #1A1A1A;
   -webkit-font-smoothing: antialiased;
 }
 
-/* =========================================================
-   LAYOUT
-   ========================================================= */
+/* ---------- TYPOGRAPHY ---------- */
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', serif;
+  color: #111;
+  letter-spacing: 0.02em;
+}
+
+p {
+  color: #2A2A2A;
+  line-height: 1.6;
+}
+
+/* ---------- LAYOUT ---------- */
 .container,
 .screen-inner {
   max-width: 640px;
@@ -31,73 +37,100 @@ body {
   padding: 20px;
 }
 
-/* =========================================================
-   HEADINGS
-   ========================================================= */
-h1, h2, h3 {
-  font-family: 'Cormorant Garamond', serif;
-  color: #111;
+/* ---------- CARDS ---------- */
+.card,
+.service-card,
+.mode-card,
+.book-for-option {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #D8D5D0;
+  box-shadow: 0 10px 22px rgba(10,10,10,0.06);
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
 }
 
-/* =========================================================
-   BUTTONS (fallback, brand.css overrides)
-   ========================================================= */
-button {
-  border: none;
-  outline: none;
+.service-card.selected,
+.mode-card.selected,
+.book-for-option.selected {
+  border-color: #0A0A0A;
+  box-shadow: 0 14px 30px rgba(10,10,10,0.1);
+}
+
+/* ---------- BUTTONS ---------- */
+button,
+.btn {
+  border-radius: 14px;
+  font-family: 'Montserrat', sans-serif;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
-/* =========================================================
-   CARDS (fallback)
-   ========================================================= */
-.card,
-.service-card,
-.mode-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid #ddd;
-  margin-bottom: 12px;
+.btn-primary,
+button.primary {
+  background: #0A0A0A;
+  color: #FFFFFF;
+  padding: 14px;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
-/* =========================================================
-   INPUTS
-   ========================================================= */
+.btn-secondary {
+  background: #FFFFFF;
+  border: 1px solid #D8D5D0;
+  color: #111;
+}
+
+/* ---------- INPUTS ---------- */
 input,
 select {
   width: 100%;
   padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  border-radius: 12px;
+  border: 1px solid #D8D5D0;
+  background: #FFFFFF;
 }
 
-/* =========================================================
-   STICKY FOOTER
-   ========================================================= */
+input:focus {
+  border-color: #0A0A0A;
+  outline: none;
+}
+
+/* ---------- STICKY FOOTER ---------- */
 .sticky-footer {
   position: sticky;
   bottom: 0;
-  background: #fff;
-  padding: 12px;
-  border-top: 1px solid #ddd;
-}
-
-/* =========================================================
-   FALLBACK BUTTON STYLE
-   ========================================================= */
-.btn-primary {
-  background: #111;
-  color: #fff;
+  background: #FAFAF8;
   padding: 14px;
-  border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  border-top: 1px solid #D8D5D0;
 }
 
-/* =========================================================
-   SAFE FALLBACK (if brand.css fails)
-   ========================================================= */
-body {
-  background: #F0EDE8;
+/* ---------- PROGRESS ---------- */
+.step-badge {
+  border-radius: 999px;
+}
+
+.step-badge.active {
+  background: #0A0A0A;
+  color: #fff;
+}
+
+/* ---------- SELECTION ---------- */
+.slot-btn.selected {
+  background: #0A0A0A;
+  color: #fff;
+}
+
+/* ---------- LOGIN ---------- */
+.login-card {
+  border-radius: 24px;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 640px) {
+  .card {
+    border-radius: 14px;
+  }
 }
