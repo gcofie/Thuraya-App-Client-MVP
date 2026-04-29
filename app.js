@@ -510,38 +510,54 @@ window.bk_updateCounter = function(id, price, dur, name, delta) {
 
 
 // ── Safe inline Continue button for Service Selection ───────
-// Keeps Page 1 CTA visible without relying on the hidden sticky bar.
+// Keeps Page 1 CTA visible and prevents duplicate CTAs.
 function bk_ensureServiceContinueButton() {
     const serviceScreen = document.querySelector('#screen-services .screen-inner');
     const menu = document.getElementById('bk_serviceMenu');
     if (!serviceScreen || !menu) return null;
 
+    // Remove earlier HTML fallback CTA if present.
+    document.querySelectorAll('#thurayaInlineContinueServices, .thuraya-inline-continue').forEach(el => el.remove());
+
+    // Remove duplicate wrappers from previous patches.
+    document.querySelectorAll('#bk_inlineServiceContinueWrap').forEach((el, index) => {
+        if (index > 0) el.remove();
+    });
+
     let wrap = document.getElementById('bk_inlineServiceContinueWrap');
     let btn = document.getElementById('btnToTech');
+
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'btnToTech';
+        btn.type = 'button';
+        btn.className = 'btn-primary full';
+        btn.disabled = true;
+        btn.textContent = 'Continue →';
+        btn.onclick = function() { goToStep('screen-technician'); };
+    }
+
+    // Ensure only this button controls Step 1 continuation.
+    btn.textContent = 'Continue →';
+    btn.type = 'button';
+    btn.onclick = function() { goToStep('screen-technician'); };
+    btn.className = 'btn-primary full';
 
     if (!wrap) {
         wrap = document.createElement('div');
         wrap.id = 'bk_inlineServiceContinueWrap';
         wrap.className = 'step-footer bk-inline-service-continue';
-        wrap.style.cssText = 'margin:28px 0 140px;width:100%;';
-
-        if (!btn) {
-            btn = document.createElement('button');
-            btn.id = 'btnToTech';
-            btn.type = 'button';
-            btn.className = 'btn-primary full';
-            btn.disabled = true;
-            btn.textContent = 'Continue →';
-            btn.onclick = function() { goToStep('screen-technician'); };
-        }
-
-        wrap.appendChild(btn);
-        menu.insertAdjacentElement('afterend', wrap);
-    } else if (btn && !wrap.contains(btn)) {
-        wrap.appendChild(btn);
     }
 
-    return document.getElementById('btnToTech');
+    wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
+    btn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border-radius:22px;background:linear-gradient(180deg,#151515 0%,#050505 100%);color:#fff;border:1px solid #050505;font-weight:900;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 18px 40px rgba(10,10,10,.24);';
+
+    if (!wrap.contains(btn)) wrap.appendChild(btn);
+    if (wrap.parentElement !== menu.parentElement || wrap.previousElementSibling !== menu) {
+        menu.insertAdjacentElement('afterend', wrap);
+    }
+
+    return btn;
 }
 
 function updateBreakdown() {
@@ -570,7 +586,6 @@ function updateBreakdown() {
                 <span>+ ${l.name} (${l.rate}%)</span><span>${l.amount.toFixed(2)} GHC</span></div>`;
         });
     }
-
     const stickyBar = document.getElementById('bk_stickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
 
@@ -581,9 +596,8 @@ function updateBreakdown() {
     // The only action is the in-page Continue button, enabled after selection.
     if (nextBtn) {
         nextBtn.disabled = !(subtotal > 0);
-        nextBtn.style.display = 'flex';
-        nextBtn.style.alignItems = 'center';
-        nextBtn.style.justifyContent = 'center';
+        nextBtn.style.opacity = subtotal > 0 ? '1' : '.45';
+        nextBtn.style.cursor = subtotal > 0 ? 'pointer' : 'not-allowed';
     }
 }
 
