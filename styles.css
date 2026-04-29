@@ -630,3 +630,171 @@ input:focus,select:focus,textarea:focus{
   .sticky-actions{ width:100%; }
   .sticky-actions .btn-primary,.sticky-actions button{ flex:1; }
 }
+
+
+
+/* =========================================================
+   THURAYA WOW POLISH LAYER — FINAL MERGED
+   Purpose: richer premium feel without touching logic
+   ========================================================= */
+
+/* richer background depth */
+.bg-texture{
+  background:
+    radial-gradient(circle at 50% -8%, rgba(255,255,255,.98), transparent 34%),
+    radial-gradient(circle at 10% 18%, rgba(200,169,77,.18), transparent 32%),
+    radial-gradient(circle at 92% 12%, rgba(0,0,0,.055), transparent 30%),
+    linear-gradient(180deg, #FBF7F0 0%, #F1ECE4 52%, #E6DED2 100%) !important;
+}
+
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.76), transparent 48%),
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0));
+}
+
+/* more luxurious card surfaces */
+.mode-card,
+.form-card,
+.confirm-card,
+.book-for-card,
+.book-for-panel,
+.promo-block,
+.grp-info-box,
+.cx-client-card,
+.tech-option-card,
+.tech-card,
+#bk_serviceMenu > div:not(.loading-pulse),
+#grp_serviceList > div:not(.loading-pulse){
+  border-color:rgba(216,213,208,.82) !important;
+  box-shadow:
+    0 18px 42px rgba(10,10,10,.075),
+    inset 0 1px 0 rgba(255,255,255,.85) !important;
+}
+
+/* selected / active feels premium */
+.mode-card:active,
+.tech-option-card:active,
+.tech-card:active,
+#bk_serviceMenu > div:not(.loading-pulse):active,
+#grp_serviceList > div:not(.loading-pulse):active{
+  transform:scale(.992) translateY(-1px);
+}
+
+/* subtle gold line for highlighted group booking card */
+.mode-card--highlight{
+  position:relative;
+  overflow:hidden;
+}
+
+.mode-card--highlight::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:18px;
+  bottom:18px;
+  width:4px;
+  border-radius:0 8px 8px 0;
+  background:linear-gradient(180deg,#D8BE61,#9D802F);
+}
+
+/* elevate primary CTA */
+.btn-primary{
+  background:
+    linear-gradient(180deg,#151515 0%,#050505 100%) !important;
+  box-shadow:
+    0 18px 40px rgba(10,10,10,.24),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+
+.btn-primary:not(:disabled):hover{
+  transform:translateY(-1px);
+  box-shadow:
+    0 24px 54px rgba(10,10,10,.30),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+/* softer secondary buttons */
+.btn-outline,
+#btnGoogleSignIn,
+#btnGuestSignIn{
+  box-shadow:
+    0 14px 32px rgba(10,10,10,.075),
+    inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+
+/* screen entrance feel */
+.screen.active .screen-inner,
+.screen.active .welcome-inner{
+  animation:thurayaScreenIn .28s ease both;
+}
+
+@keyframes thurayaScreenIn{
+  from{
+    opacity:.0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* refined title presence */
+.step-header h2{
+  text-shadow:0 1px 0 rgba(255,255,255,.65);
+}
+
+.logo-mark{
+  box-shadow:
+    0 18px 42px rgba(138,113,54,.30),
+    inset 0 1px 0 rgba(255,255,255,.35) !important;
+}
+
+/* make form fields feel more high-end */
+input,
+select,
+textarea{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.88);
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  background:#fff;
+  box-shadow:
+    0 0 0 4px rgba(10,10,10,.055),
+    0 10px 22px rgba(10,10,10,.045) !important;
+}
+
+/* sticky bar more app-like */
+.sticky-bar{
+  border-top-color:rgba(216,213,208,.9) !important;
+  box-shadow:
+    0 -18px 44px rgba(10,10,10,.12),
+    inset 0 1px 0 rgba(255,255,255,.8) !important;
+}
+
+/* improve service card readability if generated menu has nested text */
+#bk_serviceMenu > div:not(.loading-pulse),
+#grp_serviceList > div:not(.loading-pulse){
+  line-height:1.55;
+}
+
+#bk_serviceMenu label,
+#grp_serviceList label{
+  cursor:pointer;
+}
+
+/* reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce){
+  *{
+    animation:none !important;
+    transition:none !important;
+  }
+}
