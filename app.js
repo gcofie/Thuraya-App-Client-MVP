@@ -516,9 +516,10 @@ function updateBreakdown() {
         const lineMins  = s.dur   * (s.qty || 1);
         subtotal  += lineTotal;
         totalMins += lineMins;
-        // Page 1 no-duplicate pricing UX:
-        // keep line totals for final review, but do not render full cost breakdown during service selection.
-        rowsHtml  += '';
+        rowsHtml  += `<div class="breakdown-row">
+            <span>${s.name}${s.qty > 1 ? ' <span style="color:var(--text-muted);font-size:0.78rem;">(x'+s.qty+')</span>' : ''}</span>
+            <span style="font-weight:600;">${lineTotal.toFixed(2)} GHC</span>
+        </div>`;
     });
 
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
@@ -543,13 +544,13 @@ function updateBreakdown() {
     const nextBtn     = document.getElementById('btnToTech');
 
     const onServicesScreen = document.getElementById('screen-services')?.classList.contains('active');
-    if (stickyBar) stickyBar.style.display = onServicesScreen ? 'block' : 'none';
+
+    // Page 1 stays clean: no cost breakdown, no selected count, no summary.
+    // Show only the Continue button after at least one service is selected.
+    if (stickyBar) stickyBar.style.display = (onServicesScreen && subtotal > 0) ? 'block' : 'none';
 
     if (subtotal > 0) {
-        if (brkList) {
-            const itemCount = bk_selectedServices.reduce((n, x) => n + (x.qty || 1), 0);
-            brkList.innerHTML = `<div class="sticky-mini-selected">${itemCount} service${itemCount === 1 ? '' : 's'} selected</div>`;
-        }
+        if (brkList)     brkList.innerHTML    = '';
         if (brkTax)      brkTax.innerHTML     = '';
         if (durEl)       durEl.textContent    = totalMins;
         if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
@@ -561,7 +562,7 @@ function updateBreakdown() {
         if (brkTax)      brkTax.innerHTML     = '';
         if (durEl)       durEl.textContent    = '0';
         if (costEl)      costEl.textContent   = '0.00';
-        if (stickyEmpty) stickyEmpty.style.display = 'block';
+        if (stickyEmpty) stickyEmpty.style.display = 'none';
         if (stickyFull)  stickyFull.style.display  = 'none';
         if (nextBtn)     nextBtn.disabled = true;
     }
