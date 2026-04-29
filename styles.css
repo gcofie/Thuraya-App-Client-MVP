@@ -1,136 +1,55 @@
 /* =========================================================
-   THURAYA MERGED STYLES (FINAL - NO DEPENDENCIES)
+   THURAYA FINAL UI OVERRIDE (READY FILE)
    ========================================================= */
 
-/* ---------- RESET ---------- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* ---------- BASE ---------- */
 body {
+  background: #F0EDE8 !important;
   font-family: 'Montserrat', sans-serif;
-  background: #F0EDE8;
-  color: #1A1A1A;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- TYPOGRAPHY ---------- */
-h1, h2, h3 {
-  font-family: 'Cormorant Garamond', serif;
-  color: #111;
-  letter-spacing: 0.02em;
-}
-
-p {
-  color: #2A2A2A;
-  line-height: 1.6;
-}
-
-/* ---------- LAYOUT ---------- */
-.container,
-.screen-inner {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-/* ---------- CARDS ---------- */
-.card,
-.service-card,
-.mode-card,
+/* Booking cards */
 .book-for-option {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid #D8D5D0;
-  box-shadow: 0 10px 22px rgba(10,10,10,0.06);
-  margin-bottom: 14px;
-  transition: all 0.2s ease;
+  background: #FFFFFF !important;
+  border-radius: 18px !important;
+  border: 1px solid #D8D5D0 !important;
+  box-shadow: 0 10px 22px rgba(10,10,10,0.06) !important;
+  padding: 18px !important;
+  margin-bottom: 16px !important;
+  transition: all 0.2s ease !important;
 }
 
-.service-card.selected,
-.mode-card.selected,
-.book-for-option.selected {
-  border-color: #0A0A0A;
-  box-shadow: 0 14px 30px rgba(10,10,10,0.1);
+.book-for-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(10,10,10,0.1) !important;
 }
 
-/* ---------- BUTTONS ---------- */
-button,
-.btn {
-  border-radius: 14px;
-  font-family: 'Montserrat', sans-serif;
-  transition: all 0.2s ease;
-  cursor: pointer;
+/* Titles */
+h1 {
+  font-family: 'Cormorant Garamond', serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.5px !important;
+  color: #111 !important;
 }
 
-.btn-primary,
-button.primary {
-  background: #0A0A0A;
-  color: #FFFFFF;
-  padding: 14px;
-  border: none;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+/* Subtext */
+p {
+  color: #6B6B6B !important;
 }
 
-.btn-secondary {
-  background: #FFFFFF;
-  border: 1px solid #D8D5D0;
-  color: #111;
+/* Buttons */
+button {
+  border-radius: 14px !important;
 }
 
-/* ---------- INPUTS ---------- */
-input,
-select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #D8D5D0;
-  background: #FFFFFF;
+/* Sign out */
+.sign-out {
+  background: #111 !important;
+  color: #fff !important;
+  border-radius: 20px !important;
+  padding: 10px 16px !important;
 }
 
-input:focus {
-  border-color: #0A0A0A;
-  outline: none;
-}
-
-/* ---------- STICKY FOOTER ---------- */
-.sticky-footer {
-  position: sticky;
-  bottom: 0;
-  background: #FAFAF8;
-  padding: 14px;
-  border-top: 1px solid #D8D5D0;
-}
-
-/* ---------- PROGRESS ---------- */
-.step-badge {
-  border-radius: 999px;
-}
-
-.step-badge.active {
-  background: #0A0A0A;
-  color: #fff;
-}
-
-/* ---------- SELECTION ---------- */
-.slot-btn.selected {
-  background: #0A0A0A;
-  color: #fff;
-}
-
-/* ---------- LOGIN ---------- */
-.login-card {
-  border-radius: 24px;
-}
-
-/* ---------- MOBILE ---------- */
-@media (max-width: 640px) {
-  .card {
-    border-radius: 14px;
-  }
+/* Layout */
+.screen-inner {
+  padding: 24px !important;
 }
