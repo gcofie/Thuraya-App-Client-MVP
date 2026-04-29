@@ -390,7 +390,7 @@
                 <div class="step-header">
                     <div class="step-badge">Step 1 of 4</div>
                     <h2>Choose Your Services</h2>
-                    <p>Select your treatments below. Your cost and time summary updates as you go.</p>
+                    <p>Select your treatment, then continue to choose your technician.</p>
                 </div>
                 <div class="dept-toggle">
                     <button class="dept-btn active" data-dept="Hand" onclick="switchDept('Hand', this)">✋ Hand Therapy</button>
@@ -399,7 +399,11 @@
                 <div id="bk_serviceMenu">
                     <div class="loading-pulse">Loading services...</div>
                 </div>
-                <div style="height:160px;"></div>
+                <div class="step-footer service-continue-footer">
+                    <button class="btn-primary full" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
+                        Continue →
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -846,16 +850,6 @@
         </div>
 
     </div><!-- /#app -->
-
-    <!-- CLEAN SERVICE SELECTION CONTINUE BAR -->
-    <div id="bk_stickyBar" class="sticky-bar sticky-continue-only" style="display:none;">
-        <div id="bk_stickyEmpty" class="sticky-empty" style="display:none;"></div>
-        <div id="bk_stickyFull" class="sticky-continue-wrap" style="display:none;">
-            <button class="btn-primary full" id="btnToTech" onclick="goToStep('screen-technician')" disabled>
-                Continue →
-            </button>
-        </div>
-    </div>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>

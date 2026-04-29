@@ -534,38 +534,12 @@ function updateBreakdown() {
         });
     }
 
-    const stickyBar   = document.getElementById('bk_stickyBar');
-    const stickyEmpty = document.getElementById('bk_stickyEmpty');
-    const stickyFull  = document.getElementById('bk_stickyFull');
-    const brkList     = document.getElementById('bk_breakdownList');
-    const brkTax      = document.getElementById('bk_taxBreakdown');
-    const durEl       = document.getElementById('bk_totalDuration');
-    const costEl      = document.getElementById('bk_totalCost');
-    const nextBtn     = document.getElementById('btnToTech');
+    const nextBtn = document.getElementById('btnToTech');
 
-    const onServicesScreen = document.getElementById('screen-services')?.classList.contains('active');
-
-    // Page 1 stays clean: no cost breakdown, no selected count, no summary.
-    // Show only the Continue button after at least one service is selected.
-    if (stickyBar) stickyBar.style.display = (onServicesScreen && subtotal > 0) ? 'block' : 'none';
-
-    if (subtotal > 0) {
-        if (brkList)     brkList.innerHTML    = '';
-        if (brkTax)      brkTax.innerHTML     = '';
-        if (durEl)       durEl.textContent    = totalMins;
-        if (costEl)      costEl.textContent   = grandTotal.toFixed(2);
-        if (stickyEmpty) stickyEmpty.style.display = 'none';
-        if (stickyFull)  stickyFull.style.display  = 'block';
-        if (nextBtn)     nextBtn.disabled = false;
-    } else {
-        if (brkList)     brkList.innerHTML    = '';
-        if (brkTax)      brkTax.innerHTML     = '';
-        if (durEl)       durEl.textContent    = '0';
-        if (costEl)      costEl.textContent   = '0.00';
-        if (stickyEmpty) stickyEmpty.style.display = 'none';
-        if (stickyFull)  stickyFull.style.display  = 'none';
-        if (nextBtn)     nextBtn.disabled = true;
-    }
+    // Page 1 behaves like the group-booking service step:
+    // no cost breakdown, no selected-count text, no floating summary.
+    // The only action is the in-page Continue button, enabled after selection.
+    if (nextBtn) nextBtn.disabled = !(subtotal > 0);
 }
 
 window.bk_clearAllSelections = function() {
@@ -804,9 +778,6 @@ window.goToStep = function(id) {
     _screenHistory.push(id);
     showScreen(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Show sticky bar only on solo services screen
-    const bar = document.getElementById('bk_stickyBar');
-    if (bar) bar.style.display = (id === 'screen-services') ? 'block' : 'none';
     if (id === 'screen-services') updateBreakdown();
 };
 

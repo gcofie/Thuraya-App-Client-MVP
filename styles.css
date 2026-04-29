@@ -1041,3 +1041,15 @@ body {
 #screen-group-services .grp-continue-footer .btn-primary.full {
     display: flex;
 }
+
+/* Individual service step: match group-booking footer behavior */
+.service-continue-footer {
+    margin-top: 24px;
+    padding-bottom: 28px;
+}
+.service-continue-footer .btn-primary.full {
+    min-height: 54px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
