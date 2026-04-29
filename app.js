@@ -1651,78 +1651,63 @@ document.addEventListener('DOMContentLoaded', function() {
 // ── END THURAYA SAFE FINAL DOM PATCHES ────────────────────
 
 
-// ── THURAYA SAFE DATE PICKER FALLBACK ─────────────────────
-// Fixes cases where clicking the calendar icon/date field does not open picker.
-// Safe: does not change booking logic.
+// ── THURAYA SAFE DATE FIELD PATCH v2 ──────────────────────
+// Fixes date selection without aggressive showPicker loops.
+// Safe: no repeated picker calls, no focus loop, no MutationObserver freeze.
 (function () {
-    function bk_patchDatePicker() {
+    function patchDateFieldOnce() {
         const dateInput = document.getElementById('bk_date');
-        if (!dateInput || dateInput.dataset.thurayaDatePatched === 'true') return;
+        if (!dateInput || dateInput.dataset.thurayaSafeDate === 'true') return;
 
-        dateInput.dataset.thurayaDatePatched = 'true';
+        dateInput.dataset.thurayaSafeDate = 'true';
         dateInput.type = 'date';
 
-        // Ensure minimum date is today if available.
         try {
-            if (typeof todayStr !== 'undefined' && todayStr && !dateInput.min) {
+            if (typeof todayStr !== 'undefined' && todayStr) {
                 dateInput.min = todayStr;
             }
         } catch (e) {}
 
-        // Clicking anywhere on the input should open the native picker where supported.
+        // Only generate slots when a date is actually selected.
+        dateInput.addEventListener('change', function () {
+            if (!dateInput.value) return;
+
+            if (typeof bk_generateSlots === 'function') {
+                bk_generateSlots();
+            }
+
+            if (typeof bk_patchSyncCTAs === 'function') {
+                setTimeout(bk_patchSyncCTAs, 150);
+            }
+        });
+
+        // Simple click helper only. No focus loop.
         dateInput.addEventListener('click', function () {
             try {
                 if (typeof dateInput.showPicker === 'function') {
                     dateInput.showPicker();
-                } else {
-                    dateInput.focus();
                 }
             } catch (e) {
-                dateInput.focus();
-            }
-        });
-
-        // Focus fallback for browsers that need focus before picker opens.
-        dateInput.addEventListener('focus', function () {
-            try {
-                if (typeof dateInput.showPicker === 'function') {
-                    setTimeout(function () { dateInput.showPicker(); }, 30);
-                }
-            } catch (e) {}
-        });
-
-        // When date changes, generate available slots.
-        dateInput.addEventListener('change', function () {
-            if (typeof bk_generateSlots === 'function') {
-                bk_generateSlots();
-            }
-            if (typeof bk_patchSyncCTAs === 'function') {
-                setTimeout(bk_patchSyncCTAs, 80);
+                // Browser may block showPicker; native input still works.
             }
         });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        setTimeout(bk_patchDatePicker, 300);
-        setTimeout(bk_patchDatePicker, 1000);
+        setTimeout(patchDateFieldOnce, 300);
     });
 
+    // Re-run only when the user enters the date screen.
     document.addEventListener('click', function (e) {
-        if (e.target && e.target.closest && e.target.closest('#bk_date')) {
-            bk_patchDatePicker();
+        if (e.target && e.target.closest && (
+            e.target.closest('[onclick*="screen-datetime"]') ||
+            e.target.closest('#bk_date')
+        )) {
+            setTimeout(patchDateFieldOnce, 150);
         }
     });
 
-    // Repatch after screen changes/render changes.
-    const obs = new MutationObserver(function () {
-        const dateInput = document.getElementById('bk_date');
-        if (dateInput && dateInput.dataset.thurayaDatePatched !== 'true') {
-            bk_patchDatePicker();
-        }
-    });
-
-    try {
-        obs.observe(document.body, { childList: true, subtree: true });
-    } catch (e) {}
+    // Expose manual safe hook for existing navigation code.
+    window.bk_patchDateFieldOnce = patchDateFieldOnce;
 })();
-// ── END THURAYA SAFE DATE PICKER FALLBACK ─────────────────
+// ── END THURAYA SAFE DATE FIELD PATCH v2 ──────────────────
