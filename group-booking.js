@@ -1342,3 +1342,171 @@ window.grp_startSplitPlanner = function(dateStr, split) {
     grp_renderManualSplitPlanner(dateStr || grp_todayString(), split || [grp_members.length]);
 };
 
+
+
+// ============================================================
+// THURAYA GROUP BOOKING — CTA WIRING + POLISH PATCH
+// Safe layer. Does not change Firestore booking logic.
+// Fixes: "CHOOSE A TIME" CTA not moving to date/time step.
+// ============================================================
+(function () {
+    function grp_stylePrimaryCTA(btn, active) {
+        if (!btn) return;
+        btn.className = 'btn-primary full';
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.width = '100%';
+        btn.style.minHeight = '56px';
+        btn.style.borderRadius = '22px';
+        btn.style.fontWeight = '900';
+        btn.style.letterSpacing = '.14em';
+        btn.style.textTransform = 'uppercase';
+        btn.style.transition = 'transform .18s ease, box-shadow .18s ease, background .18s ease';
+        btn.style.border = active ? '1px solid #050505' : '1px solid #CEC8BE';
+        btn.style.background = active ? 'linear-gradient(180deg,#151515 0%,#050505 100%)' : '#CEC8BE';
+        btn.style.color = active ? '#fff' : '#756F66';
+        btn.style.boxShadow = active ? '0 18px 40px rgba(10,10,10,.24)' : 'none';
+        btn.style.cursor = active ? 'pointer' : 'not-allowed';
+        btn.style.opacity = '1';
+    }
+
+    function grp_allMembersReady() {
+        try {
+            return Array.isArray(grp_members)
+                && grp_members.length > 0
+                && grp_members.every(m => Array.isArray(m.selectedServices) && m.selectedServices.length > 0);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function grp_wireChooseTimeCTA() {
+        const btn = document.getElementById('grp_toDateTimeBtn');
+        if (!btn) return;
+
+        const ready = grp_allMembersReady();
+
+        btn.textContent = 'Choose a Time →';
+        btn.disabled = !ready;
+        grp_stylePrimaryCTA(btn, ready);
+
+        btn.onclick = function (e) {
+            e.preventDefault();
+
+            if (!grp_allMembersReady()) {
+                if (typeof toast === 'function') {
+                    toast('Please select services for every group member first.', 'warning');
+                }
+                return;
+            }
+
+            btn.textContent = 'Loading…';
+
+            setTimeout(function () {
+                if (typeof grp_goToDateTime === 'function') {
+                    grp_goToDateTime();
+                } else if (typeof goToStep === 'function') {
+                    goToStep('screen-group-datetime');
+                }
+            }, 120);
+        };
+    }
+
+    function grp_wireGroupTimeCTA() {
+        const btn = document.getElementById('grp_toConfirmBtn');
+        if (!btn) return;
+
+        const hasTime = !!(document.getElementById('grp_time')?.value || '');
+        btn.textContent = 'Review Group Booking →';
+        btn.disabled = !hasTime;
+        grp_stylePrimaryCTA(btn, hasTime);
+
+        btn.onclick = function (e) {
+            e.preventDefault();
+
+            if (!document.getElementById('grp_time')?.value) {
+                if (typeof toast === 'function') {
+                    toast('Please choose a time for your group first.', 'warning');
+                }
+                return;
+            }
+
+            if (typeof goToStep === 'function') {
+                goToStep('screen-group-confirm');
+            }
+        };
+    }
+
+    function grp_polishProgressText() {
+        const progressEl = document.getElementById('grp_progressText');
+        if (!progressEl) return;
+
+        try {
+            const done = grp_members.filter(m => m.selectedServices && m.selectedServices.length > 0).length;
+            const total = grp_members.length || grp_groupSize || 0;
+            progressEl.textContent = total ? `${done} of ${total} people ready` : '';
+            progressEl.style.color = '#8A7136';
+            progressEl.style.fontWeight = '800';
+            progressEl.style.letterSpacing = '.06em';
+            progressEl.style.textTransform = 'uppercase';
+            progressEl.style.fontSize = '.76rem';
+        } catch (e) {}
+    }
+
+    window.grp_polishAndWireCTAs = function () {
+        grp_wireChooseTimeCTA();
+        grp_wireGroupTimeCTA();
+        grp_polishProgressText();
+    };
+
+    // Wrap existing progress updater if present, so CTA updates after each service selection.
+    if (typeof grp_updateProgress === 'function' && !grp_updateProgress.__thurayaPatched) {
+        const originalProgress = grp_updateProgress;
+        grp_updateProgress = function () {
+            originalProgress.apply(this, arguments);
+            setTimeout(window.grp_polishAndWireCTAs, 30);
+        };
+        grp_updateProgress.__thurayaPatched = true;
+    }
+
+    // Wrap group date/time route to keep CTA state clean.
+    if (typeof window.grp_goToDateTime === 'function' && !window.grp_goToDateTime.__thurayaPatched) {
+        const originalGoToDateTime = window.grp_goToDateTime;
+        window.grp_goToDateTime = function () {
+            originalGoToDateTime.apply(this, arguments);
+            setTimeout(window.grp_polishAndWireCTAs, 80);
+        };
+        window.grp_goToDateTime.__thurayaPatched = true;
+    }
+
+    // Sync on relevant clicks/changes.
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.closest && (
+            e.target.closest('#grp_serviceList') ||
+            e.target.closest('#grp_personTabs') ||
+            e.target.closest('#grp_slots') ||
+            e.target.closest('#grp_toDateTimeBtn') ||
+            e.target.closest('#grp_toConfirmBtn')
+        )) {
+            setTimeout(window.grp_polishAndWireCTAs, 60);
+        }
+    });
+
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.closest && (
+            e.target.closest('#grp_serviceList') ||
+            e.target.closest('#grp_date') ||
+            e.target.closest('#grp_slots')
+        )) {
+            setTimeout(window.grp_polishAndWireCTAs, 80);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(window.grp_polishAndWireCTAs, 600);
+    });
+})();
+// ============================================================
+// END THURAYA GROUP BOOKING — CTA WIRING + POLISH PATCH
+// ============================================================
