@@ -1,55 +1,62 @@
 /* =========================================================
-   THURAYA FINAL UI OVERRIDE (READY FILE)
+   THURAYA FORCE OVERRIDE (FINAL — HIGH PRIORITY)
    ========================================================= */
 
-body {
+html body {
   background: #F0EDE8 !important;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Booking cards */
-.book-for-option {
+/* Target ALL booking cards */
+html body .book-for-option,
+html body .mode-card,
+html body .service-card,
+html body div[class*="card"] {
   background: #FFFFFF !important;
-  border-radius: 18px !important;
+  border-radius: 20px !important;
   border: 1px solid #D8D5D0 !important;
-  box-shadow: 0 10px 22px rgba(10,10,10,0.06) !important;
+  box-shadow: 0 12px 28px rgba(10,10,10,0.08) !important;
   padding: 18px !important;
   margin-bottom: 16px !important;
-  transition: all 0.2s ease !important;
 }
 
-.book-for-option:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(10,10,10,0.1) !important;
-}
-
-/* Titles */
-h1 {
+/* Headings */
+html body h1,
+html body h2 {
   font-family: 'Cormorant Garamond', serif !important;
   font-weight: 400 !important;
   letter-spacing: 0.5px !important;
   color: #111 !important;
 }
 
-/* Subtext */
-p {
+/* Text */
+html body p,
+html body span {
   color: #6B6B6B !important;
 }
 
 /* Buttons */
-button {
-  border-radius: 14px !important;
+html body button {
+  border-radius: 16px !important;
+}
+
+/* Primary buttons */
+html body button.primary,
+html body button[class*="primary"] {
+  background: #0A0A0A !important;
+  color: #FFFFFF !important;
 }
 
 /* Sign out */
-.sign-out {
-  background: #111 !important;
+html body .sign-out,
+html body button.sign-out {
+  background: #0A0A0A !important;
   color: #fff !important;
-  border-radius: 20px !important;
+  border-radius: 22px !important;
   padding: 10px 16px !important;
 }
 
-/* Layout */
-.screen-inner {
+/* Layout spacing */
+html body .screen-inner {
   padding: 24px !important;
 }
