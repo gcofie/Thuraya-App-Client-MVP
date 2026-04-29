@@ -352,6 +352,67 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
 }
 
 
+
+
+// ── THURAYA SOLO TIME CONTINUE CTA PATCH ──────────────────
+// Safe: availability.js owns the time slot render, so the CTA belongs here.
+function av_ensureSoloTimeContinueCTA(active = false) {
+    const slots = document.getElementById('bk_slots');
+    const container = document.getElementById('bk_slotsContainer');
+    const anchor = slots || container;
+    if (!anchor) return null;
+
+    let wrap = document.getElementById('bk_timeContinueWrap');
+    let btn = document.getElementById('btnToConfirm');
+
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'btnToConfirm';
+        btn.type = 'button';
+    }
+
+    btn.textContent = 'Continue →';
+    btn.className = 'btn-primary full';
+    btn.disabled = !active;
+    btn.onclick = function () {
+        if (btn.disabled) return;
+        if (typeof goToStep === 'function') goToStep('screen-confirm');
+    };
+
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.justifyContent = 'center';
+    btn.style.width = '100%';
+    btn.style.minHeight = '56px';
+    btn.style.borderRadius = '22px';
+    btn.style.fontWeight = '900';
+    btn.style.letterSpacing = '.14em';
+    btn.style.textTransform = 'uppercase';
+    btn.style.background = active ? 'linear-gradient(180deg,#151515 0%,#050505 100%)' : '#CEC8BE';
+    btn.style.color = active ? '#fff' : '#756F66';
+    btn.style.border = active ? '1px solid #050505' : '1px solid #CEC8BE';
+    btn.style.boxShadow = active ? '0 18px 40px rgba(10,10,10,.24)' : 'none';
+    btn.style.cursor = active ? 'pointer' : 'not-allowed';
+    btn.style.opacity = '1';
+
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'bk_timeContinueWrap';
+        wrap.className = 'step-footer bk-time-continue';
+    }
+
+    wrap.style.cssText = 'margin:28px 0 140px;width:100%;display:block;background:transparent;border:none;box-shadow:none;padding:0;';
+    if (!wrap.contains(btn)) wrap.appendChild(btn);
+
+    if (anchor && (wrap.parentElement !== anchor.parentElement || wrap.previousElementSibling !== anchor)) {
+        anchor.insertAdjacentElement('afterend', wrap);
+    }
+
+    return btn;
+}
+// ── END THURAYA SOLO TIME CONTINUE CTA PATCH ──────────────
+
+
 // ============================================================
 //  SOLO FLOW — replaces bk_generateSlots in app.js
 // ============================================================
@@ -411,7 +472,7 @@ window.bk_generateSlots = async function() {
 
         window.av_lastSlotContext = { date, loadMap, ranked: rankedResult.ranked, slotMap: rankedResult.normalized };
         av_renderSlots(rankedResult.normalized, slotsEl, 'bk_selectSlot', { loadMap, ranked: rankedResult.ranked });
-        if (typeof bk_finalSyncCTAs === 'function') setTimeout(bk_finalSyncCTAs, 80);
+        av_ensureSoloTimeContinueCTA(false);
 
     } catch (e) {
         slotsEl.innerHTML = `<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">Error loading slots: ${e.message}</p>`;
@@ -439,7 +500,7 @@ window.bk_selectSlot = function(time, btn) {
         } catch (e) { /* silent */ }
     }
     document.getElementById('btnToConfirm').disabled = false;
-    if (typeof bk_finalSyncCTAs === 'function') bk_finalSyncCTAs();
+    av_ensureSoloTimeContinueCTA(true);
 };
 
 
@@ -585,3 +646,13 @@ console.log('Thuraya availability engine 4b loaded.');
 
 // Phase 5.5E: Unified solo/group availability alignment loaded.
 console.log('Thuraya availability engine Phase 8B Client Intelligence loaded.');
+
+
+// Backup: make sure selecting any solo slot activates the Continue CTA.
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.closest && e.target.closest('#bk_slots .slot-btn, #bk_slots button')) {
+        setTimeout(function() {
+            av_ensureSoloTimeContinueCTA(true);
+        }, 40);
+    }
+});
