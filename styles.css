@@ -801,101 +801,172 @@ textarea:focus{
 
 
 
-
 /* =========================================================
-   THURAYA CLIENT APP — CONTINUE BUTTON / STICKY BAR FIX
-   Added for final client build. CSS only.
+   THURAYA CLIENT APP — FINAL POLISH PASS
+   Last visual layer before testing.
+   Safe: CSS only.
    ========================================================= */
 
-/* Give service screens enough bottom room so sticky CTA is never cut off */
-#screen-services .screen-inner,
-#screen-group-services .screen-inner,
-#screen-datetime .screen-inner,
-#screen-group-datetime .screen-inner{
-  padding-bottom:220px !important;
+/* 1. Stronger premium CTA consistency */
+.btn-primary,
+#btnToTech,
+#btnToConfirm,
+#btnConfirmBooking,
+#grp_toConfirmBtn {
+  min-height: 56px !important;
+  border-radius: 22px !important;
+  background: linear-gradient(180deg, #151515 0%, #000000 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #050505 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 18px 42px rgba(10,10,10,0.24) !important;
 }
 
-/* Keep the sticky booking action layer above all normal content */
-#bk_stickyBar{
-  position:fixed !important;
-  left:0 !important;
-  right:0 !important;
-  bottom:0 !important;
-  z-index:99999 !important;
-  background:rgba(250,250,248,.98) !important;
-  border-top:1px solid var(--line, #D8D5D0) !important;
-  box-shadow:0 -18px 44px rgba(10,10,10,.14) !important;
-  padding:14px 16px calc(14px + env(safe-area-inset-bottom)) !important;
+.btn-primary:disabled,
+#btnToTech:disabled,
+#btnToConfirm:disabled,
+#grp_toConfirmBtn:disabled {
+  background: #CEC8BE !important;
+  color: #756F66 !important;
+  border-color: #CEC8BE !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
 }
 
-/* Make the sticky footer layout reliable */
-#bk_stickyBar .sticky-footer{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:space-between !important;
-  gap:12px !important;
-  width:100% !important;
-  max-width:620px !important;
-  margin:0 auto !important;
+/* 2. Service cards — more premium, cleaner spacing */
+.service-card,
+#bk_serviceMenu > div:not(.loading-pulse),
+#grp_serviceList > div:not(.loading-pulse) {
+  border-radius: 24px !important;
+  border: 1px solid rgba(216,213,208,0.95) !important;
+  background: rgba(255,255,255,0.97) !important;
+  box-shadow:
+    0 16px 36px rgba(10,10,10,0.07),
+    inset 0 1px 0 rgba(255,255,255,0.9) !important;
 }
 
-/* Ensure action area and continue button stay visible */
-#bk_stickyBar .sticky-actions{
-  display:flex !important;
-  align-items:center !important;
-  gap:10px !important;
-  flex-shrink:0 !important;
+.service-card.selected,
+#bk_serviceMenu > div.selected,
+#grp_serviceList > div.selected {
+  border-color: #0A0A0A !important;
+  box-shadow:
+    0 20px 44px rgba(10,10,10,0.12),
+    inset 4px 0 0 #C8A94D !important;
 }
 
-#btnToTech{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  min-height:52px !important;
-  min-width:170px !important;
-  border-radius:18px !important;
-  background:linear-gradient(180deg,#151515 0%,#050505 100%) !important;
-  color:#fff !important;
-  border:1px solid #050505 !important;
-  font-weight:900 !important;
-  letter-spacing:.14em !important;
-  text-transform:uppercase !important;
-  box-shadow:0 18px 40px rgba(10,10,10,.24) !important;
+/* 3. Time slots — clearer selected state */
+.slot-btn.selected,
+.slot-btn.active,
+.time-slot.selected,
+.time-slot.active,
+#bk_slots button.selected,
+#grp_slots button.selected {
+  background: #050505 !important;
+  color: #ffffff !important;
+  border-color: #050505 !important;
+  box-shadow: 0 16px 34px rgba(10,10,10,0.22) !important;
 }
 
-/* Disabled but visible when no service is selected */
-#btnToTech:disabled{
-  display:inline-flex !important;
-  background:#CEC8BE !important;
-  color:#7F786E !important;
-  border-color:#CEC8BE !important;
-  box-shadow:none !important;
+.slot-btn.selected .slot-smart-tag,
+#bk_slots button.selected .slot-smart-tag {
+  color: #D9C16E !important;
 }
 
-/* Clear button styling */
-#bk_stickyBar .sticky-clear-btn{
-  min-height:48px !important;
-  border-radius:16px !important;
-  background:#fff !important;
-  border:1px solid var(--line, #D8D5D0) !important;
-  color:var(--primary, #070707) !important;
-  font-weight:900 !important;
+/* 4. Smart booking card refinement */
+.smart-booking-card {
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.96), rgba(247,242,232,0.92)) !important;
+  border: 1px solid rgba(200,169,77,0.34) !important;
+  box-shadow:
+    0 20px 44px rgba(10,10,10,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.85) !important;
 }
 
-/* Mobile: stack totals and actions cleanly */
-@media(max-width:640px){
-  #bk_stickyBar .sticky-footer{
-    flex-direction:column !important;
-    align-items:stretch !important;
+/* 5. Better hierarchy for menu headings */
+.menu-main-heading {
+  font-size: 0.95rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: #8A7136 !important;
+  margin: 22px 0 6px !important;
+}
+
+.menu-section-heading {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #1A1A1A !important;
+  margin: 4px 0 12px !important;
+}
+
+/* 6. Softer page rhythm */
+.screen-inner {
+  padding-bottom: 160px !important;
+}
+
+.step-header {
+  margin-bottom: 34px !important;
+}
+
+.step-header p {
+  max-width: 520px !important;
+}
+
+/* 7. Make Back link refined */
+.back-btn,
+button.back-btn {
+  color: #8A7136 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* 8. Forms / confirm panels */
+.form-card,
+.confirm-card {
+  border-radius: 26px !important;
+  box-shadow:
+    0 18px 42px rgba(10,10,10,0.09),
+    inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+
+/* 9. Light animation only */
+.mode-card,
+.service-card,
+.slot-btn,
+.tech-option-card,
+.tech-card,
+.btn-primary {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease !important;
+}
+
+.mode-card:active,
+.service-card:active,
+.slot-btn:active,
+.tech-option-card:active,
+.tech-card:active,
+.btn-primary:active {
+  transform: scale(0.992) !important;
+}
+
+/* 10. Mobile refinement */
+@media(max-width:640px) {
+  .step-header h2 {
+    font-size: 2.05rem !important;
   }
 
-  #bk_stickyBar .sticky-actions{
-    width:100% !important;
+  .service-card,
+  #bk_serviceMenu > div:not(.loading-pulse),
+  #grp_serviceList > div:not(.loading-pulse) {
+    padding: 18px !important;
   }
 
   #btnToTech,
-  #bk_stickyBar .sticky-clear-btn{
-    flex:1 !important;
-    min-width:0 !important;
+  #btnToConfirm,
+  #btnConfirmBooking,
+  #grp_toConfirmBtn {
+    width: 100% !important;
   }
 }
