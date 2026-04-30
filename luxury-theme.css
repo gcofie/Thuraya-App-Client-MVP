@@ -215,3 +215,89 @@ button,
 .book-for-card{
   box-shadow:0 16px 38px rgba(10,10,10,.075)!important;
 }
+
+/* =========================================================
+   THURAYA — Layer 2 Booking Standard
+   CSS-only upgrade for service selection + group booking surfaces.
+   No JavaScript, IDs, or event handlers changed.
+   ========================================================= */
+
+:root{
+  --luxury-panel:rgba(255,250,242,.90);
+  --luxury-panel-strong:#fffaf2;
+  --luxury-ink:#17110b;
+  --luxury-muted:#6f6252;
+  --luxury-border:rgba(201,164,92,.24);
+  --luxury-border-strong:rgba(201,164,92,.48);
+  --luxury-card-shadow:0 18px 46px rgba(61,42,18,.10);
+  --luxury-card-shadow-active:0 24px 58px rgba(79,52,16,.18);
+}
+
+#screen-booking-mode,#screen-services,#screen-tech,#screen-datetime,#screen-confirm,#screen-book-for,#screen-group-size,#screen-group-services,#screen-group-datetime,#screen-group-confirm{
+  background:radial-gradient(circle at 18% 8%, rgba(201,164,92,.13) 0%, transparent 34%),radial-gradient(circle at 88% 28%, rgba(255,250,242,.68) 0%, transparent 32%),linear-gradient(180deg,#f7f0e5 0%,#efe5d4 58%,#e9dcc8 100%)!important;
+}
+
+#screen-booking-mode .screen-inner,#screen-services .screen-inner,#screen-tech .screen-inner,#screen-datetime .screen-inner,#screen-confirm .screen-inner,#screen-book-for .screen-inner,#screen-group-size .screen-inner,#screen-group-services .screen-inner,#screen-group-datetime .screen-inner,#screen-group-confirm .screen-inner{position:relative;}
+
+.step-badge{background:rgba(255,250,242,.72)!important;border-color:var(--luxury-border-strong)!important;color:#8a6824!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.82)!important;}
+.step-header h2,.success-title{color:var(--luxury-ink)!important;font-weight:500!important;letter-spacing:-.035em!important;}
+.step-header p,.success-sub{color:var(--luxury-muted)!important;max-width:560px;}
+.back-btn{color:#8a6824!important;letter-spacing:.04em!important;}
+
+.form-card,.confirm-card,.book-for-card,.promo-block,.mode-card,.service-card,.tech-option-card,.tech-card,.grp-member-card,.group-option-card,.group-capacity-panel,.group-split-panel,.group-manual-subgroup-card,.group-billing-panel,.group-manual-planner-head{
+  background:linear-gradient(180deg,rgba(255,253,248,.96),rgba(255,248,236,.90))!important;border:1px solid var(--luxury-border)!important;box-shadow:var(--luxury-card-shadow)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+
+.mode-card,.group-option-card{border-radius:28px!important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease!important;}
+.mode-card:hover,.group-option-card:hover,.service-card:hover,.tech-option-card:hover,.tech-card:hover{transform:translateY(-2px);border-color:var(--luxury-border-strong)!important;box-shadow:0 24px 58px rgba(61,42,18,.14)!important;}
+.mode-card-icon,.group-option-icon,.tech-option-icon,.grp-member-index{background:linear-gradient(180deg,#fbefd7,#dcc080)!important;color:#2a1b09!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.62),0 10px 24px rgba(201,164,92,.18)!important;}
+.mode-card-body strong{font-family:var(--font-serif)!important;font-size:1.22rem!important;font-weight:600!important;letter-spacing:-.015em!important;}
+.mode-card-body span{color:var(--luxury-muted)!important;line-height:1.48!important;}
+.mode-card-arrow{color:#a9863b!important;}
+.mode-card--highlight{border-color:rgba(201,164,92,.42)!important;background:linear-gradient(180deg,#fffdf7,#f7ead4)!important;}
+.mode-badge,.group-recommended-badge,.amount-pill{background:linear-gradient(180deg,#d7b766,#a9863b)!important;color:#17110b!important;border:1px solid rgba(255,239,196,.55)!important;box-shadow:0 8px 18px rgba(201,164,92,.18)!important;letter-spacing:.08em!important;}
+
+#bk_serviceMenu,#grp_serviceList{gap:16px!important;}
+.menu-section{gap:14px!important;}
+.menu-main-heading,.menu-section-heading,.menu-subgroup-label,.section-title,.form-group label,.slots-label,.confirm-label{color:#8a6824!important;font-size:.72rem!important;letter-spacing:.18em!important;font-weight:850!important;}
+.menu-section-heading{margin-top:18px!important;padding-left:4px;}
+.menu-subgroup-divider{background:linear-gradient(90deg,transparent,rgba(201,164,92,.34),transparent)!important;}
+
+.service-card{min-height:104px!important;padding:20px 22px!important;border-radius:28px!important;align-items:center!important;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease!important;}
+.service-card::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 999px 999px 0;background:transparent;transition:background .18s ease,opacity .18s ease;}
+.service-card::after{content:"";position:absolute;right:-52px;top:-58px;width:138px;height:138px;border-radius:999px;border:1px solid rgba(201,164,92,.08);pointer-events:none;}
+.service-card-name{font-family:var(--font-serif)!important;font-size:1.22rem!important;font-weight:650!important;letter-spacing:-.015em!important;color:var(--luxury-ink)!important;}
+.service-card-desc{margin-top:7px!important;color:var(--luxury-muted)!important;font-size:.94rem!important;line-height:1.55!important;}
+.service-price-pill{margin-top:12px!important;padding:7px 12px!important;border-radius:999px!important;background:rgba(201,164,92,.105)!important;border:1px solid rgba(201,164,92,.22)!important;color:#6f4e16!important;font-size:.82rem!important;font-weight:850!important;letter-spacing:.02em!important;}
+.service-card.selected,.service-card.active,.group-option-card.selected,.group-option-card.active,.tech-option-card.selected,.tech-card.selected{border-color:rgba(122,86,24,.58)!important;background:linear-gradient(180deg,#fffdf8,#f7ead2)!important;box-shadow:var(--luxury-card-shadow-active)!important;transform:translateY(-1px);}
+.service-card.selected::before,.service-card.active::before{background:linear-gradient(180deg,#e6ca83,#9f782d)!important;}
+.hl-tag{color:#9f782d!important;font-weight:850!important;}
+
+.dept-toggle,.grp-tabs{gap:10px!important;}
+.dept-btn,.grp-tab{min-height:48px!important;border-radius:999px!important;background:rgba(255,250,242,.78)!important;border-color:var(--luxury-border)!important;color:var(--luxury-ink)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)!important;transition:transform .16s ease,background .16s ease,border-color .16s ease!important;}
+.dept-btn.active,.grp-tab--active{background:linear-gradient(180deg,#17110b,#0b0805)!important;color:#fffaf2!important;border-color:#17110b!important;box-shadow:0 14px 30px rgba(23,17,11,.20)!important;}
+.grp-tab--done{border-color:rgba(201,164,92,.65)!important;}
+.grp-size-display{background:linear-gradient(180deg,#fffdf8,#f7ead2)!important;border-color:var(--luxury-border-strong)!important;box-shadow:0 22px 58px rgba(61,42,18,.14)!important;}
+.grp-size-display span{font-family:var(--font-serif)!important;color:var(--luxury-ink)!important;}
+.grp-size-display small,.field-hint,.optional{color:var(--luxury-muted)!important;}
+.counter-btn,.grp-size-btn{background:linear-gradient(180deg,#fffaf2,#ead9b3)!important;border-color:rgba(201,164,92,.34)!important;color:#17110b!important;box-shadow:0 10px 22px rgba(61,42,18,.10)!important;}
+
+input,select,textarea{background:rgba(255,253,248,.92)!important;border-color:rgba(201,164,92,.25)!important;border-radius:18px!important;color:var(--luxury-ink)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.75)!important;}
+input:focus,select:focus,textarea:focus{border-color:rgba(122,86,24,.58)!important;box-shadow:0 0 0 4px rgba(201,164,92,.13),inset 0 1px 0 rgba(255,255,255,.75)!important;}
+
+.slots-grid{gap:14px!important;}
+.slot-btn,#bk_slots button,#grp_slots button{min-height:76px!important;border-radius:22px!important;background:rgba(255,253,248,.94)!important;border-color:rgba(201,164,92,.24)!important;box-shadow:0 12px 26px rgba(61,42,18,.075)!important;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease!important;}
+.slot-btn:hover,#bk_slots button:hover,#grp_slots button:hover{transform:translateY(-1px);border-color:var(--luxury-border-strong)!important;}
+.slot-btn.selected,.slot-btn.active,#bk_slots button.selected,#bk_slots button.active,#grp_slots button.selected,#grp_slots button.active{background:linear-gradient(180deg,#17110b,#0b0805)!important;color:#fffaf2!important;border-color:#17110b!important;box-shadow:0 18px 40px rgba(23,17,11,.22)!important;}
+.slot-btn.selected span,.slot-btn.active span,#bk_slots button.selected span,#bk_slots button.active span,#grp_slots button.selected span,#grp_slots button.active span{color:#ead9b3!important;}
+
+.confirm-row{border-bottom-color:rgba(201,164,92,.18)!important;}
+.confirm-value,.sticky-total-value{color:var(--luxury-ink)!important;font-weight:850!important;}
+.sticky-bar{background:rgba(255,250,242,.91)!important;border-top-color:rgba(201,164,92,.24)!important;box-shadow:0 -18px 46px rgba(61,42,18,.12)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.sticky-total-label,.sticky-empty,.confirm-note{color:var(--luxury-muted)!important;}
+
+#screen-booking-mode .btn-primary,#screen-services .btn-primary,#screen-tech .btn-primary,#screen-datetime .btn-primary,#screen-confirm .btn-primary,#screen-book-for .btn-primary,#screen-group-size .btn-primary,#screen-group-services .btn-primary,#screen-group-datetime .btn-primary,#screen-group-confirm .btn-primary,.sticky-bar .btn-primary{border-radius:999px!important;background:linear-gradient(180deg,#17110b,#0b0805)!important;color:#fffaf2!important;border-color:#17110b!important;box-shadow:0 16px 38px rgba(23,17,11,.20)!important;letter-spacing:.08em!important;text-transform:uppercase!important;}
+#screen-booking-mode .btn-outline,#screen-services .btn-outline,#screen-tech .btn-outline,#screen-datetime .btn-outline,#screen-confirm .btn-outline,#screen-group-services .btn-outline,#screen-group-confirm .btn-outline,.sticky-clear-btn{border-radius:999px!important;color:#8a6824!important;}
+.btn-primary:disabled,.sticky-bar .btn-primary:disabled{background:#d7cbb8!important;color:#827665!important;border-color:#d7cbb8!important;box-shadow:none!important;}
+
+@media(max-width:720px){.service-card{min-height:98px!important;padding:18px 18px!important;border-radius:24px!important}.service-card-name{font-size:1.12rem!important}.mode-card,.group-option-card{border-radius:24px!important}.step-header{margin-bottom:22px!important}}
