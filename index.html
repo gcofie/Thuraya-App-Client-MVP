@@ -239,65 +239,52 @@
     </style>
 
 
-  <link rel="stylesheet" href="luxury-theme.css?v=layout-v10">
+  <link rel="stylesheet" href="luxury-theme.css?v=stable-compact-12">
+  <style id="thurayaStableMobileLockV12">
+    @media (max-width:779px){
+      html,body,#app{width:100%!important;max-width:100%!important;overflow-x:hidden!important;}
+      body{margin:0!important;background:#0b0907!important;}
+      #app{min-height:100dvh!important;margin:0!important;padding-top:0!important;background:#f0ede8!important;border-radius:0!important;box-shadow:none!important;overflow-x:hidden!important;}
+      .bg-texture{display:none!important;}
 
-<style id="thurayaFinalMobileLayoutLockV10">
-/* Final mobile layout lock: prevents active screens from becoming side-by-side */
-@media (max-width: 779px) {
-  html, body, #app {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
+      .screen{display:none!important;width:100%!important;max-width:100%!important;min-height:100dvh!important;position:relative!important;overflow-x:hidden!important;background:#f0ede8!important;padding:22px 16px calc(104px + env(safe-area-inset-bottom,0px))!important;}
+      .screen.active{display:block!important;}
+      .screen::before,.screen.active::before{content:none!important;display:none!important;}
 
-  #app {
-    margin: 0 !important;
-    min-height: 100svh !important;
-    background: #eee6dc !important;
-  }
+      #screen-welcome{padding:22px 22px calc(22px + env(safe-area-inset-bottom,0px))!important;background:radial-gradient(circle at 50% 12%,rgba(200,169,77,.14),transparent 36%),linear-gradient(180deg,#11100d 0%,#050403 100%)!important;}
+      #screen-welcome.active{display:flex!important;align-items:center!important;justify-content:center!important;}
+      #screen-welcome .welcome-inner{width:100%!important;max-width:390px!important;min-height:auto!important;margin:0 auto!important;padding:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important;text-align:center!important;}
 
-  .screen {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 100svh !important;
-    overflow-x: hidden !important;
-    position: relative !important;
-  }
+      .screen-inner{width:100%!important;max-width:390px!important;margin:0 auto!important;padding:0!important;box-sizing:border-box!important;}
 
-  .screen.active {
-    display: block !important;
-  }
+      .logo-block{margin-bottom:26px!important;}
+      #screen-welcome .logo-mark{width:58px!important;height:58px!important;margin:0 auto 18px!important;}
+      #screen-welcome .logo-wordmark{font-size:clamp(2rem,8vw,2.55rem)!important;letter-spacing:.16em!important;line-height:1!important;margin-left:.16em!important;white-space:nowrap!important;}
+      #screen-welcome .logo-tagline{font-size:.92rem!important;letter-spacing:.12em!important;margin-top:10px!important;}
+      #screen-welcome .welcome-copy{font-size:clamp(1.05rem,4.4vw,1.22rem)!important;line-height:1.45!important;margin:0 auto 30px!important;max-width:300px!important;}
 
-  #screen-welcome.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
+      #screen-welcome .welcome-actions{width:100%!important;max-width:340px!important;margin:0 auto!important;display:flex!important;flex-direction:column!important;gap:12px!important;}
+      #screen-welcome .welcome-actions button{width:100%!important;min-height:50px!important;border-radius:18px!important;}
+      #screen-welcome .divider{margin:0!important;}
+      #screen-welcome .welcome-footnote{font-size:.78rem!important;margin-top:26px!important;}
 
-  .screen:not(#screen-welcome):not(#screen-doc-viewer)::before {
-    display: none !important;
-    content: none !important;
-  }
+      .step-header{margin-bottom:18px!important;}
+      .step-badge{font-size:.65rem!important;letter-spacing:.12em!important;padding:6px 12px!important;margin-bottom:12px!important;}
+      .step-header h2{font-size:clamp(1.85rem,9vw,2.45rem)!important;line-height:1.02!important;}
+      .step-header p{font-size:.94rem!important;line-height:1.45!important;margin-top:10px!important;}
 
-  .screen-inner,
-  #screen-welcome .welcome-inner {
-    width: 100% !important;
-    max-width: 430px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
-  }
+      .back-btn{width:auto!important;max-width:max-content!important;display:inline-flex!important;min-height:auto!important;padding:0!important;margin-bottom:14px!important;background:transparent!important;border:none!important;box-shadow:none!important;}
 
-  .screen.active:not(#screen-welcome):not(#screen-doc-viewer) {
-    padding: 24px 18px calc(104px + env(safe-area-inset-bottom, 0px)) !important;
-  }
+      .mode-card,.service-card,.tech-option-card,.tech-card,.form-card,.confirm-card,.book-for-card,.promo-block,.group-option-card,.group-capacity-panel,.group-split-panel,.group-manual-subgroup-card,.group-billing-panel,.cx-client-card{width:100%!important;max-width:100%!important;border-radius:18px!important;padding:14px!important;box-sizing:border-box!important;}
+      .mode-card{min-height:74px!important;grid-template-columns:44px minmax(0,1fr) 16px!important;gap:12px!important;}
+      .mode-card-body,.service-card-body,.tech-card-body{min-width:0!important;}
 
-  .back-btn {
-    width: auto !important;
-    display: inline-flex !important;
-  }
-}
-</style>
+      input,select,textarea{width:100%!important;max-width:100%!important;min-height:48px!important;border-radius:16px!important;box-sizing:border-box!important;font-size:1rem!important;}
+      .btn-primary.full,#btnToTech,#btnToDateTime,#btnToConfirm,#btnConfirmBooking,#grp_toDateTimeBtn,#grp_toConfirmBtn,#grp_btnConfirm,#btnSaveGuest,#btnSaveProfile{width:100%!important;min-height:52px!important;border-radius:18px!important;}
+
+      .sticky-bar,#bk_stickyBar{left:0!important;right:0!important;width:100%!important;max-width:100%!important;transform:none!important;border-radius:0!important;}
+    }
+  </style>
 
 </head>
 <body>
