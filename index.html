@@ -309,6 +309,163 @@
     }
 </style>
 
+
+<style id="thurayaWelcomeBlackNextPolish">
+    /* THURAYA — Welcome Black + Simulator Polish
+       Scope: welcome page only. No JavaScript touched.
+    */
+
+    html,
+    body {
+        background: #000000 !important;
+    }
+
+    #app {
+        background: #000000 !important;
+    }
+
+    #screen-welcome {
+        background: #000000 !important;
+        color: #ffffff !important;
+    }
+
+    #screen-welcome::before,
+    #screen-welcome::after {
+        content: none !important;
+        display: none !important;
+        background: none !important;
+    }
+
+    #screen-welcome .welcome-inner {
+        background: #000000 !important;
+        max-width: 390px !important;
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+    }
+
+    #screen-welcome .logo-block {
+        margin-bottom: 56px !important;
+    }
+
+    #screen-welcome .logo-mark {
+        overflow: hidden !important;
+        width: 88px !important;
+        height: 82px !important;
+        margin: 0 auto 18px !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: #000000 !important;
+        box-shadow: none !important;
+    }
+
+    #screen-welcome .logo-mark img {
+        width: 88px !important;
+        height: 88px !important;
+        object-fit: fill !important;
+        mix-blend-mode: screen !important;
+        margin-top: -6px !important;
+        display: block !important;
+    }
+
+    #screen-welcome .logo-wordmark {
+        font-size: clamp(2.35rem, 10vw, 3.25rem) !important;
+        line-height: 0.95 !important;
+        letter-spacing: 0.18em !important;
+        margin-left: 0.18em !important;
+        margin-top: 0 !important;
+        margin-bottom: 8px !important;
+        white-space: nowrap !important;
+        color: #ffffff !important;
+    }
+
+    #screen-welcome .logo-tagline {
+        color: rgba(255,255,255,0.55) !important;
+        font-size: clamp(0.86rem, 3.4vw, 1.02rem) !important;
+        letter-spacing: 0.14em !important;
+        margin-top: 8px !important;
+    }
+
+    #screen-welcome .welcome-copy {
+        color: rgba(255,255,255,0.72) !important;
+        font-size: clamp(1.28rem, 5.3vw, 1.65rem) !important;
+        line-height: 1.48 !important;
+        margin-bottom: 52px !important;
+    }
+
+    #screen-welcome .welcome-actions {
+        max-width: 340px !important;
+        gap: 16px !important;
+    }
+
+    #screen-welcome #btnGoogleSignIn {
+        min-height: 58px !important;
+        border-radius: 22px !important;
+        background: #ffffff !important;
+        color: #111111 !important;
+        border: 1px solid #ffffff !important;
+        box-shadow: none !important;
+        letter-spacing: 0.18em !important;
+    }
+
+    #screen-welcome #btnGuestSignIn {
+        min-height: 58px !important;
+        border-radius: 22px !important;
+        background: #000000 !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.26) !important;
+        box-shadow: none !important;
+        letter-spacing: 0.18em !important;
+    }
+
+    #screen-welcome .divider {
+        color: rgba(255,255,255,0.52) !important;
+        margin: 2px 0 !important;
+    }
+
+    #screen-welcome .btn-ghost,
+    #screen-welcome button[onclick*="email"],
+    #screen-welcome a {
+        color: rgba(255,255,255,0.68) !important;
+    }
+
+    #screen-welcome .welcome-footnote {
+        color: rgba(255,255,255,0.46) !important;
+        font-size: 0.82rem !important;
+        margin-top: 46px !important;
+    }
+
+    @media (max-width: 430px) {
+        #screen-welcome .welcome-inner {
+            max-width: 360px !important;
+            padding-left: 22px !important;
+            padding-right: 22px !important;
+        }
+
+        #screen-welcome .logo-mark {
+            width: 78px !important;
+            height: 73px !important;
+            margin-bottom: 16px !important;
+        }
+
+        #screen-welcome .logo-mark img {
+            width: 78px !important;
+            height: 78px !important;
+            margin-top: -5px !important;
+        }
+
+        #screen-welcome .logo-wordmark {
+            font-size: clamp(2.05rem, 9.5vw, 2.85rem) !important;
+            letter-spacing: 0.16em !important;
+            margin-left: 0.16em !important;
+        }
+
+        #screen-welcome .welcome-copy {
+            font-size: clamp(1.18rem, 5vw, 1.45rem) !important;
+            margin-bottom: 44px !important;
+        }
+    }
+</style>
+
 </head>
 <body>
 
