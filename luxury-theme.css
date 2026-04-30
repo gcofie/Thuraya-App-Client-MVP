@@ -1,24 +1,29 @@
+/* =========================================================
+   THURAYA — Layout Recovery + Warm Luxury v6
+   CSS-only. No JavaScript / booking logic changed.
+   Purpose: recover from the generic width patch, lock mobile fit,
+   and keep premium visual layers without breaking tap/navigation.
+   ========================================================= */
 
-/* Mobile width fix */
-html, body {
-  overflow-x: hidden;
+:root{
+  --font-serif:"Playfair Display","Cormorant Garamond",Georgia,serif;
+  --font-sans:"Inter","Neue Haas Grotesk Text","Helvetica Neue",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --luxury-night:#080705;
+  --luxury-cream:#f5eee4;
+  --luxury-paper:#fffaf2;
+  --luxury-line:rgba(91,73,47,.16);
+  --luxury-gold:#c8a94d;
+  --luxury-cocoa:#7a6038;
+  --luxury-shadow:0 18px 44px rgba(35,26,16,.10);
 }
-
-.container, .booking-container, .app-container {
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-  .container, .booking-container, .app-container {
-    padding: 12px;
-  }
-}
-
-button, .btn {
-  width: 100%;
-  box-sizing: border-box;
-}
+html,body{width:100%;max-width:100%;overflow-x:hidden!important;font-family:var(--font-sans)!important;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+body{background:#15110d!important;}body,button,input,select,textarea{font-family:var(--font-sans)!important;}.logo-wordmark,.step-header h2,.success-title,.confirm-title,h1,h2{font-family:var(--font-serif)!important;}
+button,.btn,.btn-primary,.btn-outline,.btn-secondary,.btn-ghost{max-width:100%;box-sizing:border-box;}button:not(.full),.btn:not(.full){width:auto;}.full,.btn-primary.full,.btn-outline.full{width:100%!important;}
+#app{width:100%!important;max-width:100vw!important;min-height:100dvh;overflow-x:hidden!important;background:linear-gradient(180deg,#f8f1e8 0%,#eee6dc 100%)!important;}.bg-texture{display:none!important;}
+.screen{width:100%!important;max-width:100vw!important;overflow-x:hidden!important;box-sizing:border-box!important;background:linear-gradient(180deg,#f8f1e8 0%,#eee6dc 100%)!important;}.screen:not(.active){display:none!important;pointer-events:none!important;visibility:hidden!important;}.screen.active{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;visibility:visible!important;pointer-events:auto!important;}.screen-inner{width:100%!important;max-width:430px!important;margin:0 auto!important;box-sizing:border-box!important;position:relative!important;z-index:2!important;}
+#screen-welcome{min-height:100dvh!important;padding:clamp(18px,4vh,36px) 22px calc(22px + env(safe-area-inset-bottom,0px))!important;color:#fff!important;background:radial-gradient(circle at 50% 12%, rgba(200,169,77,.17), transparent 34%),radial-gradient(circle at 50% 85%, rgba(255,250,242,.06), transparent 36%),linear-gradient(180deg,#11100d 0%,#080705 62%,#050403 100%)!important;overflow:hidden!important;}#screen-welcome::before,#screen-welcome::after{pointer-events:none!important;}#screen-welcome .welcome-inner{width:100%!important;max-width:430px!important;min-height:calc(100dvh - 72px)!important;margin:0 auto!important;padding:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important;text-align:center!important;position:relative!important;z-index:2!important;}#screen-welcome .logo-block{margin-bottom:clamp(28px,7vh,58px)!important;}#screen-welcome .logo-mark{width:68px!important;height:68px!important;margin-left:auto!important;margin-right:auto!important;border:1px solid rgba(255,250,242,.24)!important;background:rgba(255,255,255,.025)!important;box-shadow:0 20px 52px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.06)!important;}#screen-welcome .logo-wordmark{color:#fffaf2!important;font-size:clamp(2.25rem,10vw,3.2rem)!important;font-weight:400!important;letter-spacing:clamp(.16em,4vw,.25em)!important;line-height:.95!important;margin-left:clamp(.16em,4vw,.25em)!important;}#screen-welcome .logo-tagline{color:rgba(255,250,242,.70)!important;font-family:var(--font-serif)!important;font-style:italic!important;font-size:clamp(.82rem,3.3vw,1rem)!important;letter-spacing:.11em!important;margin-top:12px!important;}#screen-welcome .welcome-copy{color:rgba(255,250,242,.78)!important;font-family:var(--font-serif)!important;font-size:clamp(1.12rem,4.5vw,1.55rem)!important;line-height:1.55!important;margin:0 auto clamp(26px,7vh,54px)!important;max-width:310px!important;}#screen-welcome .welcome-actions{width:100%!important;max-width:340px!important;margin:0 auto!important;display:flex!important;flex-direction:column!important;gap:13px!important;align-items:stretch!important;position:relative!important;z-index:10!important;}#screen-welcome .welcome-actions button,#screen-welcome .welcome-actions .btn-primary,#screen-welcome .welcome-actions .btn-outline,#screen-welcome .welcome-actions .btn-ghost{width:100%!important;min-height:52px!important;border-radius:18px!important;pointer-events:auto!important;touch-action:manipulation!important;}#screen-welcome #btnGuestSignIn,#screen-welcome .btn-outline{background:linear-gradient(180deg,rgba(255,250,242,.075),rgba(255,250,242,.025))!important;color:#fffaf2!important;border:1px solid rgba(230,210,154,.42)!important;box-shadow:0 18px 42px rgba(0,0,0,.34),0 0 34px rgba(200,169,77,.10)!important;}#screen-welcome #btnGoogleSignIn,#screen-welcome .btn-primary{background:rgba(255,250,242,.94)!important;color:#14110d!important;border:1px solid rgba(255,250,242,.82)!important;box-shadow:0 14px 34px rgba(0,0,0,.28)!important;}#screen-welcome .divider{margin:2px 0!important;color:rgba(255,250,242,.54)!important;}#screen-welcome .welcome-footnote{margin-top:clamp(18px,5vh,38px)!important;color:rgba(255,250,242,.48)!important;}
+.screen.active:not(#screen-welcome):not(#screen-doc-viewer){padding:0 18px calc(96px + env(safe-area-inset-bottom,0px))!important;}.screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before{content:"THURAYA"!important;display:block!important;flex:0 0 auto!important;width:calc(100% + 36px)!important;max-width:none!important;margin:0 -18px 18px!important;padding:18px 18px 14px!important;box-sizing:border-box!important;position:relative!important;inset:auto!important;transform:none!important;background:#090806!important;color:#fffaf2!important;text-align:center!important;font-family:var(--font-serif)!important;font-size:clamp(1.62rem,8vw,2.15rem)!important;font-weight:400!important;letter-spacing:clamp(.18em,3.8vw,.28em)!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;pointer-events:none!important;}.step-header{width:100%!important;margin:0 0 22px!important;}.step-badge{background:rgba(255,255,255,.76)!important;border:1px solid rgba(91,73,47,.14)!important;color:#17130f!important;box-shadow:0 10px 26px rgba(36,28,18,.045)!important;}.step-header h2{font-weight:400!important;letter-spacing:-.03em!important;line-height:1!important;}.step-header p{color:#2e2821!important;}
+.mode-card,.service-card,.tech-option-card,.tech-card,.form-card,.confirm-card,.book-for-card,.promo-block,.group-option-card,.group-capacity-panel,.group-split-panel,.group-manual-subgroup-card,.group-billing-panel,.cx-client-card{width:100%!important;max-width:100%!important;box-sizing:border-box!important;background:rgba(255,253,248,.94)!important;border:1px solid rgba(91,73,47,.14)!important;border-radius:22px!important;box-shadow:var(--luxury-shadow)!important;}.mode-card{grid-template-columns:52px minmax(0,1fr) 18px!important;gap:14px!important;}.mode-card-body,.service-card-body,.tech-card-body{min-width:0!important;}.mode-card-body strong,.service-card-title{overflow-wrap:anywhere;}.service-card,.tech-option-card,.tech-card,.date-card,.slot-btn,#bk_slots button,#grp_slots button{max-width:100%!important;box-sizing:border-box!important;}.btn-primary.full,#btnToTech,#btnToDateTime,#btnToConfirm,#btnConfirmBooking,#grp_toDateTimeBtn,#grp_toConfirmBtn,#grp_btnConfirm,#btnSaveGuest,#btnSaveProfile{width:100%!important;min-height:54px!important;border-radius:18px!important;background:linear-gradient(180deg,#17130f 0%,#090807 100%)!important;border-color:#090807!important;}input,select,textarea{width:100%;max-width:100%;box-sizing:border-box;border-radius:16px!important;}
+@media(min-width:780px){#app{max-width:430px!important;min-height:844px!important;max-height:calc(100vh - 28px)!important;margin:14px auto!important;border-radius:44px!important;border:2px solid #333!important;overflow:hidden!important;box-shadow:0 40px 80px rgba(0,0,0,.56)!important;}.screen{min-height:844px!important;max-height:calc(100vh - 28px)!important;overflow-y:auto!important;}#screen-welcome .welcome-inner{min-height:calc(844px - 72px)!important;}}
+@media(max-width:420px){.screen.active:not(#screen-welcome):not(#screen-doc-viewer){padding-left:14px!important;padding-right:14px!important;}.screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before{width:calc(100% + 28px)!important;margin-left:-14px!important;margin-right:-14px!important;font-size:clamp(1.42rem,7.6vw,1.82rem)!important;letter-spacing:.2em!important;}#screen-welcome{padding-left:18px!important;padding-right:18px!important;}#screen-welcome .welcome-actions{max-width:100%!important;}}
+@media(max-width:360px){#screen-welcome .logo-wordmark{font-size:2rem!important;letter-spacing:.15em!important;margin-left:.15em!important;}#screen-welcome .welcome-actions button{min-height:50px!important;}.mode-card{grid-template-columns:46px minmax(0,1fr) 14px!important;gap:10px!important;padding-left:14px!important;padding-right:14px!important;}}
