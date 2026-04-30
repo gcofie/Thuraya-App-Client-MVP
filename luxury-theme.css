@@ -1,57 +1,28 @@
 
-/* THURAYA — Card Refinement (Black & White Luxury) */
+/* THURAYA — Final Luxury Alignment (Safe) */
 
-.service-card,
-.mode-card,
-.tech-card {
-  background: #ffffff !important;
-  border: 1px solid rgba(0,0,0,0.08) !important;
-  border-radius: 16px !important;
-  padding: 14px !important;
-  transition: all 0.2s ease !important;
-  color: #111 !important;
+#screen-welcome .logo-mark {
+  margin: 0 auto 24px !important;
 }
 
-/* Typography inside cards */
-.service-card h3,
-.mode-card h3,
-.tech-card h3 {
-  font-weight: 600 !important;
-  font-size: 1rem !important;
-  color: #111 !important;
+#screen-welcome .logo-block {
+  margin-bottom: 40px !important;
 }
 
-.service-card p,
-.mode-card p,
-.tech-card p {
-  font-size: 0.85rem !important;
-  color: #666 !important;
+#screen-welcome .logo-wordmark {
+  margin-top: 4px !important;
+  margin-bottom: 10px !important;
+  letter-spacing: 0.22em !important;
 }
 
-/* Selected state (black & white only) */
-.service-card.selected,
-.mode-card.selected,
-.tech-card.selected {
-  background: #111 !important;
-  color: #fff !important;
-  border-color: #111 !important;
+#screen-welcome .logo-tagline {
+  margin-top: 6px !important;
+  margin-bottom: 28px !important;
+  opacity: 0.7 !important;
 }
 
-.service-card.selected h3,
-.mode-card.selected h3,
-.tech-card.selected h3 {
-  color: #fff !important;
-}
-
-.service-card.selected p,
-.mode-card.selected p,
-.tech-card.selected p {
-  color: #ddd !important;
-}
-
-/* Press feedback */
-.service-card:active,
-.mode-card:active,
-.tech-card:active {
-  transform: scale(0.98) !important;
+#screen-welcome .welcome-copy {
+  margin-bottom: 36px !important;
+  line-height: 1.5 !important;
+  opacity: 0.85 !important;
 }
