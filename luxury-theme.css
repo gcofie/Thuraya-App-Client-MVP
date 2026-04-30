@@ -11,57 +11,24 @@
 @media(max-width:360px){#screen-welcome .logo-wordmark{font-size:2rem!important;letter-spacing:.14em!important;margin-left:.14em!important}#screen-welcome .welcome-actions button{min-height:50px!important}.mode-card{grid-template-columns:46px minmax(0,1fr) 14px!important;gap:10px!important;padding-left:14px!important;padding-right:14px!important}}
 
 /* =========================================================
-   THURAYA — Screen Flow Layout Fix v9
-   Exact issue: brand header pseudo-element was becoming a
-   SIDE flex item on mobile because active screens were flex-row.
+   THURAYA — Final Mobile Layout Lock v10
+   Keeps screens stacked; removes pseudo-header side-column risk.
    ========================================================= */
-
-.screen.active {
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-}
-
-.screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before {
-  flex: 0 0 auto !important;
-  width: calc(100% + 36px) !important;
-  max-width: none !important;
-  align-self: stretch !important;
-  display: block !important;
-  position: relative !important;
-}
-
-.screen.active .screen-inner {
-  flex: 0 0 auto !important;
-  width: 100% !important;
-  max-width: 430px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
 @media (max-width: 779px) {
-  #app,
-  .screen {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
+  .screen.active { display:block !important; }
+  #screen-welcome.active {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
   }
-
-  .screen.active {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
+  .screen:not(#screen-welcome):not(#screen-doc-viewer)::before {
+    display:none !important;
+    content:none !important;
   }
-
-  .screen.active:not(#screen-welcome):not(#screen-doc-viewer) {
-    padding-left: 18px !important;
-    padding-right: 18px !important;
-  }
-
-  .screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before {
-    margin-left: -18px !important;
-    margin-right: -18px !important;
-    margin-bottom: 18px !important;
+  .screen-inner {
+    width:100% !important;
+    max-width:430px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
   }
 }
