@@ -1,0 +1,217 @@
+/* =========================================================
+   THURAYA — Warm Luxury Layer 1B Patch
+   CSS-only visual upgrade. No booking logic touched.
+   Scope: global font tone + welcome/login atmosphere + CTA hierarchy.
+   ========================================================= */
+
+:root{
+  --font-serif:"Playfair Display","Cormorant Garamond",Georgia,serif;
+  --font-sans:"Inter","Neue Haas Grotesk Text","Helvetica Neue",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --luxury-black:#080706;
+  --luxury-charcoal:#12100e;
+  --luxury-cream:#f4efe6;
+  --luxury-warm:#fffaf2;
+  --luxury-gold:#c9a45c;
+  --luxury-gold-soft:#ead9b3;
+  --luxury-line:rgba(234,217,179,.22);
+  --luxury-shadow:0 22px 58px rgba(0,0,0,.38);
+}
+
+html,body{
+  font-family:var(--font-sans)!important;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+}
+
+.logo-wordmark,
+.step-header h2,
+.card-title,
+.confirm-title,
+h1,h2{
+  font-family:var(--font-serif)!important;
+}
+
+/* Premium welcome atmosphere */
+#screen-welcome{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(201,164,92,.19) 0%, rgba(201,164,92,.07) 26%, transparent 58%),
+    radial-gradient(circle at 16% 82%, rgba(244,239,230,.075) 0%, transparent 38%),
+    linear-gradient(180deg,#14110e 0%,#090806 48%,#050403 100%)!important;
+}
+
+#screen-welcome::before{
+  content:"";
+  position:absolute;
+  inset:-25%;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 28%, rgba(0,0,0,.23) 58%, rgba(0,0,0,.72) 100%);
+  z-index:0;
+}
+
+#screen-welcome::after{
+  content:"";
+  position:absolute;
+  width:290px;
+  height:290px;
+  left:50%;
+  top:17%;
+  transform:translateX(-50%);
+  border-radius:999px;
+  border:1px solid rgba(234,217,179,.08);
+  box-shadow:0 0 0 72px rgba(234,217,179,.025), inset 0 0 60px rgba(234,217,179,.035);
+  pointer-events:none;
+  z-index:0;
+}
+
+#screen-welcome .welcome-inner{
+  position:relative;
+  z-index:1;
+}
+
+#screen-welcome .logo-block{
+  margin-bottom:28px!important;
+}
+
+#screen-welcome .logo-mark{
+  width:76px!important;
+  height:76px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(234,217,179,.34)!important;
+  color:var(--luxury-gold-soft)!important;
+  background:rgba(255,255,255,.025)!important;
+  box-shadow:inset 0 0 36px rgba(234,217,179,.06), 0 18px 48px rgba(0,0,0,.32)!important;
+  font-family:var(--font-serif)!important;
+}
+
+#screen-welcome .logo-wordmark{
+  margin-top:18px!important;
+  color:#fffaf2!important;
+  font-size:clamp(2.25rem,9vw,3.1rem)!important;
+  font-weight:400!important;
+  letter-spacing:.28em!important;
+  line-height:1!important;
+  text-shadow:0 18px 44px rgba(0,0,0,.34);
+}
+
+#screen-welcome .logo-tagline{
+  margin-top:10px!important;
+  font-family:var(--font-serif)!important;
+  font-size:.86rem!important;
+  font-style:italic!important;
+  letter-spacing:.08em!important;
+  color:rgba(244,239,230,.76)!important;
+}
+
+#screen-welcome .welcome-copy{
+  margin:18px auto 28px!important;
+  max-width:280px;
+  color:rgba(244,239,230,.79)!important;
+  font-family:var(--font-serif)!important;
+  font-size:1.14rem!important;
+  line-height:1.55!important;
+  letter-spacing:.01em;
+}
+
+#screen-welcome .welcome-actions{
+  width:100%;
+  max-width:340px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* CTA hierarchy: Guest is primary, Google is utility */
+#screen-welcome #btnGuestSignIn{
+  min-height:56px!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#f8ead0 0%,#d9b872 47%,#b89142 100%)!important;
+  color:#17110b!important;
+  border:1px solid rgba(255,238,190,.65)!important;
+  box-shadow:0 18px 44px rgba(201,164,92,.27), inset 0 1px 0 rgba(255,255,255,.48)!important;
+  font-family:var(--font-sans)!important;
+  font-size:.78rem!important;
+  font-weight:800!important;
+  letter-spacing:.18em!important;
+  text-transform:uppercase!important;
+}
+
+#screen-welcome #btnGoogleSignIn{
+  min-height:52px!important;
+  border-radius:999px!important;
+  background:rgba(255,250,242,.075)!important;
+  color:rgba(255,250,242,.9)!important;
+  border:1px solid rgba(255,250,242,.16)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  font-family:var(--font-sans)!important;
+  font-size:.76rem!important;
+  font-weight:650!important;
+  letter-spacing:.08em!important;
+  text-transform:none!important;
+}
+
+#screen-welcome #btnGoogleSignIn svg{
+  filter:saturate(.82) brightness(1.02);
+}
+
+#screen-welcome .divider{
+  margin:16px 0!important;
+  color:rgba(244,239,230,.48)!important;
+}
+
+#screen-welcome .divider::before,
+#screen-welcome .divider::after{
+  background:linear-gradient(90deg,transparent,rgba(234,217,179,.18),transparent)!important;
+}
+
+#screen-welcome .btn-primary,
+#screen-welcome .btn-outline,
+#screen-welcome .btn-ghost{
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease!important;
+}
+
+#screen-welcome .btn-primary:active,
+#screen-welcome .btn-outline:active,
+#screen-welcome .btn-ghost:active{
+  transform:scale(.985)!important;
+}
+
+#screen-welcome #btnGuestSignIn:hover{
+  box-shadow:0 22px 54px rgba(201,164,92,.34), inset 0 1px 0 rgba(255,255,255,.5)!important;
+}
+
+#screen-welcome .welcome-footnote{
+  margin-top:28px!important;
+  color:rgba(244,239,230,.48)!important;
+  font-size:.72rem!important;
+  line-height:1.45!important;
+}
+
+#screen-welcome #welcomeError{
+  color:#f3d59d!important;
+}
+
+/* Small global refinement, safe overrides only */
+button,
+.btn-primary,
+.btn-outline,
+.btn-ghost{
+  font-family:var(--font-sans)!important;
+}
+
+.step-header h2{
+  letter-spacing:-.015em!important;
+}
+
+.mode-card,
+.service-card,
+.tech-option-card,
+.tech-card,
+.form-card,
+.confirm-card,
+.book-for-card{
+  box-shadow:0 16px 38px rgba(10,10,10,.075)!important;
+}
