@@ -1,0 +1,107 @@
+
+/* THURAYA — Monogram Replacement + Black Theme Patch
+   Scope: visual only. No booking logic touched.
+*/
+
+/* Keep main experience black-first */
+#screen-welcome,
+.login-screen,
+.splash,
+.brand-header,
+.app-header {
+  background: #050505 !important;
+}
+
+/* Use simulator monogram image */
+.logo-mark,
+.login-logo,
+.monogram,
+.brand-monogram {
+  background-image: url("assets/thuraya-monogram.jpg") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Hide old embedded image/letter inside logo containers */
+.logo-mark img,
+.login-logo img,
+.monogram img,
+.brand-monogram img,
+.logo-mark span,
+.login-logo span,
+.monogram span,
+.brand-monogram span {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Login / welcome monogram sizing */
+#screen-welcome .logo-mark,
+.login-screen .logo-mark,
+.login-logo,
+.monogram {
+  width: 78px !important;
+  height: 78px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Simulator-style restraint */
+.logo-wordmark,
+.login-brand,
+.brand-name {
+  color: #ffffff !important;
+}
+
+.logo-tagline,
+.login-tag,
+.brand-tag {
+  color: rgba(255,255,255,.68) !important;
+}
+
+/* Black and white buttons only */
+#btnGuestSignIn,
+.guest-btn,
+.book-btn,
+.btn-primary,
+button.primary {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow: none !important;
+}
+
+#btnGoogleSignIn,
+.google-btn {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Remove gold/glow remnants */
+* {
+  text-shadow: none !important;
+}
+
+.service-card.selected,
+.mode-card.selected,
+.tech-card.selected,
+.service-option.selected,
+.tech-option.selected {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  border-color: #0a0a0a !important;
+  box-shadow: none !important;
+}
+
+.service-card.selected *,
+.mode-card.selected *,
+.tech-card.selected *,
+.service-option.selected *,
+.tech-option.selected * {
+  color: #ffffff !important;
+}
