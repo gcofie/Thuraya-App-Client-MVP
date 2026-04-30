@@ -858,3 +858,315 @@ html,body{
     padding:24px!important;
   }
 }
+
+/* =========================================================
+   THURAYA — Mobile Viewport Fit Patch v3
+   Goal: make the app fit real mobile browser screens and stop
+   non-welcome screens from rendering as side-by-side panels.
+   CSS-only. No JavaScript touched.
+   ========================================================= */
+
+html,
+body,
+#app{
+  width:100%!important;
+  max-width:100vw!important;
+  min-height:100dvh!important;
+  overflow-x:hidden!important;
+}
+
+/* Mobile app should behave as a true single-column web app, not a phone-shell split layout */
+@media(max-width:779px){
+  #app{
+    margin:0!important;
+    border-radius:0!important;
+    border:0!important;
+    box-shadow:none!important;
+    background:var(--off-white,#F0EDE8)!important;
+    overflow-x:hidden!important;
+  }
+
+  .screen{
+    width:100%!important;
+    max-width:100vw!important;
+    min-height:100dvh!important;
+    overflow-x:hidden!important;
+    box-sizing:border-box!important;
+  }
+
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer){
+    display:block!important;
+    padding:0 18px calc(88px + env(safe-area-inset-bottom,0px))!important;
+  }
+
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before{
+    display:block!important;
+    width:calc(100% + 36px)!important;
+    max-width:none!important;
+    margin:0 -18px 22px!important;
+    padding:18px 18px 16px!important;
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    transform:none!important;
+    text-align:center!important;
+    box-sizing:border-box!important;
+    font-size:clamp(1.72rem,8.8vw,2.28rem)!important;
+    letter-spacing:clamp(.22em,4.5vw,.34em)!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+  }
+
+  .screen-inner{
+    width:100%!important;
+    max-width:430px!important;
+    margin:0 auto!important;
+    padding:0!important;
+    box-sizing:border-box!important;
+  }
+
+  #screen-guest .screen-inner,
+  #screen-profile .screen-inner,
+  #screen-register .screen-inner,
+  #screen-booking-mode .screen-inner,
+  #screen-services .screen-inner,
+  #screen-technician .screen-inner,
+  #screen-datetime .screen-inner,
+  #screen-confirm .screen-inner,
+  #screen-group-size .screen-inner,
+  #screen-group-services .screen-inner,
+  #screen-group-datetime .screen-inner,
+  #screen-group-confirm .screen-inner{
+    max-width:430px!important;
+  }
+
+  .back-btn{
+    margin:0 0 14px!important;
+  }
+
+  .step-header{
+    text-align:center!important;
+    margin:0 auto 20px!important;
+  }
+
+  .step-header h2,
+  .step-header h1,
+  .screen-title,
+  .step-title{
+    font-size:clamp(2rem,11vw,2.65rem)!important;
+    line-height:.98!important;
+  }
+
+  .step-header p,
+  .screen-subtitle,
+  .step-subtitle{
+    font-size:clamp(.9rem,4vw,1rem)!important;
+    line-height:1.5!important;
+    max-width:340px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+
+  .form-card,
+  .confirm-card,
+  .book-for-card,
+  .promo-block,
+  .mode-card,
+  .service-card,
+  .tech-option-card,
+  .tech-card,
+  .group-option-card,
+  .group-capacity-panel,
+  .group-split-panel,
+  .group-manual-subgroup-card,
+  .group-billing-panel{
+    width:100%!important;
+    max-width:100%!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
+
+/* Welcome screen: compact enough for real Chrome/Samsung browser viewport */
+@media(max-width:779px){
+  #screen-welcome{
+    display:block!important;
+    min-height:100dvh!important;
+    padding:clamp(18px,3.5vh,30px) 22px clamp(24px,4vh,42px)!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    box-sizing:border-box!important;
+  }
+
+  #screen-welcome .welcome-inner{
+    width:100%!important;
+    max-width:430px!important;
+    min-height:calc(100dvh - clamp(42px,7vh,72px))!important;
+    margin:0 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:flex-start!important;
+    text-align:center!important;
+  }
+
+  #screen-welcome .logo-block{
+    margin-top:clamp(8px,2vh,18px)!important;
+    margin-bottom:clamp(34px,8vh,72px)!important;
+  }
+
+  #screen-welcome .logo-mark{
+    width:clamp(58px,15vw,72px)!important;
+    height:clamp(58px,15vw,72px)!important;
+    margin-bottom:clamp(18px,4vh,28px)!important;
+  }
+
+  #screen-welcome .logo-wordmark{
+    width:100%!important;
+    max-width:100%!important;
+    font-size:clamp(2rem,11.5vw,2.85rem)!important;
+    letter-spacing:clamp(.16em,4.1vw,.27em)!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    line-height:1!important;
+  }
+
+  #screen-welcome .logo-tagline{
+    margin-top:10px!important;
+    font-size:clamp(.76rem,3.2vw,.88rem)!important;
+    letter-spacing:.08em!important;
+  }
+
+  #screen-welcome .welcome-copy{
+    margin:0 auto clamp(34px,7vh,58px)!important;
+    max-width:320px!important;
+    font-size:clamp(1.18rem,5.4vw,1.58rem)!important;
+    line-height:1.42!important;
+  }
+
+  #screen-welcome .welcome-actions{
+    width:100%!important;
+    max-width:100%!important;
+    gap:12px!important;
+    margin:0 auto!important;
+  }
+
+  #screen-welcome #btnGoogleSignIn,
+  #screen-welcome #btnGuestSignIn,
+  #screen-welcome .btn-primary,
+  #screen-welcome .btn-outline{
+    width:100%!important;
+    min-height:56px!important;
+    border-radius:24px!important;
+    font-size:clamp(.68rem,3vw,.78rem)!important;
+    letter-spacing:clamp(.12em,3.1vw,.18em)!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+
+  #screen-welcome .divider{
+    margin:12px 0!important;
+  }
+
+  #screen-welcome .btn-ghost,
+  #screen-welcome button[style*="text-decoration"]{
+    margin-top:4px!important;
+    font-size:.86rem!important;
+  }
+
+  #screen-welcome .welcome-note,
+  #screen-welcome .guest-note,
+  #screen-welcome .sign-in-note,
+  #screen-welcome .welcome-helper{
+    margin-top:18px!important;
+  }
+
+  #screen-welcome .welcome-footnote{
+    margin-top:clamp(24px,5vh,42px)!important;
+    font-size:.76rem!important;
+    line-height:1.42!important;
+  }
+}
+
+/* Extra compact mode for shorter mobile viewport/browser chrome */
+@media(max-width:779px) and (max-height:760px){
+  #screen-welcome{
+    padding-top:16px!important;
+    padding-bottom:20px!important;
+  }
+
+  #screen-welcome .logo-block{
+    margin-top:4px!important;
+    margin-bottom:28px!important;
+  }
+
+  #screen-welcome .logo-mark{
+    width:56px!important;
+    height:56px!important;
+    margin-bottom:14px!important;
+  }
+
+  #screen-welcome .logo-wordmark{
+    font-size:clamp(1.85rem,10vw,2.4rem)!important;
+    letter-spacing:clamp(.14em,3.7vw,.23em)!important;
+  }
+
+  #screen-welcome .logo-tagline{
+    font-size:.74rem!important;
+  }
+
+  #screen-welcome .welcome-copy{
+    font-size:clamp(1.05rem,4.8vw,1.32rem)!important;
+    margin-bottom:24px!important;
+  }
+
+  #screen-welcome #btnGoogleSignIn,
+  #screen-welcome #btnGuestSignIn,
+  #screen-welcome .btn-primary,
+  #screen-welcome .btn-outline{
+    min-height:50px!important;
+    border-radius:22px!important;
+  }
+
+  #screen-welcome .divider{
+    margin:8px 0!important;
+  }
+
+  #screen-welcome .welcome-footnote{
+    margin-top:20px!important;
+    font-size:.72rem!important;
+  }
+
+  #screen-guest .form-card,
+  #screen-profile .form-card,
+  #screen-register .form-card{
+    padding:20px!important;
+    border-radius:24px!important;
+  }
+
+  input,select,textarea{
+    min-height:50px!important;
+  }
+}
+
+@media(max-width:380px){
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer){
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before{
+    width:calc(100% + 28px)!important;
+    margin-left:-14px!important;
+    margin-right:-14px!important;
+    font-size:clamp(1.55rem,8vw,2rem)!important;
+    letter-spacing:.21em!important;
+  }
+
+  #screen-welcome{
+    padding-left:18px!important;
+    padding-right:18px!important;
+  }
+}
