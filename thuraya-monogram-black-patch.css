@@ -1,107 +1,71 @@
+/* THURAYA — Simulator Exact Monogram + Black Luxury Patch */
 
-/* THURAYA — Monogram Replacement + Black Theme Patch
-   Scope: visual only. No booking logic touched.
-*/
+#screen-welcome{background:#050505!important;}
+#screen-welcome .welcome-inner{background:transparent!important;}
 
-/* Keep main experience black-first */
-#screen-welcome,
-.login-screen,
-.splash,
-.brand-header,
-.app-header {
-  background: #050505 !important;
+#screen-welcome .logo-mark,.logo-mark{
+  width:92px!important;
+  height:92px!important;
+  margin:0 auto 34px!important;
+  border:none!important;
+  border-radius:0!important;
+  background:transparent url("./assets/thuraya-monogram.jpg") center/contain no-repeat!important;
+  box-shadow:none!important;
+  color:transparent!important;
+  font-size:0!important;
+  line-height:0!important;
+  overflow:visible!important;
 }
 
-/* Use simulator monogram image */
-.logo-mark,
-.login-logo,
-.monogram,
-.brand-monogram {
-  background-image: url("assets/thuraya-monogram.jpg") !important;
-  background-size: contain !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  border: none !important;
-  box-shadow: none !important;
+.logo-mark>*,.logo-mark img,.logo-mark span{
+  display:none!important;
+  opacity:0!important;
+  visibility:hidden!important;
 }
 
-/* Hide old embedded image/letter inside logo containers */
-.logo-mark img,
-.login-logo img,
-.monogram img,
-.brand-monogram img,
-.logo-mark span,
-.login-logo span,
-.monogram span,
-.brand-monogram span {
-  opacity: 0 !important;
-  visibility: hidden !important;
+#screen-welcome .logo-block{
+  margin-bottom:clamp(50px,8vh,72px)!important;
 }
 
-/* Login / welcome monogram sizing */
-#screen-welcome .logo-mark,
-.login-screen .logo-mark,
-.login-logo,
-.monogram {
-  width: 78px !important;
-  height: 78px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+#screen-welcome .logo-wordmark{
+  color:#fff!important;
+  font-family:var(--font-serif,"Cormorant Garamond",Georgia,serif)!important;
+  font-weight:400!important;
+  font-size:clamp(2.55rem,10.2vw,4.1rem)!important;
+  line-height:.95!important;
+  letter-spacing:clamp(.18em,4.4vw,.34em)!important;
+  margin-left:clamp(.18em,4.4vw,.34em)!important;
+  text-align:center!important;
+  white-space:nowrap!important;
 }
 
-/* Simulator-style restraint */
-.logo-wordmark,
-.login-brand,
-.brand-name {
-  color: #ffffff !important;
+#screen-welcome .logo-tagline{
+  color:rgba(255,255,255,.58)!important;
+  font-family:var(--font-serif,"Cormorant Garamond",Georgia,serif)!important;
+  font-style:italic!important;
+  font-size:clamp(.9rem,3.4vw,1.12rem)!important;
+  letter-spacing:.16em!important;
+  margin-top:16px!important;
 }
 
-.logo-tagline,
-.login-tag,
-.brand-tag {
-  color: rgba(255,255,255,.68) !important;
-}
+#screen-welcome .welcome-copy{color:rgba(255,255,255,.74)!important;}
+#screen-welcome #btnGoogleSignIn{background:#fff!important;color:#111!important;border:1px solid #fff!important;box-shadow:none!important;}
+#screen-welcome #btnGuestSignIn{background:#050505!important;color:#fff!important;border:1px solid rgba(255,255,255,.24)!important;box-shadow:none!important;}
+#screen-welcome .divider,#screen-welcome .welcome-footnote{color:rgba(255,255,255,.52)!important;}
 
-/* Black and white buttons only */
-#btnGuestSignIn,
-.guest-btn,
-.book-btn,
-.btn-primary,
-button.primary {
-  background: #0a0a0a !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-  box-shadow: none !important;
-}
-
-#btnGoogleSignIn,
-.google-btn {
-  background: #ffffff !important;
-  color: #111111 !important;
-  border: 1px solid #ffffff !important;
-  box-shadow: none !important;
-}
-
-/* Remove gold/glow remnants */
-* {
-  text-shadow: none !important;
-}
-
-.service-card.selected,
-.mode-card.selected,
-.tech-card.selected,
-.service-option.selected,
-.tech-option.selected {
-  background: #0a0a0a !important;
-  color: #ffffff !important;
-  border-color: #0a0a0a !important;
-  box-shadow: none !important;
-}
-
-.service-card.selected *,
-.mode-card.selected *,
-.tech-card.selected *,
-.service-option.selected *,
-.tech-option.selected * {
-  color: #ffffff !important;
+@media(max-width:430px){
+  #screen-welcome .logo-mark,.logo-mark{
+    width:76px!important;
+    height:76px!important;
+    margin-bottom:30px!important;
+  }
+  #screen-welcome .logo-wordmark{
+    font-size:clamp(2.15rem,9.6vw,3.1rem)!important;
+    letter-spacing:.22em!important;
+    margin-left:.22em!important;
+  }
+  #screen-welcome .logo-tagline{
+    font-size:.88rem!important;
+    letter-spacing:.12em!important;
+  }
 }
