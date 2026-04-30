@@ -216,10 +216,28 @@
             }
         }
     </style>
-
-
   <link rel="stylesheet" href="brand.css">
   <link rel="stylesheet" href="client-engagement.css">
+<style id="thurayaInlineContinueFix">
+        .thuraya-inline-continue {
+            width: 100%;
+            margin: 26px 0 120px;
+            display: block;
+        }
+
+        .thuraya-inline-continue .btn-primary {
+            min-height: 56px;
+            border-radius: 18px;
+            background: linear-gradient(180deg,#151515 0%,#050505 100%);
+            color: #fff;
+            border: 1px solid #050505;
+            font-weight: 900;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            box-shadow: 0 18px 40px rgba(10,10,10,.24);
+        }
+    </style>
+
 </head>
 <body>
 
@@ -401,17 +419,17 @@
                 <div id="bk_serviceMenu">
                     <div class="loading-pulse">Loading services...</div>
                 </div>
+
+                <!-- THURAYA SAFE FALLBACK CTA: keeps Continue visible even if sticky bar is hidden -->
+                <div class="thuraya-inline-continue" id="thurayaInlineContinueServices">
+                    <button class="btn-primary full" type="button" onclick="goToStep('screen-technician')">
+                        Continue →
+                    </button>
+                </div>
+
                 <div style="height:160px;"></div>
             </div>
         </div>
-
-        
-<!-- Early Toggle: Book For -->
-<div class="early-bookfor">
-    <label><input type="radio" name="earlyBookFor" value="myself" checked onchange="bk_setEarlyBookFor('myself')"> Myself</label>
-    <label><input type="radio" name="earlyBookFor" value="someone_else" onchange="bk_setEarlyBookFor('someone_else')"> Someone else</label>
-</div>
-
 <!-- STEP 2 OF 4: TECHNICIAN -->
         <div class="screen" id="screen-technician">
             <div class="screen-inner">
@@ -471,7 +489,7 @@
                     </div>
                 </div>
                 <div id="bk_slotsContainer" class="slots-container" style="display:none;">
-                    <label class="slots-label">Available Times</label>
+                    <label class="slots-label section-title">Available Times</label>
                     <div id="bk_slots" class="slots-grid"></div>
                 </div>
                 <input type="hidden" id="bk_time" value="">
@@ -772,7 +790,7 @@
                     </div>
                 </div>
                 <div id="grp_slotsContainer" class="slots-container" style="display:none;">
-                    <label class="slots-label">Available Times</label>
+                    <label class="slots-label section-title">Available Times</label>
                     <div id="grp_slots" class="slots-grid"></div>
                 </div>
                 <input type="hidden" id="grp_time" value="">
