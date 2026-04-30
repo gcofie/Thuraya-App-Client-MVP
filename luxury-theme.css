@@ -9,3 +9,106 @@
 @media(min-width:900px){#app{max-width:430px!important;min-height:844px!important;max-height:calc(100vh - 28px)!important;margin:14px auto!important;border-radius:44px!important;border:2px solid #333!important;overflow:hidden!important;box-shadow:0 40px 80px rgba(0,0,0,.56)!important}.screen{min-height:844px!important;max-height:calc(100vh - 28px)!important;overflow-y:auto!important}#screen-welcome .welcome-inner{min-height:calc(844px - 72px)!important}}
 @media(max-width:420px){.screen.active:not(#screen-welcome):not(#screen-doc-viewer){padding-left:14px!important;padding-right:14px!important}.screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before{width:calc(100% + 28px)!important;margin-left:-14px!important;margin-right:-14px!important;font-size:clamp(1.36rem,7vw,1.75rem)!important;letter-spacing:.18em!important}#screen-welcome{padding-left:18px!important;padding-right:18px!important}#screen-welcome .welcome-actions{max-width:100%!important}}
 @media(max-width:360px){#screen-welcome .logo-wordmark{font-size:2rem!important;letter-spacing:.14em!important;margin-left:.14em!important}#screen-welcome .welcome-actions button{min-height:50px!important}.mode-card{grid-template-columns:46px minmax(0,1fr) 14px!important;gap:10px!important;padding-left:14px!important;padding-right:14px!important}}
+
+/* =========================================================
+   THURAYA — Mobile Layout Stabilizer v8.1
+   Purpose: stop screen drift/side-column behaviour without
+   replacing the existing luxury theme.
+   ========================================================= */
+
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  #app {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100svh !important;
+    margin: 0 auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .screen {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100svh !important;
+    overflow-x: hidden !important;
+  }
+
+  .screen.active {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .screen:not(.active) {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer) {
+    padding: 22px 16px calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  .screen-inner {
+    width: 100% !important;
+    max-width: 430px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  #screen-welcome.active {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  #screen-welcome .welcome-inner {
+    width: 100% !important;
+    max-width: 430px !important;
+    min-height: auto !important;
+    margin: 0 auto !important;
+  }
+
+  .back-btn {
+    width: auto !important;
+    max-width: max-content !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .form-card,
+  .mode-card,
+  .service-card,
+  .tech-option-card,
+  .tech-card,
+  .confirm-card,
+  .book-for-card,
+  .group-option-card,
+  .group-capacity-panel,
+  .group-split-panel,
+  .group-manual-subgroup-card,
+  .group-billing-panel,
+  .cx-client-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .step-header {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
