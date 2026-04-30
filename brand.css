@@ -1,434 +1,78 @@
-/* =========================================================
-   THURAYA CLIENT APP — SIMULATION TARGET BRAND SKIN
-   Built from the uploaded simulated visual direction.
-   Load after styles.css.
-   ========================================================= */
+/* THURAYA FINAL BRAND POLISH
+   Complements existing brand.css.
+   Safe visual refinements only.
+*/
 
-:root{
-  --black:#0a0a0a;
-  --primary:#0a0a0a;
-  --off-white:#F0EDE8;
-  --cream:#F0EDE8;
-  --warm-white:#FAFAF8;
-  --surface:#FAFAF8;
-  --mid:#1A1A1A;
-  --text-muted:#686158;
-  --light-line:#D8D5D0;
-  --border:#D8D5D0;
-  --gold:#C8A94D;
-  --gold-dark:#8A7136;
-  --font-serif:"Cormorant Garamond", Georgia, serif;
-  --font-sans:"DM Sans", Inter, system-ui, sans-serif;
+:root {
+  --thuraya-black: #0a0a0a;
+  --thuraya-cream: #F0EDE8;
+  --thuraya-warm-white: #FAFAF8;
+  --thuraya-gold: #8A7136;
 }
 
-body{
-  background:#1a1a1a!important;
+body {
+  background: #1a1a1a !important;
 }
 
-/* Desktop: present as premium phone/app shell like simulation */
-@media(min-width:780px){
-  #app{
-    max-width:430px;
-    min-height:844px;
-    max-height:calc(100vh - 28px);
-    margin:14px auto;
-    background:var(--off-white);
-    border-radius:44px;
-    border:2px solid #333;
-    overflow:hidden;
-    box-shadow:0 40px 80px rgba(0,0,0,.56);
-  }
-
-  .screen{
-    min-height:844px;
-    max-height:calc(100vh - 28px);
-    overflow-y:auto;
-    padding:0 16px 110px!important;
-    background:var(--off-white);
-  }
-
-  .screen.active{
-    display:block!important;
-  }
-
-  .screen-inner{
-    max-width:100%!important;
-    padding:18px 0 0;
-  }
-
-  .welcome-inner{
-    max-width:100%!important;
-    min-height:844px!important;
-    padding:0 24px 40px;
-  }
-
-  .sticky-bar{
-    left:50%!important;
-    right:auto!important;
-    transform:translateX(-50%);
-    width:426px!important;
-    border-radius:0 0 40px 40px;
-  }
-
-  .bk-floating-signout{
-    left:calc(50% + 128px);
-    right:auto!important;
-  }
+#screen-welcome {
+  background: #0a0a0a !important;
 }
 
-/* Mobile full screen */
-@media(max-width:779px){
-  #app{
-    min-height:100vh;
-    background:var(--off-white);
-  }
-  .screen{
-    background:var(--off-white);
-  }
+#screen-welcome .logo-wordmark {
+  letter-spacing: 10px !important;
 }
 
-/* Welcome dark luxury screen */
-#screen-welcome{
-  background:#0a0a0a!important;
-  color:#fff!important;
-  padding:0 24px 40px!important;
+#screen-welcome .welcome-copy {
+  color: rgba(255,255,255,.72) !important;
 }
 
-#screen-welcome .welcome-inner{
-  justify-content:center;
-}
-
-#screen-welcome .logo-mark{
-  background:transparent!important;
-  border:1px solid rgba(240,239,235,.25);
-  color:#F0EFEB;
-  box-shadow:none!important;
-}
-
-#screen-welcome .logo-wordmark{
-  color:#fff!important;
-  font-weight:300!important;
-  font-size:34px!important;
-  letter-spacing:10px!important;
-}
-
-#screen-welcome .logo-tagline{
-  font-family:var(--font-serif);
-  font-size:12px!important;
-  font-style:italic;
-  color:rgba(255,255,255,.55)!important;
-  letter-spacing:1.2px!important;
-}
-
-#screen-welcome .welcome-copy{
-  color:rgba(255,255,255,.72)!important;
-  font-size:1.05rem!important;
-  margin-top:22px;
-}
-
-#screen-welcome .btn-primary,
-#screen-welcome .btn-outline{
-  background:#fff!important;
-  color:#0a0a0a!important;
-  border-color:#fff!important;
-  border-radius:12px!important;
-  min-height:50px!important;
-  box-shadow:none!important;
-  letter-spacing:.18em!important;
-  text-transform:uppercase;
-}
-
-#screen-welcome .btn-outline{
-  background:transparent!important;
-  color:rgba(255,255,255,.95)!important;
-  border:.5px solid rgba(255,255,255,.16)!important;
-}
-
-#screen-welcome .btn-ghost,
-#screen-welcome button[style*="text-decoration"]{
-  color:#F0EFEB!important;
-}
-
-#screen-welcome .divider,
-#screen-welcome .welcome-footnote,
-#screen-welcome #welcomeError{
-  color:rgba(255,255,255,.58)!important;
-}
-
-/* Add dark header feeling to main screens */
-.screen:not(#screen-welcome):not(#screen-doc-viewer)::before{
-  content:"THURAYA";
-  display:block;
-  margin:0 -16px 18px;
-  padding:20px 20px 16px;
-  background:#0a0a0a;
-  color:#fff;
-  text-align:center;
-  font-family:var(--font-serif);
-  font-size:30px;
-  font-weight:300;
-  letter-spacing:10px;
-  line-height:1.1;
-}
-
-#screen-booking-mode::before{content:"THURAYA";}
-#screen-services::before{content:"THURAYA";}
-#screen-technician::before{content:"THURAYA";}
-#screen-datetime::before{content:"THURAYA";}
-#screen-confirm::before{content:"THURAYA";}
-#screen-group-size::before{content:"THURAYA";}
-#screen-group-services::before{content:"THURAYA";}
-#screen-group-datetime::before{content:"THURAYA";}
-#screen-group-confirm::before{content:"THURAYA";}
-
-/* Headings */
-.step-header{
-  margin-bottom:18px!important;
-}
-
-.step-badge{
-  background:rgba(255,255,255,.76)!important;
-  border:.5px solid var(--light-line)!important;
-  color:#1A1A1A!important;
-  border-radius:20px!important;
-  font-size:9px!important;
-  letter-spacing:1.6px!important;
-  padding:6px 13px!important;
-}
-
-.step-header h2{
-  font-family:var(--font-serif)!important;
-  font-size:clamp(2.05rem,9vw,3rem)!important;
-  font-weight:300!important;
-  letter-spacing:.2px!important;
-  color:#0a0a0a!important;
-}
-
-.step-header p{
-  font-size:.94rem!important;
-  color:#1A1A1A!important;
-  line-height:1.6!important;
-}
-
-/* Cards */
 .mode-card,
 .service-card,
-.tech-option-card,
 .tech-card,
-.form-card,
-.confirm-card,
-.book-for-card,
-.promo-block,
+.tech-option-card,
 .group-option-card,
-.group-capacity-panel,
-.group-split-panel,
-.group-manual-subgroup-card,
-.group-billing-panel,
-.cx-client-card{
-  background:var(--warm-white)!important;
-  border:.5px solid var(--light-line)!important;
-  border-radius:12px!important;
-  box-shadow:0 10px 26px rgba(10,10,10,.06)!important;
+.form-card,
+.confirm-card {
+  background: #FAFAF8 !important;
+  border-color: #D8D5D0 !important;
 }
 
-.mode-card{
-  min-height:74px!important;
-  padding:14px 12px!important;
-  grid-template-columns:42px 1fr 18px!important;
+.service-card.selected,
+.tech-card.selected,
+.tech-option-card.selected,
+.group-option-card.selected {
+  border-color: #0a0a0a !important;
+  box-shadow: 0 14px 30px rgba(10,10,10,.13) !important;
 }
 
-.mode-card-icon{
-  width:36px!important;
-  height:36px!important;
-  background:#F0EDE8!important;
-}
-
-.mode-card-body strong,
-.service-card-name,
-.tech-option-card strong,
-.tech-card strong{
-  color:#0a0a0a!important;
-  font-weight:700!important;
-  font-size:.95rem!important;
-}
-
-.mode-card-body span,
-.service-card-desc,
-.tech-option-card span,
-.tech-card span{
-  color:#1A1A1A!important;
-  font-size:.82rem!important;
-  line-height:1.45!important;
-}
-
-.mode-card-arrow{
-  color:#8A7136!important;
-}
-
-/* Service selection */
-.dept-btn{
-  border-radius:10px!important;
-  min-height:48px!important;
-  border:.5px solid var(--light-line)!important;
-  background:var(--warm-white)!important;
-  color:#0a0a0a!important;
-  font-size:.78rem!important;
-  text-transform:none!important;
-}
-
-.dept-btn.active{
-  background:#0a0a0a!important;
-  color:#fff!important;
-  border-color:#0a0a0a!important;
-  box-shadow:none!important;
-}
-
-.service-card{
-  border-radius:10px!important;
-  padding:14px!important;
-}
-
-.service-card.selected{
-  border-color:#0a0a0a!important;
-  border-width:1.5px!important;
-  box-shadow:0 12px 24px rgba(10,10,10,.12)!important;
-}
-
-.service-price-pill{
-  font-family:var(--font-serif)!important;
-  font-size:1.15rem!important;
-  color:#0a0a0a!important;
-}
-
-/* Inputs */
-input,select,textarea{
-  background:var(--warm-white)!important;
-  border:.5px solid var(--light-line)!important;
-  border-radius:10px!important;
-  min-height:48px!important;
-  font-size:.92rem!important;
-}
-
-/* Buttons */
 .btn-primary,
-.btn-primary.full,
 #btnToTech,
 #btnToDateTime,
 #btnToConfirm,
-#btnConfirmBooking,
 #grp_toDateTimeBtn,
 #grp_toConfirmBtn,
-#grp_btnConfirm,
-#btnSaveGuest,
-#btnSaveProfile{
-  background:#0a0a0a!important;
-  color:#fff!important;
-  border-color:#0a0a0a!important;
-  border-radius:12px!important;
-  min-height:50px!important;
-  font-size:10px!important;
-  letter-spacing:2.5px!important;
-  text-transform:uppercase!important;
-  box-shadow:0 12px 26px rgba(10,10,10,.16)!important;
+#btnConfirmBooking,
+#grp_btnConfirm {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  letter-spacing: 2.3px !important;
+  text-transform: uppercase !important;
 }
 
 .btn-primary:disabled,
 #btnToTech:disabled,
 #btnToConfirm:disabled,
 #grp_toDateTimeBtn:disabled,
-#grp_toConfirmBtn:disabled{
-  background:#CFCBC4!important;
-  color:#7A756D!important;
-  border-color:#CFCBC4!important;
-  box-shadow:none!important;
+#grp_toConfirmBtn:disabled {
+  background: #CFCBC4 !important;
+  color: #7A756D !important;
 }
 
-.btn-outline,
-.btn-secondary{
-  border-radius:12px!important;
-  background:var(--warm-white)!important;
-  border:.5px solid var(--light-line)!important;
+.step-badge {
+  color: #0a0a0a !important;
+  background: rgba(255,255,255,.78) !important;
 }
 
-.btn-ghost{
-  color:#0a0a0a!important;
-}
-
-/* Date/time */
-.slots-label,.section-title,.form-group label,.confirm-label{
-  color:#1A1A1A!important;
-  font-size:9px!important;
-  letter-spacing:1.5px!important;
-  text-transform:uppercase!important;
-}
-
-#bk_slots button,#grp_slots button,.slot-btn{
-  border-radius:8px!important;
-  min-height:58px!important;
-  background:var(--warm-white)!important;
-  border:.5px solid var(--light-line)!important;
-  box-shadow:none!important;
-}
-
-#bk_slots button.selected,#bk_slots button.active,
-#grp_slots button.selected,#grp_slots button.active,
-.slot-btn.selected,.slot-btn.active{
-  background:#0a0a0a!important;
-  color:#fff!important;
-  border-color:#0a0a0a!important;
-}
-
-/* Confirm card dark like simulation */
-#screen-confirm .confirm-card,
-#screen-group-confirm .confirm-card,
-#screen-success .confirm-card,
-#screen-group-success .confirm-card{
-  background:#0a0a0a!important;
-  color:#fff!important;
-  border-color:#0a0a0a!important;
-}
-
-#screen-confirm .confirm-label,
-#screen-group-confirm .confirm-label,
-#screen-success .confirm-label,
-#screen-group-success .confirm-label{
-  color:rgba(255,255,255,.68)!important;
-}
-
-#screen-confirm .confirm-value,
-#screen-group-confirm .confirm-value,
-#screen-success .confirm-value,
-#screen-group-success .confirm-value{
-  color:#fff!important;
-}
-
-#screen-confirm .confirm-row,
-#screen-group-confirm .confirm-row,
-#screen-success .confirm-row,
-#screen-group-success .confirm-row{
-  border-color:rgba(255,255,255,.08)!important;
-}
-
-/* Sticky bar as bottom nav-like CTA */
-.sticky-bar{
-  background:rgba(250,250,248,.96)!important;
-  backdrop-filter:blur(10px);
-}
-
-.sticky-empty{
-  font-size:.78rem!important;
-}
-
-.sticky-clear-btn{
-  color:#1A1A1A!important;
-}
-
-/* remove leaked early UI if any old JS/CSS injects it */
-.early-bookfor{
-  display:none!important;
-}
-
-/* client care safe */
-#screen-doc-viewer::before{
-  display:none!important;
+.back-btn {
+  color: #8A7136 !important;
 }
