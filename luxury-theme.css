@@ -11,104 +11,57 @@
 @media(max-width:360px){#screen-welcome .logo-wordmark{font-size:2rem!important;letter-spacing:.14em!important;margin-left:.14em!important}#screen-welcome .welcome-actions button{min-height:50px!important}.mode-card{grid-template-columns:46px minmax(0,1fr) 14px!important;gap:10px!important;padding-left:14px!important;padding-right:14px!important}}
 
 /* =========================================================
-   THURAYA — Mobile Layout Stabilizer v8.1
-   Purpose: stop screen drift/side-column behaviour without
-   replacing the existing luxury theme.
+   THURAYA — Screen Flow Layout Fix v9
+   Exact issue: brand header pseudo-element was becoming a
+   SIDE flex item on mobile because active screens were flex-row.
    ========================================================= */
 
-@media (max-width: 768px) {
-  html,
-  body {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
+.screen.active {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
 
-  #app {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 100svh !important;
-    margin: 0 auto !important;
-    overflow-x: hidden !important;
-  }
+.screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before {
+  flex: 0 0 auto !important;
+  width: calc(100% + 36px) !important;
+  max-width: none !important;
+  align-self: stretch !important;
+  display: block !important;
+  position: relative !important;
+}
 
+.screen.active .screen-inner {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: 430px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+@media (max-width: 779px) {
+  #app,
   .screen {
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 100svh !important;
     overflow-x: hidden !important;
   }
 
   .screen.active {
-    display: block !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-  }
-
-  .screen:not(.active) {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
   }
 
   .screen.active:not(#screen-welcome):not(#screen-doc-viewer) {
-    padding: 22px 16px calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
   }
 
   .screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before {
-    content: none !important;
-    display: none !important;
-  }
-
-  .screen-inner {
-    width: 100% !important;
-    max-width: 430px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  #screen-welcome.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #screen-welcome .welcome-inner {
-    width: 100% !important;
-    max-width: 430px !important;
-    min-height: auto !important;
-    margin: 0 auto !important;
-  }
-
-  .back-btn {
-    width: auto !important;
-    max-width: max-content !important;
-    display: inline-flex !important;
-    align-items: center !important;
-  }
-
-  .form-card,
-  .mode-card,
-  .service-card,
-  .tech-option-card,
-  .tech-card,
-  .confirm-card,
-  .book-for-card,
-  .group-option-card,
-  .group-capacity-panel,
-  .group-split-panel,
-  .group-manual-subgroup-card,
-  .group-billing-panel,
-  .cx-client-card {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .step-header {
-    width: 100% !important;
-    max-width: 100% !important;
+    margin-left: -18px !important;
+    margin-right: -18px !important;
+    margin-bottom: 18px !important;
   }
 }
