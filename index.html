@@ -547,6 +547,93 @@ body {
 }
 </style>
 
+
+<style id="thurayaWelcomeBlackWhiteCompletion">
+/* THURAYA — Welcome Screen Black/White Completion
+   Scope: welcome screen only. No JavaScript touched.
+*/
+
+/* Email link / ghost button — remove gold */
+#screen-welcome .btn-ghost,
+#screen-welcome #btnViewBookings,
+#screen-welcome button.btn-ghost,
+#screen-welcome a,
+#screen-welcome button[style*="gold"],
+#screen-welcome [style*="gold"] {
+    color: #F8F7F3 !important;
+    text-decoration-color: rgba(248,247,243,0.72) !important;
+    border-color: rgba(248,247,243,0.56) !important;
+}
+
+/* Catch common gold variable usage on welcome */
+#screen-welcome [style*="var(--gold"],
+#screen-welcome [style*="var(--gold-dark"],
+#screen-welcome .accent,
+#screen-welcome .accent-text,
+#screen-welcome .gold,
+#screen-welcome .gold-text {
+    color: #F8F7F3 !important;
+    border-color: rgba(248,247,243,0.56) !important;
+}
+
+/* Info card / benefit panel — black + cloud white only */
+#screen-welcome .welcome-card,
+#screen-welcome .info-card,
+#screen-welcome .signin-benefit,
+#screen-welcome .guest-benefit,
+#screen-welcome [class*="benefit"],
+#screen-welcome [class*="note"],
+#screen-welcome [class*="tip"] {
+    background: #000000 !important;
+    color: #F8F7F3 !important;
+    border: 1px solid rgba(248,247,243,0.54) !important;
+    box-shadow: none !important;
+}
+
+/* Text inside info card */
+#screen-welcome .welcome-card *,
+#screen-welcome .info-card *,
+#screen-welcome .signin-benefit *,
+#screen-welcome .guest-benefit *,
+#screen-welcome [class*="benefit"] *,
+#screen-welcome [class*="note"] *,
+#screen-welcome [class*="tip"] * {
+    color: #F8F7F3 !important;
+    background: transparent !important;
+}
+
+/* Emoji/sparkle should visually read white */
+#screen-welcome .welcome-card::first-letter,
+#screen-welcome .info-card::first-letter,
+#screen-welcome [class*="benefit"]::first-letter {
+    color: #F8F7F3 !important;
+}
+
+/* Extra protection for inline beige/card surfaces */
+#screen-welcome [style*="#fff"],
+#screen-welcome [style*="#FFF"],
+#screen-welcome [style*="cream"],
+#screen-welcome [style*="beige"] {
+    background: #000000 !important;
+    color: #F8F7F3 !important;
+    border-color: rgba(248,247,243,0.54) !important;
+}
+
+/* Keep Google button white only */
+#screen-welcome #btnGoogleSignIn {
+    background: #F8F7F3 !important;
+    color: #000000 !important;
+    border-color: #F8F7F3 !important;
+}
+
+/* Keep guest button black with cloud-white border */
+#screen-welcome #btnGuestSignIn {
+    background: #000000 !important;
+    color: #F8F7F3 !important;
+    border-color: rgba(248,247,243,0.58) !important;
+}
+</style>
+
 </head>
 <body>
 
