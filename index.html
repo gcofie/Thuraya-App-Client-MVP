@@ -498,29 +498,32 @@
 </style>
 
 
-<style id="thurayaFixFinal2">
-#screen-welcome a {
- color:#F8F7F3 !important;
- text-decoration:underline !important;
+<style id="thurayaDividerFix">
+#screen-welcome .logo-tagline::after {
+    content: "◇";
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    color: rgba(248,247,243,0.6);
+    font-size: 12px;
+    letter-spacing: 12px;
 }
 
-#screen-welcome .welcome-card,
-#screen-welcome .info-card,
-#screen-welcome [class*="benefit"]{
- background:#000000 !important;
- border:1px solid rgba(248,247,243,0.5) !important;
- color:#F8F7F3 !important;
+#screen-welcome .logo-tagline::before {
+    content: "";
+    display: block;
+    width: 120px;
+    height: 1px;
+    background: rgba(248,247,243,0.4);
+    margin: 16px auto 0;
 }
 
-#screen-welcome .welcome-card *,
-#screen-welcome .info-card *{
- color:#F8F7F3 !important;
- background:transparent !important;
+#screen-welcome .logo-tagline::after {
+    position: relative;
 }
 
-#screen-welcome [style*="gold"],
-#screen-welcome .gold{
- color:#F8F7F3 !important;
+#screen-welcome .logo-tagline span.divider-line {
+    display:none;
 }
 </style>
 
