@@ -682,3 +682,168 @@ body{
   }
 }
 /* === END THURAYA DEVICE-SAFE SCALE LOCK v2 === */
+
+/* =========================================================
+   THURAYA CRISP SCALE PASS — Booking landing + global cards
+   Purpose: reduce oversized typography/cards and prevent margin overflow.
+   Logic untouched.
+   ========================================================= */
+:root{
+  --thuraya-shell-w: 390px !important;
+  --thuraya-page-pad: 18px !important;
+}
+
+#app{
+  width:min(390px, 100vw) !important;
+  max-width:390px !important;
+}
+
+.screen{
+  padding-left:var(--thuraya-page-pad) !important;
+  padding-right:var(--thuraya-page-pad) !important;
+  padding-bottom:96px !important;
+}
+
+.screen-inner{
+  max-width:100% !important;
+  padding-top:22px !important;
+}
+
+/* Keep floating controls inside the app shell */
+.bk-floating-signout{
+  position:fixed !important;
+  top:18px !important;
+  left:calc(50% + 96px) !important;
+  right:auto !important;
+  transform:none !important;
+  max-width:104px !important;
+  min-height:44px !important;
+  padding:8px 18px !important;
+  border-radius:999px !important;
+  font-size:.82rem !important;
+  letter-spacing:.08em !important;
+}
+
+/* Booking landing page: crisp mobile-app hierarchy */
+#screen-booking-mode .screen-inner{
+  padding-top:24px !important;
+}
+
+#screen-booking-mode .step-header{
+  margin:0 0 22px !important;
+}
+
+#screen-booking-mode .step-badge{
+  min-height:34px !important;
+  padding:8px 18px !important;
+  margin-bottom:34px !important;
+  font-size:.72rem !important;
+  letter-spacing:.18em !important;
+  border-radius:999px !important;
+}
+
+#screen-booking-mode .step-header h2{
+  font-size:clamp(3.05rem, 14vw, 4.05rem) !important;
+  line-height:.95 !important;
+  letter-spacing:-.045em !important;
+  max-width:100% !important;
+  margin:0 !important;
+}
+
+#screen-booking-mode .step-header p{
+  color:#2F2922 !important;
+  font-size:1rem !important;
+  line-height:1.4 !important;
+  margin-top:24px !important;
+}
+
+#screen-booking-mode .step-header + div{
+  gap:12px !important;
+  margin-top:0 !important;
+}
+
+#screen-booking-mode .mode-card{
+  min-height:112px !important;
+  padding:16px 18px !important;
+  border-radius:22px !important;
+  grid-template-columns:46px minmax(0,1fr) 18px !important;
+  gap:14px !important;
+}
+
+#screen-booking-mode .mode-card-icon{
+  width:42px !important;
+  height:42px !important;
+  font-size:1.08rem !important;
+}
+
+#screen-booking-mode .mode-card-body strong{
+  font-size:1rem !important;
+  line-height:1.15 !important;
+  letter-spacing:-.015em !important;
+}
+
+#screen-booking-mode .mode-card-body span{
+  display:block !important;
+  margin-top:8px !important;
+  font-size:.94rem !important;
+  line-height:1.38 !important;
+  color:#2F2922 !important;
+}
+
+#screen-booking-mode .mode-card-arrow{
+  font-size:1.55rem !important;
+  line-height:1 !important;
+}
+
+/* Global card compression for remaining booking pages */
+.service-card,
+.tech-option-card,
+.tech-card,
+.form-card,
+.confirm-card,
+.book-for-card,
+.promo-block,
+.group-option-card,
+.group-capacity-panel,
+.group-split-panel,
+.group-manual-subgroup-card,
+.group-billing-panel,
+.cx-client-card{
+  border-radius:20px !important;
+  padding:16px 18px !important;
+}
+
+.btn-primary,
+.btn-primary.full,
+.btn-outline,
+.btn-secondary,
+#btnToTech,
+#btnToDateTime,
+#btnToConfirm,
+#btnConfirmBooking,
+#grp_toDateTimeBtn,
+#grp_toConfirmBtn,
+#grp_btnConfirm,
+#btnSaveGuest,
+#btnSaveProfile{
+  min-height:50px !important;
+  border-radius:16px !important;
+  font-size:.86rem !important;
+}
+
+input,select,textarea{
+  min-height:46px !important;
+  border-radius:14px !important;
+  font-size:.95rem !important;
+}
+
+/* Phones: keep same design, just remove shell chrome and tighten edge padding */
+@media (max-width:430px){
+  :root{--thuraya-shell-w:390px !important;--thuraya-page-pad:18px !important;}
+  #app{width:100vw !important;max-width:100vw !important;border-radius:0 !important;border-left:0 !important;border-right:0 !important;margin:0 auto !important;}
+  .screen{padding-left:18px !important;padding-right:18px !important;}
+  .bk-floating-signout{left:auto !important;right:16px !important;top:16px !important;}
+  #screen-booking-mode .step-header h2{font-size:clamp(2.55rem, 13.5vw, 3.55rem) !important;}
+  #screen-booking-mode .mode-card{min-height:104px !important;padding:15px 16px !important;grid-template-columns:44px minmax(0,1fr) 18px !important;}
+  #screen-booking-mode .mode-card-body span{font-size:.92rem !important;}
+}
