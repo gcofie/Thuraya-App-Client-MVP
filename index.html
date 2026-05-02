@@ -491,8 +491,110 @@ body{background:#000;}
 </style>
 
   <link rel="stylesheet" href="booking-scale-fix.css?v=scale-clean-final-20260502">
+  <link rel="stylesheet" href="thuraya-unified-mobile-first.css?v=unified-theme-lock-20260502a">
+
+<style id="thurayaUnifiedThemeHardLock">
+/* THURAYA — ONE EXPERIENCE LOCK (PC + MOBILE)
+   Loaded after all CSS to stop mobile/desktop theme split. */
+html, body {
+  margin:0 !important;
+  width:100% !important;
+  min-height:100% !important;
+  overflow-x:hidden !important;
+  background:#000 !important;
+}
+body {
+  display:flex !important;
+  justify-content:center !important;
+  align-items:stretch !important;
+}
+#app {
+  width:100% !important;
+  max-width:430px !important;
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  background:#000 !important;
+  overflow-x:hidden !important;
+  position:relative !important;
+}
+.bg-texture {
+  background:#000 !important;
+}
+.screen {
+  width:100% !important;
+  max-width:430px !important;
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  margin:0 auto !important;
+  overflow-x:hidden !important;
+}
+.screen.active {
+  display:block !important;
+}
+.screen-inner {
+  width:100% !important;
+  max-width:390px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
+}
+/* Booking mode must match the black luxury PC experience on every device */
+#screen-booking-mode,
+#screen-booking-mode.active {
+  background:#000 !important;
+  color:#f8f7f3 !important;
+}
+#screen-booking-mode::before {
+  background:#000 !important;
+  color:#f8f7f3 !important;
+  box-shadow:none !important;
+}
+#screen-booking-mode .screen-inner {
+  background:transparent !important;
+  padding-left:20px !important;
+  padding-right:20px !important;
+  padding-top:clamp(84px,12dvh,112px) !important;
+}
+#screen-booking-mode .step-badge {
+  background:#f2f2f0 !important;
+  color:#000 !important;
+  border:1px solid rgba(255,255,255,.72) !important;
+}
+#screen-booking-mode .step-header h2 {
+  color:rgba(248,247,243,.92) !important;
+  opacity:1 !important;
+  font-size:clamp(3rem,11vw,4.6rem) !important;
+  line-height:.98 !important;
+}
+#screen-booking-mode .step-header p {
+  color:#f8f7f3 !important;
+  opacity:.88 !important;
+}
+#screen-booking-mode .mode-card {
+  background:#f1efeb !important;
+  color:#050505 !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  box-shadow:0 20px 46px rgba(0,0,0,.32) !important;
+}
+#screen-booking-mode .mode-card-body strong { color:#050505 !important; }
+#screen-booking-mode .mode-card-body span { color:#2c2a27 !important; }
+#screen-booking-mode .mode-card-arrow { color:#8f7b3a !important; }
+#screen-booking-mode .mode-badge { display:none !important; }
+@media (max-width:779px) {
+  html, body, #app, .screen, .screen.active {
+    background:#000 !important;
+  }
+  .screen.active { display:block !important; }
+  #screen-booking-mode .screen-inner {
+    max-width:390px !important;
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
+}
+</style>
 </head>
-  <link rel="stylesheet" href="thuraya-unified-mobile-first.css?v=unified-pc-mobile-20260502">
 <body>
 
     <!-- ── BACKGROUND TEXTURE ─────────────────────── -->

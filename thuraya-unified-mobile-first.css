@@ -199,3 +199,27 @@ canvas{
   :root{--thuraya-content-max:calc(100vw - 28px);} 
   #screen-welcome .welcome-inner{padding-left:18px !important;padding-right:18px !important;}
 }
+
+/* =========================================================
+   THURAYA — HARD THEME LOCK v2
+   Same black luxury experience on PC and mobile.
+   ========================================================= */
+html,body{background:#000!important;color:#f8f7f3!important;overflow-x:hidden!important;}
+body{display:flex!important;justify-content:center!important;align-items:stretch!important;}
+#app{width:100%!important;max-width:430px!important;min-height:100vh!important;min-height:100dvh!important;margin:0 auto!important;background:#000!important;overflow-x:hidden!important;}
+.bg-texture{background:#000!important;}
+.screen{width:100%!important;max-width:430px!important;min-height:100vh!important;min-height:100dvh!important;margin:0 auto!important;overflow-x:hidden!important;}
+.screen.active{display:block!important;}
+.screen-inner{width:100%!important;max-width:390px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box!important;}
+#screen-booking-mode,#screen-booking-mode.active{background:#000!important;color:#f8f7f3!important;}
+#screen-booking-mode::before{background:#000!important;color:#f8f7f3!important;box-shadow:none!important;}
+#screen-booking-mode .screen-inner{background:transparent!important;padding-left:20px!important;padding-right:20px!important;padding-top:clamp(84px,12dvh,112px)!important;}
+#screen-booking-mode .step-badge{background:#f2f2f0!important;color:#000!important;border:1px solid rgba(255,255,255,.72)!important;}
+#screen-booking-mode .step-header h2{color:rgba(248,247,243,.92)!important;opacity:1!important;font-size:clamp(3rem,11vw,4.6rem)!important;line-height:.98!important;}
+#screen-booking-mode .step-header p{color:#f8f7f3!important;opacity:.88!important;}
+#screen-booking-mode .mode-card{background:#f1efeb!important;color:#050505!important;border:1px solid rgba(255,255,255,.24)!important;box-shadow:0 20px 46px rgba(0,0,0,.32)!important;}
+#screen-booking-mode .mode-card-body strong{color:#050505!important;}
+#screen-booking-mode .mode-card-body span{color:#2c2a27!important;}
+#screen-booking-mode .mode-card-arrow{color:#8f7b3a!important;}
+#screen-booking-mode .mode-badge{display:none!important;}
+@media(max-width:779px){html,body,#app,.screen,.screen.active{background:#000!important}.screen.active{display:block!important}#screen-booking-mode .screen-inner{max-width:390px!important;padding-left:20px!important;padding-right:20px!important}}
