@@ -2412,3 +2412,180 @@ button:active,
 }
 
 /* === END THURAYA FINAL POLISH === */
+
+
+/* =========================================================
+   THURAYA MY ACCOUNT LAYER — FINAL PRODUCT NAV
+   Scope: account/profile/payment/wallet screens only.
+   ========================================================= */
+.th-account-entry-card{
+  border-color:rgba(10,10,10,.16) !important;
+}
+
+.th-account-profile-card{
+  display:grid !important;
+  grid-template-columns:58px minmax(0,1fr) !important;
+  gap:14px !important;
+  align-items:center !important;
+  padding:18px !important;
+  margin-bottom:16px !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.94) !important;
+  border:1px solid rgba(221,211,197,.84) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.075) !important;
+}
+
+.th-account-avatar{
+  width:54px !important;
+  height:54px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.6rem !important;
+  font-weight:700 !important;
+}
+
+.th-account-profile-copy{min-width:0 !important;}
+.th-account-name{
+  font-size:1.02rem !important;
+  font-weight:900 !important;
+  color:#0a0a0a !important;
+  letter-spacing:-.02em !important;
+}
+.th-account-meta{
+  margin-top:5px !important;
+  color:rgba(47,41,34,.68) !important;
+  font-size:.82rem !important;
+  line-height:1.35 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.th-account-menu{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+}
+
+.th-account-menu-card{
+  width:100% !important;
+  min-height:76px !important;
+  display:grid !important;
+  grid-template-columns:42px minmax(0,1fr) 18px !important;
+  gap:14px !important;
+  align-items:center !important;
+  padding:16px !important;
+  border-radius:22px !important;
+  background:rgba(255,253,248,.94) !important;
+  border:1px solid rgba(221,211,197,.84) !important;
+  box-shadow:0 12px 26px rgba(35,26,16,.055) !important;
+  text-align:left !important;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+}
+
+.th-account-menu-card:active{transform:scale(.982) !important;}
+@media(hover:hover){.th-account-menu-card:hover{transform:translateY(-1px) !important;border-color:rgba(10,10,10,.22) !important;box-shadow:0 16px 34px rgba(35,26,16,.085) !important;}}
+
+.th-account-menu-icon{
+  width:40px !important;
+  height:40px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  background:#F4EFE8 !important;
+}
+
+.th-account-menu-card strong{
+  display:block !important;
+  color:#0a0a0a !important;
+  font-size:.98rem !important;
+  font-weight:900 !important;
+  letter-spacing:-.015em !important;
+}
+
+.th-account-menu-card em{
+  display:block !important;
+  margin-top:4px !important;
+  color:rgba(47,41,34,.68) !important;
+  font-style:normal !important;
+  font-size:.82rem !important;
+  line-height:1.3 !important;
+}
+
+.th-account-menu-card i{
+  color:#8F7638 !important;
+  font-style:normal !important;
+  font-size:1.35rem !important;
+}
+
+.th-profile-summary-card .confirm-row{
+  align-items:flex-start !important;
+}
+.th-profile-summary-card .confirm-value{
+  max-width:58% !important;
+  overflow-wrap:anywhere !important;
+}
+
+.th-empty-state-card{
+  padding:26px 20px !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.94) !important;
+  border:1px solid rgba(221,211,197,.84) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.075) !important;
+  text-align:center !important;
+}
+
+.th-empty-icon{
+  width:62px !important;
+  height:62px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  margin:0 auto 16px !important;
+  background:#F4EFE8 !important;
+  font-size:1.6rem !important;
+}
+
+.th-empty-state-card h3{
+  margin:0 0 8px !important;
+  color:#0a0a0a !important;
+  font-size:1.05rem !important;
+  font-weight:900 !important;
+}
+
+.th-empty-state-card p{
+  margin:0 0 18px !important;
+  color:rgba(47,41,34,.72) !important;
+  line-height:1.5 !important;
+}
+
+.th-wallet-balance-card{
+  margin-bottom:16px !important;
+  padding:24px !important;
+  border-radius:26px !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  box-shadow:0 20px 46px rgba(0,0,0,.22) !important;
+}
+
+.th-wallet-balance-card span,
+.th-wallet-balance-card em{
+  display:block !important;
+  color:rgba(255,255,255,.62) !important;
+  font-size:.72rem !important;
+  letter-spacing:.14em !important;
+  text-transform:uppercase !important;
+  font-style:normal !important;
+}
+
+.th-wallet-balance-card strong{
+  display:block !important;
+  margin:10px 0 12px !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:2.2rem !important;
+  font-weight:600 !important;
+}
+/* === END THURAYA MY ACCOUNT LAYER === */

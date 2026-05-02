@@ -1740,3 +1740,71 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(bk_finalSyncCTAs, 600);
 });
 // ── END THURAYA FINAL CTA EVENT SYNC ──────────────────────
+
+
+// ── THURAYA MY ACCOUNT LAYER ─────────────────────────────
+function bk_safeText(value, fallback = '—') {
+    const v = (value === undefined || value === null) ? '' : String(value).trim();
+    return v || fallback;
+}
+
+function bk_syncAccountSummary() {
+    const profile = bk_clientProfile || {};
+    const name = bk_safeText(profile.name, bk_isGuest ? 'Guest Client' : 'THURAYA Client');
+    const phone = bk_safeText(profile.phone, 'Phone not saved');
+    const email = bk_safeText(profile.email || bk_currentUser?.email, bk_isGuest ? 'Guest booking' : 'Email not saved');
+    const dob = bk_safeText(profile.dob || profile.Date_Of_Birth, 'Not set');
+    const gender = bk_safeText(profile.gender || profile.Gender, 'Not set');
+
+    const initial = (name || 'T').charAt(0).toUpperCase();
+    const initialEl = document.getElementById('thAccountInitial');
+    const nameEl = document.getElementById('thAccountName');
+    const metaEl = document.getElementById('thAccountMeta');
+
+    if (initialEl) initialEl.textContent = initial;
+    if (nameEl) nameEl.textContent = name;
+    if (metaEl) metaEl.textContent = `${phone} · ${email}`;
+
+    const set = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    set('thProfileName', name);
+    set('thProfilePhone', phone);
+    set('thProfileEmail', email);
+    set('thProfileDob', dob);
+    set('thProfileGender', gender);
+}
+
+window.bk_openMyAccount = function() {
+    bk_syncAccountSummary();
+    goToStep('screen-my-account');
+};
+
+window.bk_openProfileMenu = function() {
+    bk_syncAccountSummary();
+    goToStep('screen-account-profile');
+};
+
+window.bk_openPaymentMethods = function() {
+    goToStep('screen-payment-methods');
+};
+
+window.bk_openWallet = function() {
+    goToStep('screen-wallet');
+};
+
+window.bk_prepareProfileEdit = function() {
+    const profile = bk_clientProfile || {};
+    const setVal = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value || '';
+    };
+    setVal('prof_name', profile.name || '');
+    setVal('prof_phone', profile.phone || '');
+    setVal('prof_email', profile.email || bk_currentUser?.email || '');
+    setVal('prof_dob', profile.dob || profile.Date_Of_Birth || '');
+    setVal('prof_gender', profile.gender || profile.Gender || '');
+    goToStep('screen-profile');
+};
+// ── END THURAYA MY ACCOUNT LAYER ─────────────────────────

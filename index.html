@@ -359,6 +359,14 @@
                         </div>
                         <div class="mode-card-arrow" style="color:var(--gold);">›</div>
                     </button>
+                    <button class="mode-card th-account-entry-card" onclick="bk_openMyAccount()">
+                        <div class="mode-card-icon">👤</div>
+                        <div class="mode-card-body">
+                            <strong>My Account</strong>
+                            <span>Profile, bookings, payments and wallet</span>
+                        </div>
+                        <div class="mode-card-arrow">›</div>
+                    </button>
                     <button class="mode-card" onclick="goToStep('screen-client-care-library')">
                         <div class="mode-card-icon">✦</div>
                         <div class="mode-card-body">
@@ -712,6 +720,9 @@
                     <div class="loading-pulse">Loading your bookings...</div>
                 </div>
                 <div class="step-footer" style="margin-top:24px;">
+                    <button class="btn-outline full" onclick="bk_openMyAccount()" style="margin-bottom:10px;">
+                        My Account
+                    </button>
                     <button class="btn-primary full" onclick="goToStep('screen-booking-mode')">
                         Book a New Visit
                     </button>
@@ -722,6 +733,136 @@
             </div>
         </div>
 
+
+
+        <!-- MY ACCOUNT LAYER -->
+        <div class="screen" id="screen-my-account">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">My Account</div>
+                    <h2>Your THURAYA</h2>
+                    <p>Manage your profile, booking history, payment preferences and wallet.</p>
+                </div>
+
+                <div class="th-account-profile-card">
+                    <div class="th-account-avatar" id="thAccountInitial">T</div>
+                    <div class="th-account-profile-copy">
+                        <div class="th-account-name" id="thAccountName">THURAYA Client</div>
+                        <div class="th-account-meta" id="thAccountMeta">Profile details will appear here</div>
+                    </div>
+                </div>
+
+                <div class="th-account-menu">
+                    <button class="th-account-menu-card" onclick="bk_viewMyBookings()">
+                        <span class="th-account-menu-icon">📅</span>
+                        <span>
+                            <strong>Booking History</strong>
+                            <em>Upcoming and past appointments</em>
+                        </span>
+                        <i>›</i>
+                    </button>
+                    <button class="th-account-menu-card" onclick="bk_openProfileMenu()">
+                        <span class="th-account-menu-icon">👤</span>
+                        <span>
+                            <strong>Profile</strong>
+                            <em>Name, phone, date of birth and preferences</em>
+                        </span>
+                        <i>›</i>
+                    </button>
+                    <button class="th-account-menu-card" onclick="bk_openPaymentMethods()">
+                        <span class="th-account-menu-icon">💳</span>
+                        <span>
+                            <strong>Payment Methods</strong>
+                            <em>Paystack / card setup placeholder</em>
+                        </span>
+                        <i>›</i>
+                    </button>
+                    <button class="th-account-menu-card" onclick="bk_openWallet()">
+                        <span class="th-account-menu-icon">👛</span>
+                        <span>
+                            <strong>Wallet</strong>
+                            <em>Future credits, packages and rewards</em>
+                        </span>
+                        <i>›</i>
+                    </button>
+                    <button class="th-account-menu-card" onclick="goToStep('screen-client-care-library')">
+                        <span class="th-account-menu-icon">✦</span>
+                        <span>
+                            <strong>Your Info</strong>
+                            <em>Selfcare and pre-arrival guidance</em>
+                        </span>
+                        <i>›</i>
+                    </button>
+                </div>
+
+                <div class="step-footer" style="margin-top:22px;">
+                    <button class="btn-outline full" onclick="bk_signOut()">Sign Out</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROFILE MENU -->
+        <div class="screen" id="screen-account-profile">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Profile</div>
+                    <h2>Profile Details</h2>
+                    <p>Your saved client information for faster bookings.</p>
+                </div>
+                <div class="form-card th-profile-summary-card">
+                    <div class="confirm-row"><span class="confirm-label">Name</span><span class="confirm-value" id="thProfileName">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Phone</span><span class="confirm-value" id="thProfilePhone">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Email</span><span class="confirm-value" id="thProfileEmail">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Date of Birth</span><span class="confirm-value" id="thProfileDob">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Gender</span><span class="confirm-value" id="thProfileGender">—</span></div>
+                </div>
+                <div class="step-footer" style="margin-top:22px;">
+                    <button class="btn-primary full" onclick="bk_prepareProfileEdit()">Update Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAYMENT METHODS -->
+        <div class="screen" id="screen-payment-methods">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Payments</div>
+                    <h2>Payment Methods</h2>
+                    <p>Payment setup will support Paystack/card payments when enabled.</p>
+                </div>
+                <div class="th-empty-state-card">
+                    <div class="th-empty-icon">💳</div>
+                    <h3>No payment method yet</h3>
+                    <p>For launch, clients can pay at checkout. Online payment can be enabled next with Paystack or Flutterwave.</p>
+                    <button class="btn-primary full" onclick="toast('Online payment setup coming soon.', 'info')">Add Payment Method</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- WALLET -->
+        <div class="screen" id="screen-wallet">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Wallet</div>
+                    <h2>Wallet</h2>
+                    <p>Track future credits, packages, loyalty rewards and prepaid balances.</p>
+                </div>
+                <div class="th-wallet-balance-card">
+                    <span>Available Balance</span>
+                    <strong>0.00 GHC</strong>
+                    <em>Wallet activation pending</em>
+                </div>
+                <div class="th-empty-state-card">
+                    <div class="th-empty-icon">👛</div>
+                    <h3>Wallet coming next</h3>
+                    <p>Recommended after payment integration, prepaid packages and refund rules are confirmed.</p>
+                </div>
+            </div>
+        </div>
 
         <!-- CLIENT CARE LIBRARY -->
         <div class="screen" id="screen-client-care-library">
