@@ -353,39 +353,49 @@ function renderMenuForDept(dept) {
     const container = document.getElementById('bk_serviceMenu');
     if (!container) return;
 
+    const aliases = { 'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS' };
+    const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
     const dbData = { Hand: {}, Foot: {} };
-    bk_menuServices.forEach(s => {
-        let cat = _normaliseCategory(s.category || s.subCategory || 'Uncategorized');
-        const targets = (s.department === 'Both') ? ['Hand','Foot'] : [s.department || 'Hand'];
-        targets.forEach(d => {
+
+    (bk_menuServices || []).forEach(s => {
+        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
+        cat = aliases[cat] || aliases[cat.toUpperCase()] || cat;
+
+        if (s.department === 'Both') {
+            ['Hand', 'Foot'].forEach(d => {
+                if (!dbData[d][cat]) dbData[d][cat] = [];
+                dbData[d][cat].push(s);
+            });
+        } else {
+            const d = s.department || 'Hand';
             if (!dbData[d]) dbData[d] = {};
-            const main = _inferMainCategory(s, cat, d);
-            const sub  = _inferSubCategory(s, cat);
-            if (!dbData[d][main]) dbData[d][main] = {};
-            if (!dbData[d][main][sub]) dbData[d][main][sub] = [];
-            dbData[d][main][sub].push(s);
+            if (!dbData[d][cat]) dbData[d][cat] = [];
+            dbData[d][cat].push(s);
+        }
+    });
+
+    Object.values(dbData).forEach(dObj => {
+        Object.values(dObj).forEach(arr => {
+            arr.sort((a, b) =>
+                (typeOrder[a.inputType] ?? 1) - (typeOrder[b.inputType] ?? 1) ||
+                (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+                (a.name || '').localeCompare(b.name || '')
+            );
         });
     });
 
-    Object.values(dbData).forEach(mainObj =>
-        Object.values(mainObj).forEach(subObj =>
-            Object.values(subObj).forEach(arr =>
-                arr.sort((a, b) =>
-                    _menuOrder(a, 'sortOrder') - _menuOrder(b, 'sortOrder') ||
-                    (TYPE_ORDER[a.inputType] ?? 1) - (TYPE_ORDER[b.inputType] ?? 1) ||
-                    (a.name || '').localeCompare(b.name || '')
-                )
-            )
-        )
-    );
-
-    const mainKeys = Object.keys(dbData[dept] || {}).sort((a, b) => {
-        const oa = MENU_MAIN_ORDER[a.toUpperCase()] ?? MENU_MAIN_ORDER[a] ?? 999;
-        const ob = MENU_MAIN_ORDER[b.toUpperCase()] ?? MENU_MAIN_ORDER[b] ?? 999;
-        return oa - ob || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
+        const aU = a.trim().toUpperCase();
+        const bU = b.trim().toUpperCase();
+        const aNum = numRe.test(aU);
+        const bNum = numRe.test(bU);
+        if (aNum && !bNum) return -1;
+        if (!aNum && bNum) return 1;
+        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
     });
 
-    if (!mainKeys.length) {
+    if (!sortedCats.length) {
         container.innerHTML =
             '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available for this category.</p>';
         updateBreakdown();
@@ -393,22 +403,24 @@ function renderMenuForDept(dept) {
     }
 
     let html = '';
-    mainKeys.forEach(main => {
-        const subObj = dbData[dept][main];
-        html += `<div class="menu-main-block"><div class="menu-main-heading">${main}</div>`;
+    sortedCats.forEach(cat => {
+        const items = dbData[dept][cat] || [];
+        const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
+        const multis = items.filter(s => (s.inputType || 'radio') !== 'radio');
 
-        const subKeys = Object.keys(subObj).sort((a, b) => {
-            const ao = _menuOrder(subObj[a][0], 'subSortOrder', 999);
-            const bo = _menuOrder(subObj[b][0], 'subSortOrder', 999);
-            return ao - bo || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-        });
+        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
 
-        subKeys.forEach(sub => {
-            const items = subObj[sub];
-            html += `<div class="menu-section"><div class="menu-section-heading">${sub}</div>`;
+        if (singles.length && multis.length) {
+            html += `<div class="menu-subgroup-label">Choose your ritual <span>— select one</span></div>`;
+            singles.forEach(s => { html += _buildCard(s, dept); });
+
+            html += `<div class="menu-subgroup-divider"></div>`;
+            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span>— select any</span></div>`;
+            multis.forEach(s => { html += _buildCard(s, dept); });
+        } else {
             items.forEach(s => { html += _buildCard(s, dept); });
-            html += `</div>`;
-        });
+        }
+
         html += `</div>`;
     });
 
@@ -421,6 +433,7 @@ function renderMenuForDept(dept) {
         if (cb)  { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
         if (qty) { qty.value  = sel.qty || 1; }
     });
+
     updateBreakdown();
 }
 

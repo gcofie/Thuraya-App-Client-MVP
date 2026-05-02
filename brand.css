@@ -1323,172 +1323,156 @@ img,svg,video,canvas{
 
 
 /* =========================================================
-   THURAYA INDIVIDUAL SERVICE MENU — GROUP-STYLE ALIGNMENT
-   Purpose: make Individual Booking service menu visually match the
-   cleaner Group Booking arrangement.
-   Scope: CSS only. Booking logic untouched.
+   THURAYA INDIVIDUAL MENU — MATCH GROUP RENDER v2
+   Purpose: individual service menu now uses same flat category structure
+   as group booking; this CSS aligns the visual treatment.
    ========================================================= */
+#screen-services .step-header h2{
+  font-size:clamp(1.9rem, 7.2vw, 2.55rem) !important;
+}
 
-/* Service menu shell */
 #bk_serviceMenu{
   width:100% !important;
   display:flex !important;
   flex-direction:column !important;
-  gap:18px !important;
+  gap:24px !important;
   padding:2px 0 42px !important;
 }
 
-/* Main category grouping */
-#bk_serviceMenu .menu-main-block{
-  width:100% !important;
-  display:flex !important;
-  flex-direction:column !important;
-  gap:12px !important;
-  padding:0 !important;
-  margin:0 0 6px !important;
-  border:0 !important;
-}
-
-/* Main heading: premium but compact */
+#bk_serviceMenu .menu-main-block,
 #bk_serviceMenu .menu-main-heading{
-  font-family:var(--font-serif, "Cormorant Garamond", Georgia, serif) !important;
-  font-size:clamp(1.05rem, 4.2vw, 1.28rem) !important;
-  line-height:1.08 !important;
-  font-weight:600 !important;
-  letter-spacing:.01em !important;
-  color:#0a0a0a !important;
-  margin:8px 0 2px !important;
-  padding:0 2px !important;
+  display:contents !important;
 }
 
-/* Sub section grouping */
 #bk_serviceMenu .menu-section{
   width:100% !important;
   display:flex !important;
   flex-direction:column !important;
-  gap:9px !important;
+  gap:12px !important;
   margin:0 !important;
   padding:0 !important;
 }
 
-/* Sub heading: same disciplined feel as group booking */
 #bk_serviceMenu .menu-section-heading{
   font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:.66rem !important;
-  line-height:1.2 !important;
-  font-weight:850 !important;
-  letter-spacing:.14em !important;
+  font-size:clamp(1.02rem, 4.4vw, 1.22rem) !important;
+  line-height:1.15 !important;
+  font-weight:900 !important;
+  letter-spacing:.09em !important;
   text-transform:uppercase !important;
-  color:rgba(47,41,34,.62) !important;
-  margin:8px 0 0 !important;
-  padding:0 2px !important;
+  color:#0a0a0a !important;
+  margin:8px 0 2px !important;
+  padding:0 !important;
 }
 
-/* Service cards: compact list-style like group booking */
+#bk_serviceMenu .menu-subgroup-label{
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.70rem !important;
+  line-height:1.2 !important;
+  font-weight:850 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  color:rgba(47,41,34,.62) !important;
+  margin:2px 0 -2px !important;
+}
+
+#bk_serviceMenu .menu-subgroup-label span{
+  color:rgba(47,41,34,.46) !important;
+  font-size:.68rem !important;
+  font-weight:650 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+
+#bk_serviceMenu .menu-subgroup-divider{
+  height:1px !important;
+  width:100% !important;
+  margin:4px 0 2px !important;
+  background:rgba(35,26,16,.08) !important;
+}
+
 #bk_serviceMenu .service-card{
   width:100% !important;
   display:grid !important;
-  grid-template-columns:22px minmax(0,1fr) !important;
+  grid-template-columns:38px minmax(0,1fr) !important;
   align-items:start !important;
-  gap:12px !important;
-  min-height:auto !important;
-  padding:13px 14px !important;
+  gap:14px !important;
+  min-height:0 !important;
+  padding:18px 18px !important;
   margin:0 !important;
-  border-radius:18px !important;
+  border-radius:22px !important;
   background:rgba(255,253,248,.94) !important;
   border:1px solid rgba(221,211,197,.82) !important;
-  box-shadow:0 10px 24px rgba(35,26,16,.055) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.075) !important;
   overflow:hidden !important;
 }
 
-/* Counter services keep controls aligned */
 #bk_serviceMenu .service-card:has(.counter-box){
   grid-template-columns:minmax(0,1fr) auto !important;
   align-items:center !important;
 }
 
-/* Inputs sit cleanly and do not stretch */
 #bk_serviceMenu .service-card input[type="radio"],
 #bk_serviceMenu .service-card input[type="checkbox"]{
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  min-height:18px !important;
-  margin:2px 0 0 !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  min-height:24px !important;
+  margin:4px 0 0 !important;
   padding:0 !important;
   accent-color:#0a0a0a !important;
 }
 
-/* Card content */
 #bk_serviceMenu .service-card-body{
   min-width:0 !important;
   width:100% !important;
   display:flex !important;
   flex-direction:column !important;
-  gap:4px !important;
+  gap:8px !important;
 }
 
-/* Service title */
 #bk_serviceMenu .service-card-name{
   color:#0a0a0a !important;
   font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:.92rem !important;
-  line-height:1.18 !important;
-  font-weight:800 !important;
-  letter-spacing:-.015em !important;
+  font-size:1.02rem !important;
+  line-height:1.15 !important;
+  font-weight:850 !important;
+  letter-spacing:-.018em !important;
   margin:0 !important;
 }
 
-/* Service description */
 #bk_serviceMenu .service-card-desc{
-  color:#4A433B !important;
-  font-size:.80rem !important;
-  line-height:1.34 !important;
+  color:#2F2922 !important;
+  font-size:.94rem !important;
+  line-height:1.42 !important;
   margin:0 !important;
+  opacity:.86 !important;
 }
 
-/* Duration + price */
 #bk_serviceMenu .service-price-pill{
   display:inline-flex !important;
   align-items:center !important;
   width:max-content !important;
   max-width:100% !important;
-  margin-top:3px !important;
-  padding:4px 8px !important;
-  border-radius:999px !important;
-  background:#F4EFE8 !important;
-  color:#1F1A16 !important;
-  font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:.70rem !important;
-  line-height:1 !important;
-  font-weight:800 !important;
-  letter-spacing:.04em !important;
-}
-
-/* Tag refinement */
-#bk_serviceMenu .hl-tag{
-  display:inline-flex !important;
-  align-items:center !important;
-  margin-left:6px !important;
-  padding:3px 7px !important;
-  border-radius:999px !important;
-  background:rgba(10,10,10,.08) !important;
+  margin-top:5px !important;
+  padding:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
   color:#0a0a0a !important;
-  font-size:.62rem !important;
-  font-weight:850 !important;
-  letter-spacing:.08em !important;
-  vertical-align:middle !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.22rem !important;
+  line-height:1 !important;
+  font-weight:600 !important;
+  letter-spacing:.02em !important;
 }
 
-/* Selected state */
 #bk_serviceMenu .service-card.selected{
   border-color:#0a0a0a !important;
-  border-width:1.25px !important;
+  border-width:1.35px !important;
   background:#FFFDF8 !important;
-  box-shadow:0 14px 30px rgba(10,10,10,.105) !important;
+  box-shadow:0 18px 38px rgba(10,10,10,.12) !important;
 }
 
-/* Tap/hover polish */
 #bk_serviceMenu .service-card{
   transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease !important;
 }
@@ -1499,71 +1483,47 @@ img,svg,video,canvas{
   #bk_serviceMenu .service-card:hover{
     transform:translateY(-1px) !important;
     border-color:rgba(10,10,10,.22) !important;
-    box-shadow:0 14px 30px rgba(35,26,16,.09) !important;
+    box-shadow:0 18px 38px rgba(35,26,16,.10) !important;
   }
 }
 
-/* Counter controls */
-#bk_serviceMenu .counter-box{
-  display:flex !important;
-  align-items:center !important;
-  gap:7px !important;
-}
-#bk_serviceMenu .counter-btn{
-  width:34px !important;
-  height:34px !important;
-  min-width:34px !important;
-  border-radius:999px !important;
-  border:1px solid rgba(10,10,10,.12) !important;
-  background:#FFFDF8 !important;
-  color:#0a0a0a !important;
-  font-weight:900 !important;
-  box-shadow:0 8px 18px rgba(35,26,16,.06) !important;
-}
-
-/* Department toggle aligned to same visual system */
 #screen-services .dept-toggle{
   display:grid !important;
   grid-template-columns:1fr 1fr !important;
-  gap:10px !important;
-  margin:0 0 18px !important;
+  gap:12px !important;
+  margin:0 0 24px !important;
 }
+
 #screen-services .dept-btn{
-  min-height:42px !important;
-  border-radius:999px !important;
-  font-size:.72rem !important;
+  min-height:50px !important;
+  border-radius:22px !important;
+  font-size:.88rem !important;
   font-weight:850 !important;
-  letter-spacing:.04em !important;
+  letter-spacing:-.015em !important;
   box-shadow:0 10px 22px rgba(35,26,16,.045) !important;
 }
 
-/* Keep the inline continue button aligned with the refined list */
 #screen-services .thuraya-inline-continue{
-  margin:22px 0 120px !important;
-}
-#screen-services .thuraya-inline-continue .btn-primary{
-  min-height:52px !important;
-  border-radius:18px !important;
+  margin:24px 0 120px !important;
 }
 
-/* Mobile density */
 @media(max-width:430px){
   #bk_serviceMenu{
-    gap:16px !important;
-  }
-  #bk_serviceMenu .menu-main-heading{
-    font-size:clamp(1rem, 4.4vw, 1.18rem) !important;
+    gap:22px !important;
   }
   #bk_serviceMenu .service-card{
-    padding:12px 13px !important;
-    border-radius:17px !important;
-    gap:11px !important;
+    padding:17px 17px !important;
+    border-radius:21px !important;
+    gap:13px !important;
   }
   #bk_serviceMenu .service-card-name{
-    font-size:.90rem !important;
+    font-size:1rem !important;
   }
   #bk_serviceMenu .service-card-desc{
-    font-size:.78rem !important;
+    font-size:.91rem !important;
+  }
+  #bk_serviceMenu .service-price-pill{
+    font-size:1.15rem !important;
   }
 }
-/* === END THURAYA INDIVIDUAL SERVICE MENU GROUP-STYLE ALIGNMENT === */
+/* === END THURAYA INDIVIDUAL MENU MATCH GROUP RENDER v2 === */
