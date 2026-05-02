@@ -1831,7 +1831,8 @@ function bk_safeText(value, fallback = '—') {
 function bk_syncAccountSummary() {
     const profile = bk_clientProfile || {};
     const name = bk_safeText(profile.name, bk_isGuest ? 'Guest Client' : 'THURAYA Client');
-    const phone = bk_safeText(profile.phone, 'Phone not saved');
+    const phone = bk_safeText(profile.phone || profile.Tel_Number, 'Phone not saved');
+    const secondaryPhone = bk_safeText(profile.secondaryPhone || profile.Secondary_Phone, 'Not set');
     const email = bk_safeText(profile.email || bk_currentUser?.email, bk_isGuest ? 'Guest booking' : 'Email not saved');
     const dob = bk_safeText(profile.dob || profile.Date_Of_Birth, 'Not set');
     const gender = bk_safeText(profile.gender || profile.Gender, 'Not set');
@@ -1851,6 +1852,7 @@ function bk_syncAccountSummary() {
     };
     set('thProfileName', name);
     set('thProfilePhone', phone);
+    set('thProfileSecondaryPhone', secondaryPhone);
     set('thProfileEmail', email);
     set('thProfileDob', dob);
     set('thProfileGender', gender);
@@ -1875,17 +1877,84 @@ window.bk_openWallet = function() {
 };
 
 window.bk_prepareProfileEdit = function() {
+    // Legacy route kept safe: account profile edits now use the dedicated edit screen.
+    bk_prepareAccountProfileEdit();
+};
+
+window.bk_prepareAccountProfileEdit = function() {
     const profile = bk_clientProfile || {};
     const setVal = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.value = value || '';
     };
-    setVal('prof_name', profile.name || '');
-    setVal('prof_phone', profile.phone || '');
-    setVal('prof_email', profile.email || bk_currentUser?.email || '');
-    setVal('prof_dob', profile.dob || profile.Date_Of_Birth || '');
-    setVal('prof_gender', profile.gender || profile.Gender || '');
-    goToStep('screen-profile');
+
+    setVal('acct_name', profile.name || profile.Forename || '');
+    setVal('acct_phone', profile.phone || profile.Tel_Number || '');
+    setVal('acct_secondaryPhone', profile.secondaryPhone || profile.Secondary_Phone || '');
+    setVal('acct_email', profile.email || bk_currentUser?.email || '');
+    setVal('acct_dob', profile.dob || profile.Date_Of_Birth || '');
+    setVal('acct_gender', profile.gender || profile.Gender || '');
+
+    const dobEl = document.getElementById('acct_dob');
+    if (dobEl) dobEl.max = todayStr;
+
+    goToStep('screen-account-profile-edit');
+};
+
+window.bk_saveAccountProfile = async function() {
+    const btn = document.getElementById('btnSaveAccountProfile');
+    const name = (document.getElementById('acct_name')?.value || '').trim();
+    const phone = (document.getElementById('acct_phone')?.value || '').replace(/\D/g, '');
+    const secondaryPhone = (document.getElementById('acct_secondaryPhone')?.value || '').replace(/\D/g, '');
+    const dob = document.getElementById('acct_dob')?.value || '';
+    const gender = document.getElementById('acct_gender')?.value || '';
+    const email = (bk_currentUser?.email || bk_clientProfile?.email || '').toLowerCase();
+
+    if (!name) { toast('Please enter your full name.', 'warning'); return; }
+    if (phone.length !== 10) { toast('Primary phone must be 10 digits.', 'warning'); return; }
+    if (secondaryPhone && secondaryPhone.length !== 10) { toast('Secondary phone must be 10 digits, or leave it blank.', 'warning'); return; }
+    if (secondaryPhone && secondaryPhone === phone) { toast('Secondary phone should be different from your primary phone.', 'warning'); return; }
+    if (!dob) { toast('Please enter your date of birth.', 'warning'); return; }
+    if (dob > todayStr) { toast('Date of birth cannot be in the future.', 'warning'); return; }
+
+    setBtnLoading(btn, true, 'Save Changes');
+    try {
+        const profileUpdate = {
+            ...(bk_clientProfile || {}),
+            name,
+            phone,
+            secondaryPhone,
+            gender,
+            dob,
+            email: email || (bk_clientProfile?.email || ''),
+            profileComplete: true,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (email) {
+            await db.collection('Client_Users').doc(email).set(profileUpdate, { merge: true });
+        }
+
+        await db.collection('Clients').doc(phone).set({
+            Forename: name.split(' ')[0] || name,
+            Surname: name.split(' ').slice(1).join(' ') || '',
+            Tel_Number: phone,
+            Secondary_Phone: secondaryPhone,
+            Email: email || '',
+            Gender: gender,
+            Date_Of_Birth: dob,
+            Last_Updated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        bk_clientProfile = profileUpdate;
+        bk_syncAccountSummary();
+        toast('Profile updated successfully.', 'success');
+        goToStep('screen-account-profile');
+    } catch (e) {
+        toast('Could not update profile: ' + e.message, 'error');
+    } finally {
+        setBtnLoading(btn, false, 'Save Changes');
+    }
 };
 // ── END THURAYA MY ACCOUNT LAYER ─────────────────────────
 

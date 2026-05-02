@@ -2923,3 +2923,60 @@ button:active,
   }
 }
 /* === END THURAYA BOTTOM NAV === */
+
+
+/* =========================================================
+   THURAYA PROFILE EDIT UPGRADE — CONTACT ACCURACY LAYER
+   Scope: My Account profile summary + edit profile screen only.
+   ========================================================= */
+#screen-account-profile-edit .th-profile-edit-card{
+  padding:22px !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.96) !important;
+  border:1px solid rgba(221,211,197,.86) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.075) !important;
+}
+
+#screen-account-profile-edit .form-group label{
+  color:rgba(47,41,34,.72) !important;
+  font-size:.72rem !important;
+  letter-spacing:.14em !important;
+  font-weight:900 !important;
+}
+
+#screen-account-profile-edit input,
+#screen-account-profile-edit select{
+  min-height:52px !important;
+  border-radius:18px !important;
+  background:#FFFDF8 !important;
+  border:1px solid rgba(221,211,197,.92) !important;
+}
+
+#screen-account-profile-edit input:focus,
+#screen-account-profile-edit select:focus{
+  border-color:rgba(10,10,10,.45) !important;
+  box-shadow:0 0 0 3px rgba(10,10,10,.07) !important;
+}
+
+#screen-account-profile-edit .field-hint{
+  display:block !important;
+  margin-top:7px !important;
+  color:rgba(47,41,34,.56) !important;
+  font-size:.76rem !important;
+  line-height:1.35 !important;
+}
+
+#btnSaveAccountProfile{
+  margin-top:4px !important;
+  min-height:58px !important;
+  border-radius:22px !important;
+}
+
+#screen-account-profile .th-profile-summary-card .confirm-label{
+  min-width:42% !important;
+}
+
+#screen-account-profile .th-profile-summary-card .confirm-value{
+  max-width:56% !important;
+}
+/* === END THURAYA PROFILE EDIT UPGRADE === */

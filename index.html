@@ -813,13 +813,62 @@
                 </div>
                 <div class="form-card th-profile-summary-card">
                     <div class="confirm-row"><span class="confirm-label">Name</span><span class="confirm-value" id="thProfileName">—</span></div>
-                    <div class="confirm-row"><span class="confirm-label">Phone</span><span class="confirm-value" id="thProfilePhone">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Primary Phone</span><span class="confirm-value" id="thProfilePhone">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Secondary Phone</span><span class="confirm-value" id="thProfileSecondaryPhone">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Email</span><span class="confirm-value" id="thProfileEmail">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Date of Birth</span><span class="confirm-value" id="thProfileDob">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Gender</span><span class="confirm-value" id="thProfileGender">—</span></div>
                 </div>
                 <div class="step-footer" style="margin-top:22px;">
-                    <button class="btn-primary full" onclick="bk_prepareProfileEdit()">Update Profile</button>
+                    <button class="btn-primary full" onclick="bk_prepareAccountProfileEdit()">Edit Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT PROFILE -->
+        <div class="screen" id="screen-account-profile-edit">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Edit Profile</div>
+                    <h2>Update Your Details</h2>
+                    <p>Keep your contact details accurate so THURAYA can confirm and support your bookings.</p>
+                </div>
+                <div class="form-card th-profile-edit-card">
+                    <div class="form-group">
+                        <label>Full Name <span class="req">*</span></label>
+                        <input type="text" id="acct_name" placeholder="Your full name" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label>Primary Phone <span class="req">*</span></label>
+                        <input type="tel" id="acct_phone" placeholder="10-digit phone number" maxlength="10" inputmode="numeric" autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label>Secondary Phone <span class="optional">(optional)</span></label>
+                        <input type="tel" id="acct_secondaryPhone" placeholder="Backup phone number" maxlength="10" inputmode="numeric" autocomplete="tel">
+                        <small class="field-hint">Used only if your primary number cannot be reached.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth <span class="req">*</span></label>
+                        <input type="date" id="acct_dob" autocomplete="bday">
+                        <small class="field-hint">Used for birthday surprises and personalized client care.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Gender <span class="optional">(optional)</span></label>
+                        <select id="acct_gender">
+                            <option value="">Prefer not to say</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Other">Other / Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="acct_email" readonly style="opacity:.68;cursor:not-allowed;">
+                    </div>
+                    <button class="btn-primary full" id="btnSaveAccountProfile" onclick="bk_saveAccountProfile()">
+                        <span class="btn-text">Save Changes</span>
+                    </button>
                 </div>
             </div>
         </div>
