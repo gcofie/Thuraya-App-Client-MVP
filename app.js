@@ -354,11 +354,10 @@ function renderMenuForDept(dept) {
     if (!container) return;
 
     /*
-      Individual booking now mirrors Group Booking service arrangement:
-      - flat category sections
-      - every Hand / Foot category rendered
-      - radio items first, add-ons after
-      - no mainCategory/subCategory split that caused only part of the Hand menu to look aligned
+      Accordion service menu — Option B:
+      - all sections collapsed by default
+      - multiple sections can stay open
+      - individual menu follows the same category logic used by group booking
     */
     const aliases = {
         'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS',
@@ -390,10 +389,9 @@ function renderMenuForDept(dept) {
         if (serviceDept === 'Both') {
             addToDept('Hand', cat, s);
             addToDept('Foot', cat, s);
-            return;
+        } else {
+            addToDept(serviceDept, cat, s);
         }
-
-        addToDept(serviceDept, cat, s);
     });
 
     Object.values(dbData).forEach(dObj => {
@@ -430,6 +428,18 @@ function renderMenuForDept(dept) {
         return 99;
     }
 
+    function helperText(cat, items) {
+        const upper = String(cat || '').toUpperCase();
+        const count = items.length;
+        if (upper.includes('ADD') || upper.includes('UPGRADE') || upper.includes('EMBELLISH') || upper.includes('DESIGNER')) {
+            return `Enhancements · optional · ${count} option${count === 1 ? '' : 's'}`;
+        }
+        if (items.some(s => (s.inputType || 'radio') !== 'radio')) {
+            return `Choose your ritual · optional add-ons available · ${count} option${count === 1 ? '' : 's'}`;
+        }
+        return `Core treatments · choose one · ${count} option${count === 1 ? '' : 's'}`;
+    }
+
     const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
         const ar = sectionRank(a);
         const br = sectionRank(b);
@@ -446,13 +456,24 @@ function renderMenuForDept(dept) {
 
     let html = '';
 
-    sortedCats.forEach(cat => {
+    sortedCats.forEach((cat, index) => {
         const items = dbData[dept][cat] || [];
         const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
         const multis = items.filter(s => (s.inputType || 'radio') !== 'radio');
+        const sectionId = `bk_menu_section_${dept}_${index}`;
+        const helper = helperText(cat, items);
 
-        html += `<div class="menu-section th-individual-menu-section" data-category="${cat}">
-            <div class="menu-section-heading">${cat}</div>`;
+        html += `
+            <div class="thuraya-accordion-section" data-category="${cat}">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="bk_toggleMenuSection(this)">
+                    <span class="thuraya-accordion-title-wrap">
+                        <span class="thuraya-accordion-title">${cat}</span>
+                        <span class="thuraya-accordion-meta">${helper}</span>
+                    </span>
+                    <span class="thuraya-accordion-chevron">›</span>
+                </button>
+                <div class="thuraya-accordion-body" id="${sectionId}">
+                    <div class="thuraya-accordion-inner">`;
 
         if (singles.length && multis.length) {
             html += `<div class="menu-subgroup-label">Choose your ritual <span>— select one</span></div>`;
@@ -465,22 +486,59 @@ function renderMenuForDept(dept) {
             items.forEach(s => { html += _buildCard(s, dept); });
         }
 
-        html += `</div>`;
+        html += `
+                    </div>
+                </div>
+            </div>`;
     });
 
     container.innerHTML = html;
 
-    // Restore selected state after render.
+    // Restore selected state after render, and auto-open sections containing selected services.
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
-        if (cb)  { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
-        if (qty) { qty.value  = sel.qty || 1; }
+        if (cb) {
+            cb.checked = true;
+            const card = cb.closest('.service-card');
+            card?.classList.add('selected');
+            const section = cb.closest('.thuraya-accordion-section');
+            if (section) {
+                section.classList.add('open');
+                const head = section.querySelector('.thuraya-accordion-head');
+                if (head) head.setAttribute('aria-expanded', 'true');
+            }
+        }
+        if (qty) {
+            qty.value = sel.qty || 1;
+            const section = qty.closest('.thuraya-accordion-section');
+            if (section) {
+                section.classList.add('open');
+                const head = section.querySelector('.thuraya-accordion-head');
+                if (head) head.setAttribute('aria-expanded', 'true');
+            }
+        }
     });
 
     setTimeout(bk_finalSyncCTAs, 60);
     updateBreakdown();
 }
+
+
+// ── THURAYA SERVICE MENU ACCORDION — OPTION B ─────────────
+// Multiple sections can stay open. All sections start collapsed.
+window.bk_toggleMenuSection = function(btn) {
+    const section = btn?.closest('.thuraya-accordion-section');
+    if (!section) return;
+
+    const isOpen = section.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+    setTimeout(() => {
+        if (typeof bk_finalSyncCTAs === 'function') bk_finalSyncCTAs();
+    }, 80);
+};
+// ── END THURAYA SERVICE MENU ACCORDION ────────────────────
 
 function _buildCard(s, dept) {
     const type     = s.inputType || 'radio';
