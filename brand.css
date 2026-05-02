@@ -2182,3 +2182,233 @@ img,svg,video,canvas{
   }
 }
 /* === END THURAYA STEP 4 REVIEW & CONFIRM PREMIUM POLISH === */
+
+/* =========================================================
+   THURAYA FINAL POLISH — MICRO-INTERACTIONS + PREMIUM MOTION
+   Scope: interaction feel only. No booking logic changed.
+   ========================================================= */
+
+:root{
+  --th-motion-fast: 160ms;
+  --th-motion-med: 260ms;
+  --th-motion-slow: 420ms;
+  --th-ease-luxury: cubic-bezier(.22,.8,.22,1);
+}
+
+/* Premium tap response across the booking journey */
+button,
+.mode-card,
+.service-card,
+.tech-option-card,
+.tech-item,
+.slot-btn,
+#bk_slots button,
+#grp_slots button,
+.book-for-option,
+.cx-client-tab,
+.cx-client-card a{
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+button:active,
+.mode-card:active,
+.service-card:active,
+.tech-option-card:active,
+.tech-item:active,
+.slot-btn:active,
+#bk_slots button:active,
+#grp_slots button:active,
+.book-for-option:active,
+.cx-client-card a:active{
+  transform: scale(.975) !important;
+}
+
+/* Smooth screen arrival — gives the app a softer Apple-level feel */
+.screen.active .screen-inner{
+  animation: thScreenIn var(--th-motion-slow) var(--th-ease-luxury) both !important;
+}
+
+@keyframes thScreenIn{
+  from{ opacity:0; transform: translateY(10px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+/* Headings breathe in gently */
+.screen.active .step-header{
+  animation: thHeaderIn var(--th-motion-slow) var(--th-ease-luxury) both !important;
+}
+
+@keyframes thHeaderIn{
+  from{ opacity:0; transform: translateY(8px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+/* Cards feel alive without being loud */
+.mode-card,
+.service-card,
+.tech-option-card,
+.tech-card,
+.form-card,
+.confirm-card,
+.book-for-card,
+.promo-block,
+.group-option-card,
+.cx-client-card{
+  transition:
+    transform var(--th-motion-med) var(--th-ease-luxury),
+    box-shadow var(--th-motion-med) var(--th-ease-luxury),
+    border-color var(--th-motion-med) var(--th-ease-luxury),
+    background var(--th-motion-med) var(--th-ease-luxury) !important;
+}
+
+@media (hover:hover){
+  .mode-card:hover,
+  .service-card:hover,
+  .tech-option-card:hover,
+  .tech-card:hover,
+  .cx-client-card:hover{
+    transform: translateY(-2px) !important;
+    box-shadow: 0 18px 42px rgba(35,26,16,.12) !important;
+  }
+}
+
+/* Service selection final refinement */
+#bk_serviceMenu .service-card.selected,
+#grp_serviceList .service-card.selected{
+  border-color: rgba(10,10,10,.92) !important;
+  background: linear-gradient(180deg,#FFFDF8 0%,#F8F1E8 100%) !important;
+  box-shadow: 0 18px 42px rgba(10,10,10,.13), 0 0 0 1px rgba(200,169,77,.18) inset !important;
+  transform: translateY(-1px) !important;
+}
+
+#bk_serviceMenu .service-card.selected::after,
+#grp_serviceList .service-card.selected::after{
+  content: "✓" !important;
+  position:absolute !important;
+  top:14px !important;
+  right:14px !important;
+  width:26px !important;
+  height:26px !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-size:.72rem !important;
+  font-weight:900 !important;
+  box-shadow:0 10px 22px rgba(10,10,10,.22) !important;
+  animation: thCheckPop var(--th-motion-med) var(--th-ease-luxury) both !important;
+}
+
+@keyframes thCheckPop{
+  from{ opacity:0; transform: scale(.7); }
+  to{ opacity:1; transform: scale(1); }
+}
+
+/* Technician page already works — final polish only */
+#screen-technician .tech-option-card.selected{
+  background: linear-gradient(180deg,#FFFDF8 0%,#F8F1E8 100%) !important;
+  box-shadow:0 18px 42px rgba(10,10,10,.13), 0 0 0 1px rgba(200,169,77,.20) inset !important;
+}
+
+#techCard_any::after{
+  box-shadow:0 10px 24px rgba(10,10,10,.18) !important;
+}
+
+/* Date/time slots — confident but calm */
+#bk_slots button,
+#grp_slots button,
+.slot-btn{
+  transition:
+    transform var(--th-motion-med) var(--th-ease-luxury),
+    box-shadow var(--th-motion-med) var(--th-ease-luxury),
+    background var(--th-motion-med) var(--th-ease-luxury),
+    border-color var(--th-motion-med) var(--th-ease-luxury) !important;
+}
+
+#bk_slots button.selected,
+#grp_slots button.selected,
+.slot-btn.selected,
+#bk_slots button.active,
+#grp_slots button.active,
+.slot-btn.active{
+  box-shadow:0 16px 34px rgba(10,10,10,.18) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Confirm page trust finish */
+#screen-confirm .confirm-card{
+  animation: thConfirmIn var(--th-motion-slow) var(--th-ease-luxury) both !important;
+}
+
+@keyframes thConfirmIn{
+  from{ opacity:0; transform: translateY(14px) scale(.985); }
+  to{ opacity:1; transform: translateY(0) scale(1); }
+}
+
+#btnConfirmBooking{
+  position:relative !important;
+  overflow:hidden !important;
+}
+
+#btnConfirmBooking::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  background:linear-gradient(120deg, transparent 0%, rgba(255,255,255,.18) 44%, transparent 72%) !important;
+  transform:translateX(-120%) !important;
+  transition:transform .75s var(--th-ease-luxury) !important;
+  pointer-events:none !important;
+}
+
+@media (hover:hover){
+  #btnConfirmBooking:hover::after{
+    transform:translateX(120%) !important;
+  }
+}
+
+/* Success moment — small reward without disturbing logic */
+#screen-success.active .success-icon,
+#screen-group-success.active .success-icon{
+  animation: thSuccessPop .72s var(--th-ease-luxury) both !important;
+}
+
+@keyframes thSuccessPop{
+  0%{ opacity:0; transform: scale(.72) rotate(-8deg); }
+  58%{ opacity:1; transform: scale(1.08) rotate(2deg); }
+  100%{ opacity:1; transform: scale(1) rotate(0); }
+}
+
+#screen-success.active .success-title,
+#screen-group-success.active .success-title{
+  animation: thSuccessText .58s var(--th-ease-luxury) .08s both !important;
+}
+
+@keyframes thSuccessText{
+  from{ opacity:0; transform: translateY(10px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+/* Make disabled buttons feel intentional, not broken */
+.btn-primary:disabled,
+#btnToTech:disabled,
+#btnToConfirm:disabled,
+#grp_toDateTimeBtn:disabled,
+#grp_toConfirmBtn:disabled{
+  filter:saturate(.85) !important;
+  opacity:.92 !important;
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* === END THURAYA FINAL POLISH === */
