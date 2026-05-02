@@ -2057,6 +2057,36 @@ async function bk_loadClientNotifications() {
     }
 }
 
+let bk_nextUpcomingAppointment = null;
+
+function bk_hoursUntilAppointment(appt) {
+    try {
+        if (!appt?.dateString || !appt?.timeString) return null;
+        const dt = new Date(`${appt.dateString}T${appt.timeString}:00`);
+        return (dt.getTime() - Date.now()) / 36e5;
+    } catch(e) { return null; }
+}
+
+function bk_setUpcomingCardMood(appt) {
+    const card = document.getElementById('thUpcomingAppointmentCard');
+    const pill = document.getElementById('thUpcomingStatusPill');
+    const guidance = document.getElementById('thUpcomingGuidance');
+    if (!card) return;
+
+    card.classList.remove('is-soon', 'is-later');
+    const hours = bk_hoursUntilAppointment(appt);
+
+    if (hours !== null && hours <= 24) {
+        card.classList.add('is-soon');
+        if (pill) pill.textContent = 'Within 24h';
+        if (guidance) guidance.textContent = 'Your visit is coming up soon. Directions and WhatsApp are ready below.';
+    } else {
+        card.classList.add('is-later');
+        if (pill) pill.textContent = 'Confirmed';
+        if (guidance) guidance.textContent = 'Your appointment is reserved. You can view details or book another visit anytime.';
+    }
+}
+
 async function bk_loadUpcomingAppointmentPreview() {
     const card = document.getElementById('thUpcomingAppointmentCard');
     if (!card || !bk_clientProfile) return;
@@ -2071,7 +2101,7 @@ async function bk_loadUpcomingAppointmentPreview() {
         } else if (phone) {
             snap = await db.collection('Appointments').where('clientPhone', '==', phone).get();
         }
-        if (!snap || snap.empty) { card.style.display = 'none'; return; }
+        if (!snap || snap.empty) { card.style.display = 'none'; bk_nextUpcomingAppointment = null; return; }
 
         const activeStatuses = ['Scheduled', 'Confirmed', 'Arrived', 'In Progress'];
         const nowKey = todayStr + '00:00';
@@ -2083,18 +2113,38 @@ async function bk_loadUpcomingAppointmentPreview() {
         });
         upcoming.sort((a, b) => ((a.dateString || '') + (a.timeString || '')).localeCompare((b.dateString || '') + (b.timeString || '')));
 
-        if (!upcoming.length) { card.style.display = 'none'; return; }
+        if (!upcoming.length) { card.style.display = 'none'; bk_nextUpcomingAppointment = null; return; }
         const next = upcoming[0];
+        bk_nextUpcomingAppointment = next;
+
         const serviceEl = document.getElementById('thUpcomingService');
         const dateEl = document.getElementById('thUpcomingDateTime');
         if (serviceEl) serviceEl.textContent = next.bookedService || 'Your next THURAYA visit';
         if (dateEl) dateEl.textContent = bk_formatClientDateTime(next.dateString, next.timeString);
+        bk_setUpcomingCardMood(next);
         card.style.display = 'block';
     } catch(e) {
         console.warn('Upcoming appointment preview skipped:', e);
         card.style.display = 'none';
+        bk_nextUpcomingAppointment = null;
     }
 }
+
+window.bk_upcomingDirections = function() {
+    const query = encodeURIComponent('THURAYA The HAUTE Nail Bar Accra');
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener');
+};
+
+window.bk_upcomingWhatsApp = function() {
+    const service = bk_nextUpcomingAppointment?.bookedService || 'my upcoming appointment';
+    const when = bk_nextUpcomingAppointment ? bk_formatClientDateTime(bk_nextUpcomingAppointment.dateString, bk_nextUpcomingAppointment.timeString) : '';
+    const msg = encodeURIComponent(`Hello THURAYA, I need help with ${service}${when ? ' on ' + when : ''}.`);
+    window.open(`https://wa.me/?text=${msg}`, '_blank', 'noopener');
+};
+
+window.bk_upcomingReschedule = function() {
+    toast('Rescheduling is coming soon. Please contact THURAYA on WhatsApp for changes.', 'info');
+};
 
 // Load notification preview after client entry and when returning home.
 (function(){

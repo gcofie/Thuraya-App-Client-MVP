@@ -343,14 +343,21 @@
                     <p>Book for yourself or bring a group along.</p>
                 </div>
 
-                <section id="thUpcomingAppointmentCard" class="th-upcoming-appointment-card" style="display:none;">
-                    <div class="th-upcoming-kicker">Upcoming appointment</div>
+                <section id="thUpcomingAppointmentCard" class="th-upcoming-appointment-card th-upcoming-smart" style="display:none;">
+                    <div class="th-upcoming-topline">
+                        <div class="th-upcoming-kicker">Upcoming appointment</div>
+                        <div class="th-upcoming-status-pill" id="thUpcomingStatusPill">Confirmed</div>
+                    </div>
                     <div class="th-upcoming-title" id="thUpcomingService">Your next THURAYA visit</div>
                     <div class="th-upcoming-meta" id="thUpcomingDateTime">Date and time will appear here</div>
-                    <div class="th-upcoming-actions">
-                        <button type="button" class="th-mini-action primary" onclick="bk_viewMyBookings()">View</button>
+                    <div class="th-upcoming-guidance" id="thUpcomingGuidance">We’ll keep this ready for your visit.</div>
+                    <div class="th-upcoming-actions th-upcoming-actions-grid">
+                        <button type="button" class="th-mini-action primary" onclick="bk_upcomingDirections()">Directions</button>
+                        <button type="button" class="th-mini-action" onclick="bk_upcomingWhatsApp()">WhatsApp</button>
+                        <button type="button" class="th-mini-action" onclick="bk_viewMyBookings()">View</button>
                         <button type="button" class="th-mini-action" onclick="bk_navServices()">Book Again</button>
                     </div>
+                    <button type="button" class="th-reschedule-link" onclick="bk_upcomingReschedule()">Need to reschedule?</button>
                 </section>
 
                 <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">

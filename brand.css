@@ -3105,3 +3105,100 @@ button:active,
 .th-notification-empty strong{font-size:1rem !important;color:#0a0a0a !important;}
 .th-notification-empty span{font-size:.88rem !important;color:rgba(47,41,34,.64) !important;line-height:1.45 !important;}
 /* === END THURAYA CLIENT NOTIFICATION LAYER === */
+
+
+/* =========================================================
+   THURAYA UPCOMING APPOINTMENT SMART ACTIONS
+   Directions + WhatsApp + View + Book Again.
+   ========================================================= */
+.th-upcoming-smart{
+  position:relative !important;
+  overflow:hidden !important;
+}
+.th-upcoming-smart::after{
+  content:"" !important;
+  position:absolute !important;
+  top:-70px !important;
+  right:-70px !important;
+  width:150px !important;
+  height:150px !important;
+  border-radius:999px !important;
+  background:radial-gradient(circle, rgba(200,169,77,.22), transparent 62%) !important;
+  pointer-events:none !important;
+}
+.th-upcoming-topline{
+  position:relative !important;
+  z-index:1 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  margin-bottom:8px !important;
+}
+.th-upcoming-topline .th-upcoming-kicker{
+  margin-bottom:0 !important;
+}
+.th-upcoming-status-pill{
+  flex:0 0 auto !important;
+  min-height:26px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:6px 10px !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.10) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  color:rgba(255,255,255,.82) !important;
+  font-size:.62rem !important;
+  font-weight:900 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+}
+.th-upcoming-smart.is-soon .th-upcoming-status-pill{
+  background:#fff !important;
+  color:#111 !important;
+  border-color:#fff !important;
+}
+.th-upcoming-guidance{
+  position:relative !important;
+  z-index:1 !important;
+  margin-top:12px !important;
+  padding:12px 13px !important;
+  border-radius:18px !important;
+  background:rgba(255,255,255,.07) !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  color:rgba(255,255,255,.76) !important;
+  font-size:.82rem !important;
+  line-height:1.38 !important;
+}
+.th-upcoming-actions-grid{
+  position:relative !important;
+  z-index:1 !important;
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin-top:14px !important;
+}
+.th-upcoming-actions-grid .th-mini-action{
+  width:100% !important;
+  min-height:42px !important;
+  justify-content:center !important;
+  transition:transform .18s ease, background .18s ease, border-color .18s ease !important;
+}
+.th-upcoming-actions-grid .th-mini-action:active{
+  transform:scale(.97) !important;
+}
+.th-reschedule-link{
+  position:relative !important;
+  z-index:1 !important;
+  width:100% !important;
+  margin-top:10px !important;
+  min-height:36px !important;
+  border:0 !important;
+  background:transparent !important;
+  color:rgba(255,255,255,.66) !important;
+  font-size:.76rem !important;
+  font-weight:800 !important;
+  text-decoration:underline !important;
+  text-underline-offset:4px !important;
+}
