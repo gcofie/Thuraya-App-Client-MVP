@@ -818,3 +818,96 @@ html,body,#app{
     max-width:430px!important;
   }
 }
+
+/* =========================================================
+   THURAYA VIEWPORT CENTER FIX — 2026-05-02
+   Purpose: center the mobile app container inside desktop/browser
+   viewport, remove white overflow space, and keep fixed controls
+   aligned to the 430px app rail. Logic untouched.
+   ========================================================= */
+html,
+body{
+  width:100%!important;
+  min-height:100%!important;
+  margin:0!important;
+  overflow-x:hidden!important;
+  background:#000!important;
+}
+
+body{
+  min-height:100vh!important;
+  display:flex!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+}
+
+#app{
+  width:100%!important;
+  max-width:430px!important;
+  min-height:100vh!important;
+  margin:0 auto!important;
+  position:relative!important;
+  overflow-x:hidden!important;
+  background:#000!important;
+}
+
+.bg-texture{
+  width:100vw!important;
+  left:0!important;
+  right:0!important;
+  background:#000!important;
+}
+
+.screen{
+  width:100%!important;
+  max-width:430px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  overflow-x:hidden!important;
+}
+
+.screen.active{
+  display:block!important;
+  justify-content:initial!important;
+  align-items:initial!important;
+}
+
+.screen-inner,
+.welcome-inner{
+  width:100%!important;
+  max-width:430px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Keep sign-out button attached to the centered app, not viewport edge */
+.bk-floating-signout{
+  right:calc((100vw - min(100vw, 430px)) / 2 + 14px)!important;
+}
+
+@media (max-width:779px){
+  body{
+    display:block!important;
+    background:#000!important;
+  }
+
+  #app{
+    max-width:430px!important;
+  }
+
+  .screen.active{
+    display:block!important;
+  }
+
+  .screen-inner,
+  .sticky-footer{
+    width:100%!important;
+    max-width:390px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+
+  .bk-floating-signout{
+    right:calc((100vw - min(100vw, 430px)) / 2 + 10px)!important;
+  }
+}
