@@ -572,3 +572,113 @@ img, svg, video, canvas {
 }
 
 /* === END THURAYA ONE-SCALE APP VIEWPORT LOCK === */
+
+/* === THURAYA DEVICE-SAFE SCALE LOCK v2 ===
+   Fixes mobile overflow while preserving the PC-master 430px app shell.
+   The app uses one viewport scale everywhere; shell margin collapses to 0 on phones.
+*/
+:root{
+  --thuraya-shell-w: 430px;
+  --thuraya-shell-gap: clamp(0px, calc((100vw - 430px) / 2), 14px);
+  --thuraya-shell-h: min(844px, calc(100dvh - var(--thuraya-shell-gap) - var(--thuraya-shell-gap)));
+}
+
+html,
+body{
+  width:100% !important;
+  max-width:100% !important;
+  min-height:100dvh !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow-x:hidden !important;
+  background:#000 !important;
+}
+
+body{
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+}
+
+#app{
+  width:min(var(--thuraya-shell-w), 100vw) !important;
+  max-width:100vw !important;
+  height:var(--thuraya-shell-h) !important;
+  min-height:var(--thuraya-shell-h) !important;
+  max-height:var(--thuraya-shell-h) !important;
+  margin:var(--thuraya-shell-gap) auto !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+
+.screen{
+  width:100% !important;
+  min-width:0 !important;
+  height:var(--thuraya-shell-h) !important;
+  min-height:var(--thuraya-shell-h) !important;
+  max-height:var(--thuraya-shell-h) !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  box-sizing:border-box !important;
+}
+
+.screen.active{
+  display:block !important;
+}
+
+.screen-inner,
+.welcome-inner,
+.sticky-footer{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
+}
+
+.sticky-bar{
+  width:min(426px, 100vw) !important;
+  max-width:100vw !important;
+  box-sizing:border-box !important;
+}
+
+.mode-card,
+.service-card,
+.tech-option-card,
+.tech-card,
+.form-card,
+.confirm-card,
+.book-for-card,
+.promo-block,
+.group-option-card,
+.group-capacity-panel,
+.group-split-panel,
+.group-manual-subgroup-card,
+.group-billing-panel,
+.cx-client-card{
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+/* Keep the same PC design, but remove only the physical shell chrome when it would cause phone overflow. */
+@media (max-width: 430px){
+  #app{
+    border-radius:0 !important;
+    border-left:0 !important;
+    border-right:0 !important;
+  }
+
+  .screen{
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+
+  #screen-welcome .welcome-inner{
+    min-height:var(--thuraya-shell-h) !important;
+    padding-left:18px !important;
+    padding-right:18px !important;
+  }
+}
+/* === END THURAYA DEVICE-SAFE SCALE LOCK v2 === */
