@@ -216,7 +216,7 @@
             }
         }
     </style>
-  <link rel="stylesheet" href="brand.css?v=floating-cta-force-20260502">
+  <link rel="stylesheet" href="brand.css">
 <style id="thurayaInlineContinueFix">
         .thuraya-inline-continue {
             width: 100%;
@@ -468,15 +468,6 @@
                     <div class="loading-pulse">Loading services...</div>
                 </div>
 
-                <!-- THURAYA FLOATING SERVICE CTA — FORCE VISIBLE PATCH -->
-                <div id="thurayaFloatingServiceCTA" class="is-disabled" aria-live="polite">
-                    <div class="thuraya-floating-copy">
-                        <div class="thuraya-floating-title" id="thurayaFloatingServiceTitle">Select a service</div>
-                        <div class="thuraya-floating-sub" id="thurayaFloatingServiceSub">Step 1 of 4 · Choose your ritual</div>
-                    </div>
-                    <button type="button" id="thurayaFloatingServiceBtn" disabled>Continue</button>
-                </div>
-
                 <!-- THURAYA SAFE FALLBACK CTA: keeps Continue visible even if sticky bar is hidden -->
                 <div class="thuraya-inline-continue" id="thurayaInlineContinueServices">
                     <button class="btn-primary full" type="button" onclick="goToStep('screen-technician')">
@@ -501,7 +492,7 @@
                         <div class="tech-option-icon">✨</div>
                         <div>
                             <strong>Any Available</strong>
-                            <span>We'll assign the best available technician for your time</span>
+                            <span>Fastest availability • Recommended for most bookings</span>
                         </div>
                         <div class="tech-option-check" id="techCheck_any">✓</div>
                     </div>
@@ -966,7 +957,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
     <script src="thuraya-menu-from-website.js?v=website-menu-20260428"></script>
-    <script src="app.js?v=floating-cta-force-20260502"></script>
+    <script src="app.js?v=website-menu-20260428"></script>
     <script src="group-booking.js?v=phase8-smart-booking-20260427"></script>
     <script src="availability.js?v=phase8-smart-booking-20260427"></script>
     <script src="phase-9a-soft-login-gate.js?v=phase9a-full-20260428"></script>
