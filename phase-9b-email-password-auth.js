@@ -187,7 +187,7 @@
     style.id = "p9bEmailAuthStyles";
     style.textContent = `
       .p9b-email-wrap{margin-top:12px;width:100%;}
-      .p9b-email-toggle{width:100%;border:0;background:transparent;color:var(--gold-dark,#8c6239);font-weight:750;font-size:.82rem;text-decoration:underline;cursor:pointer;padding:8px 0;font-family:var(--font-sans,inherit);}
+      .p9b-email-toggle{width:100%;border:0;background:transparent;color:#F8F7F3;font-weight:750;font-size:.82rem;text-decoration:underline;cursor:pointer;padding:8px 0;font-family:var(--font-sans,inherit);}
       .p9b-email-panel{display:none;margin-top:8px;padding:14px;border-radius:18px;background:rgba(255,250,245,.92);border:1px solid rgba(140,98,57,.16);box-shadow:0 10px 24px rgba(0,0,0,.045);}
       .p9b-email-panel.active{display:block;}
       .p9b-email-row{display:grid;gap:9px;margin-bottom:10px;}
