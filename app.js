@@ -353,46 +353,88 @@ function renderMenuForDept(dept) {
     const container = document.getElementById('bk_serviceMenu');
     if (!container) return;
 
-    const aliases = { 'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS' };
+    /*
+      Individual booking now mirrors Group Booking service arrangement:
+      - flat category sections
+      - every Hand / Foot category rendered
+      - radio items first, add-ons after
+      - no mainCategory/subCategory split that caused only part of the Hand menu to look aligned
+    */
+    const aliases = {
+        'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS',
+        'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
+        'O FOOT THERAPY RITUALS': 'FOOT THERAPY RITUALS',
+        'O ADD ONS & UPGRADES': 'ADD ONS & UPGRADES',
+        'O HAND THERAPY & ENHANCEMENT RITUALS': 'HAND THERAPY & ENHANCEMENT RITUALS'
+    };
+
     const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
     const dbData = { Hand: {}, Foot: {} };
 
-    (bk_menuServices || []).forEach(s => {
-        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
-        cat = aliases[cat] || aliases[cat.toUpperCase()] || cat;
+    function cleanCategory(s) {
+        let cat = (s.category || s.subCategory || s.mainCategory || 'Uncategorized');
+        cat = String(cat).trim().replace(/\s+/g, ' ');
+        return aliases[cat] || aliases[cat.toUpperCase()] || cat;
+    }
 
-        if (s.department === 'Both') {
-            ['Hand', 'Foot'].forEach(d => {
-                if (!dbData[d][cat]) dbData[d][cat] = [];
-                dbData[d][cat].push(s);
-            });
-        } else {
-            const d = s.department || 'Hand';
-            if (!dbData[d]) dbData[d] = {};
-            if (!dbData[d][cat]) dbData[d][cat] = [];
-            dbData[d][cat].push(s);
+    function addToDept(d, cat, service) {
+        if (!dbData[d]) dbData[d] = {};
+        if (!dbData[d][cat]) dbData[d][cat] = [];
+        dbData[d][cat].push(service);
+    }
+
+    (bk_menuServices || []).forEach(s => {
+        const cat = cleanCategory(s);
+        const serviceDept = s.department || 'Hand';
+
+        if (serviceDept === 'Both') {
+            addToDept('Hand', cat, s);
+            addToDept('Foot', cat, s);
+            return;
         }
+
+        addToDept(serviceDept, cat, s);
     });
 
     Object.values(dbData).forEach(dObj => {
         Object.values(dObj).forEach(arr => {
             arr.sort((a, b) =>
-                (typeOrder[a.inputType] ?? 1) - (typeOrder[b.inputType] ?? 1) ||
+                (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
                 (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
-                (a.name || '').localeCompare(b.name || '')
+                (Number(a.order) || 999) - (Number(b.order) || 999) ||
+                (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
             );
         });
     });
 
-    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    const romanMap = { I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7, VIII:8, IX:9, X:10 };
+    function sectionRank(cat) {
+        const c = String(cat || '').trim();
+        const upper = c.toUpperCase();
+
+        const roman = upper.match(/^(I|II|III|IV|V|VI|VII|VIII|IX|X)\./);
+        if (roman) return romanMap[roman[1]] || 50;
+
+        const numeric = upper.match(/^(\d+)\./);
+        if (numeric) return Number(numeric[1]);
+
+        if (upper.includes('HAND THERAPY')) return 10;
+        if (upper.includes('PLEIADES')) return 20;
+        if (upper.includes('NAIL ARCHITECTURE')) return 30;
+        if (upper.includes('DESIGNER')) return 40;
+        if (upper.includes('EMBELLISH')) return 50;
+        if (upper.includes('ADD')) return 80;
+        if (upper.includes('FINISH')) return 85;
+        if (upper.includes('FOOT')) return 10;
+
+        return 99;
+    }
+
     const sortedCats = Object.keys(dbData[dept] || {}).sort((a, b) => {
-        const aU = a.trim().toUpperCase();
-        const bU = b.trim().toUpperCase();
-        const aNum = numRe.test(aU);
-        const bNum = numRe.test(bU);
-        if (aNum && !bNum) return -1;
-        if (!aNum && bNum) return 1;
-        return aU.localeCompare(bU, undefined, { numeric: true, sensitivity: 'base' });
+        const ar = sectionRank(a);
+        const br = sectionRank(b);
+        if (ar !== br) return ar - br;
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
 
     if (!sortedCats.length) {
@@ -403,19 +445,21 @@ function renderMenuForDept(dept) {
     }
 
     let html = '';
+
     sortedCats.forEach(cat => {
         const items = dbData[dept][cat] || [];
         const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
         const multis = items.filter(s => (s.inputType || 'radio') !== 'radio');
 
-        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
+        html += `<div class="menu-section th-individual-menu-section" data-category="${cat}">
+            <div class="menu-section-heading">${cat}</div>`;
 
         if (singles.length && multis.length) {
             html += `<div class="menu-subgroup-label">Choose your ritual <span>— select one</span></div>`;
             singles.forEach(s => { html += _buildCard(s, dept); });
 
-            html += `<div class="menu-subgroup-divider"></div>`;
-            html += `<div class="menu-subgroup-label">Enhancements &amp; Add-ons <span>— select any</span></div>`;
+            html += `<div class="menu-subgroup-divider"></div>
+                     <div class="menu-subgroup-label">Enhancements &amp; Add-ons <span>— select any</span></div>`;
             multis.forEach(s => { html += _buildCard(s, dept); });
         } else {
             items.forEach(s => { html += _buildCard(s, dept); });
@@ -425,8 +469,8 @@ function renderMenuForDept(dept) {
     });
 
     container.innerHTML = html;
-    setTimeout(bk_finalSyncCTAs, 60);
 
+    // Restore selected state after render.
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
@@ -434,6 +478,7 @@ function renderMenuForDept(dept) {
         if (qty) { qty.value  = sel.qty || 1; }
     });
 
+    setTimeout(bk_finalSyncCTAs, 60);
     updateBreakdown();
 }
 

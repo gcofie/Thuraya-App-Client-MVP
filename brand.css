@@ -1323,20 +1323,51 @@ img,svg,video,canvas{
 
 
 /* =========================================================
-   THURAYA INDIVIDUAL MENU — MATCH GROUP RENDER v2
-   Purpose: individual service menu now uses same flat category structure
-   as group booking; this CSS aligns the visual treatment.
+   THURAYA INDIVIDUAL FULL HAND MENU — GROUP ARRANGEMENT v3
+   Purpose: apply group-booking service arrangement styling to the
+   entire individual Hand/Foot menu, not only visible first sections.
    ========================================================= */
+#screen-services .screen-inner{
+  padding-top:18px !important;
+}
+
+#screen-services .step-header{
+  margin-bottom:22px !important;
+}
+
 #screen-services .step-header h2{
   font-size:clamp(1.9rem, 7.2vw, 2.55rem) !important;
+  line-height:1.05 !important;
+}
+
+#screen-services .step-header p{
+  font-size:.92rem !important;
+  line-height:1.38 !important;
+  opacity:.86 !important;
+}
+
+#screen-services .dept-toggle{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:12px !important;
+  margin:0 0 26px !important;
+}
+
+#screen-services .dept-btn{
+  min-height:50px !important;
+  border-radius:22px !important;
+  font-size:.88rem !important;
+  font-weight:850 !important;
+  letter-spacing:-.015em !important;
+  box-shadow:0 10px 22px rgba(35,26,16,.045) !important;
 }
 
 #bk_serviceMenu{
   width:100% !important;
   display:flex !important;
   flex-direction:column !important;
-  gap:24px !important;
-  padding:2px 0 42px !important;
+  gap:26px !important;
+  padding:2px 0 44px !important;
 }
 
 #bk_serviceMenu .menu-main-block,
@@ -1344,7 +1375,8 @@ img,svg,video,canvas{
   display:contents !important;
 }
 
-#bk_serviceMenu .menu-section{
+#bk_serviceMenu .menu-section,
+#bk_serviceMenu .th-individual-menu-section{
   width:100% !important;
   display:flex !important;
   flex-direction:column !important;
@@ -1355,8 +1387,8 @@ img,svg,video,canvas{
 
 #bk_serviceMenu .menu-section-heading{
   font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:clamp(1.02rem, 4.4vw, 1.22rem) !important;
-  line-height:1.15 !important;
+  font-size:clamp(1.02rem, 4.4vw, 1.24rem) !important;
+  line-height:1.16 !important;
   font-weight:900 !important;
   letter-spacing:.09em !important;
   text-transform:uppercase !important;
@@ -1466,6 +1498,20 @@ img,svg,video,canvas{
   letter-spacing:.02em !important;
 }
 
+#bk_serviceMenu .hl-tag{
+  display:inline-flex !important;
+  align-items:center !important;
+  margin-left:6px !important;
+  padding:3px 7px !important;
+  border-radius:999px !important;
+  background:rgba(10,10,10,.08) !important;
+  color:#0a0a0a !important;
+  font-size:.62rem !important;
+  font-weight:850 !important;
+  letter-spacing:.08em !important;
+  vertical-align:middle !important;
+}
+
 #bk_serviceMenu .service-card.selected{
   border-color:#0a0a0a !important;
   border-width:1.35px !important;
@@ -1476,9 +1522,11 @@ img,svg,video,canvas{
 #bk_serviceMenu .service-card{
   transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease !important;
 }
+
 #bk_serviceMenu .service-card:active{
   transform:scale(.992) !important;
 }
+
 @media(hover:hover){
   #bk_serviceMenu .service-card:hover{
     transform:translateY(-1px) !important;
@@ -1487,20 +1535,22 @@ img,svg,video,canvas{
   }
 }
 
-#screen-services .dept-toggle{
-  display:grid !important;
-  grid-template-columns:1fr 1fr !important;
-  gap:12px !important;
-  margin:0 0 24px !important;
+#bk_serviceMenu .counter-box{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
 }
 
-#screen-services .dept-btn{
-  min-height:50px !important;
-  border-radius:22px !important;
-  font-size:.88rem !important;
-  font-weight:850 !important;
-  letter-spacing:-.015em !important;
-  box-shadow:0 10px 22px rgba(35,26,16,.045) !important;
+#bk_serviceMenu .counter-btn{
+  width:36px !important;
+  height:36px !important;
+  min-width:36px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(10,10,10,.12) !important;
+  background:#FFFDF8 !important;
+  color:#0a0a0a !important;
+  font-weight:900 !important;
+  box-shadow:0 8px 18px rgba(35,26,16,.06) !important;
 }
 
 #screen-services .thuraya-inline-continue{
@@ -1526,4 +1576,4 @@ img,svg,video,canvas{
     font-size:1.15rem !important;
   }
 }
-/* === END THURAYA INDIVIDUAL MENU MATCH GROUP RENDER v2 === */
+/* === END THURAYA INDIVIDUAL FULL HAND MENU GROUP ARRANGEMENT v3 === */
