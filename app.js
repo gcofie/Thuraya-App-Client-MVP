@@ -1392,74 +1392,154 @@ window.bk_addToCalendar = function() {
 window.bk_viewMyBookings = async function() {
     goToStep('screen-mybookings');
     const listEl = document.getElementById('myBookingsList');
+    if (!listEl) return;
+
     if (!bk_currentUser) {
-        listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">Please sign in to view bookings.</p>';
+        listEl.innerHTML = `
+            <div class="th-bookings-empty">
+                <div class="th-bookings-empty-icon">👤</div>
+                <strong>Sign in to view your bookings</strong>
+                <span>Your upcoming and past appointments will appear here.</span>
+            </div>`;
         return;
     }
 
     listEl.innerHTML = '<div class="loading-pulse">Loading your bookings...</div>';
 
-    // Single where clause only — no orderBy — avoids composite index requirement.
-    // Sort client-side by dateString + timeString instead.
     try {
         const snap = await db.collection('Appointments')
             .where('clientEmail', '==', bk_currentUser.email)
             .get();
 
         if (snap.empty) {
-            listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No bookings yet.</p>';
+            listEl.innerHTML = `
+                <div class="th-bookings-empty">
+                    <div class="th-bookings-empty-icon">✦</div>
+                    <strong>No bookings yet</strong>
+                    <span>When you book your first THURAYA visit, it will appear here.</span>
+                    <button class="btn-primary full" onclick="goToStep('screen-booking-mode')">Book Your First Visit</button>
+                </div>`;
             return;
         }
 
-        // Client-friendly labels.
-        // Firestore still keeps the operational staff status internally.
-        // The client app only translates the wording for a better customer experience.
         const statusLabels = {
-            'Scheduled':         { label: 'Confirmed',   cls: 'status-scheduled' },
-            'Arrived':           { label: 'Checked In',  cls: 'status-arrived'   },
-            'In Progress':       { label: 'In Service',  cls: 'status-arrived'   },
-            'Ready for Payment': { label: 'Wrapping Up', cls: 'status-arrived'   },
-            'Closed':            { label: 'Completed',   cls: 'status-closed'    },
-            'Completed':         { label: 'Completed',   cls: 'status-closed'    },
-            'Cancelled':         { label: 'Cancelled',   cls: 'status-cancelled' },
-            'No Show':           { label: 'Missed',      cls: 'status-noshow'    },
+            'Scheduled':         { label: 'Upcoming',    cls: 'upcoming'  },
+            'Confirmed':         { label: 'Upcoming',    cls: 'upcoming'  },
+            'Arrived':           { label: 'Checked In',  cls: 'active'    },
+            'In Progress':       { label: 'In Service',  cls: 'active'    },
+            'Ready for Payment': { label: 'Wrapping Up', cls: 'active'    },
+            'Closed':            { label: 'Completed',   cls: 'completed' },
+            'Completed':         { label: 'Completed',   cls: 'completed' },
+            'Cancelled':         { label: 'Cancelled',   cls: 'cancelled' },
+            'No Show':           { label: 'Missed',      cls: 'cancelled' }
         };
 
-        // Build array and sort newest first by date then time
+        const now = new Date();
         const docs = [];
         snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-        docs.sort((a, b) => {
-            const aKey = (a.dateString || '') + (a.timeString || '');
-            const bKey = (b.dateString || '') + (b.timeString || '');
-            return bKey.localeCompare(aKey);
+
+        docs.forEach(a => {
+            const dt = new Date(`${a.dateString || ''}T${a.timeString || '00:00'}`);
+            a._dateObj = isNaN(dt.getTime()) ? null : dt;
+            a._isUpcoming = a._dateObj ? a._dateObj >= now && !['Closed','Completed','Cancelled','No Show'].includes(a.status || '') : false;
         });
 
-        const html = docs.slice(0, 20).map(a => {
-            let dateFormatted = a.dateString || '—';
-            try { dateFormatted = new Date(a.dateString + 'T00:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); } catch(e) {}
-            let timeFormatted = a.timeString || '';
-            try {
-                const [hh, mm] = a.timeString.split(':').map(Number);
-                timeFormatted = `${hh % 12 || 12}:${String(mm).padStart(2,'0')} ${hh >= 12 ? 'PM' : 'AM'}`;
-            } catch(e) {}
-            const s = statusLabels[a.status] || { label: a.status || 'Unknown', cls: 'status-scheduled' };
-            const isGroup = a.isGroupBooking ? ' 👥' : '';
-            return `
-                <div class="booking-item">
-                    <div class="booking-item-header">
-                        <strong>${dateFormatted} · ${timeFormatted}</strong>
-                        <span class="booking-status-badge ${s.cls}">${s.label}</span>
-                    </div>
-                    <p>💅 ${a.bookedService || 'N/A'}${isGroup}</p>
-                    <p>👩‍🔧 ${a.assignedTechName || 'To be assigned'} · ${parseFloat(a.grandTotal || 0).toFixed(2)} GHC</p>
-                </div>`;
-        }).join('');
+        const upcoming = docs
+            .filter(a => a._isUpcoming)
+            .sort((a, b) => (a._dateObj?.getTime() || 0) - (b._dateObj?.getTime() || 0));
 
-        listEl.innerHTML = html || '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No bookings yet.</p>';
+        const history = docs
+            .filter(a => !a._isUpcoming)
+            .sort((a, b) => {
+                const ak = (a.dateString || '') + (a.timeString || '');
+                const bk = (b.dateString || '') + (b.timeString || '');
+                return bk.localeCompare(ak);
+            });
+
+        function fmtDate(a) {
+            try {
+                return new Date((a.dateString || '') + 'T00:00:00').toLocaleDateString('en-GB', {
+                    weekday:'short', day:'numeric', month:'short', year:'numeric'
+                });
+            } catch(e) { return a.dateString || '—'; }
+        }
+
+        function fmtTime(a) {
+            try {
+                const [hh, mm] = String(a.timeString || '').split(':').map(Number);
+                return `${hh % 12 || 12}:${String(mm || 0).padStart(2,'0')} ${hh >= 12 ? 'PM' : 'AM'}`;
+            } catch(e) { return a.timeString || '—'; }
+        }
+
+        function money(v) {
+            const n = parseFloat(v || 0);
+            return Number.isFinite(n) ? n.toFixed(2) : '0.00';
+        }
+
+        function card(a, featured=false) {
+            const status = statusLabels[a.status] || { label: a.status || 'Booking', cls: 'upcoming' };
+            const isGroup = a.isGroupBooking ? '<span class="th-booking-mini-pill">Group</span>' : '';
+            const tech = a.assignedTechName || 'To be assigned';
+            const service = a.bookedService || 'THURAYA service';
+            const total = money(a.grandTotal || a.bookedPrice || 0);
+
+            return `
+                <article class="th-booking-card ${featured ? 'featured' : ''}">
+                    <div class="th-booking-topline">
+                        <span class="th-booking-kicker">${featured ? 'Next appointment' : 'Appointment'}</span>
+                        <span class="th-booking-status ${status.cls}">${status.label}</span>
+                    </div>
+                    <h3>${service}${isGroup}</h3>
+                    <div class="th-booking-meta-grid">
+                        <div><small>Date</small><strong>${fmtDate(a)}</strong></div>
+                        <div><small>Time</small><strong>${fmtTime(a)}</strong></div>
+                        <div><small>Technician</small><strong>${tech}</strong></div>
+                        <div><small>Total</small><strong>${total} GHC</strong></div>
+                    </div>
+                    <div class="th-booking-actions">
+                        <button class="th-booking-action primary" onclick="bk_bookAgainFromHistory('${a.id}')">Book Again</button>
+                        <button class="th-booking-action" onclick="bk_openMyAccount()">My Account</button>
+                    </div>
+                </article>`;
+        }
+
+        let html = '';
+        if (upcoming.length) {
+            html += `<section class="th-bookings-section"><div class="th-bookings-section-head"><span>Upcoming</span><em>${upcoming.length}</em></div>${upcoming.slice(0, 3).map((a, i) => card(a, i === 0)).join('')}</section>`;
+        }
+        if (history.length) {
+            html += `<section class="th-bookings-section"><div class="th-bookings-section-head"><span>History</span><em>${history.length}</em></div>${history.slice(0, 20).map(a => card(a)).join('')}</section>`;
+        }
+
+        listEl.innerHTML = html || `
+            <div class="th-bookings-empty">
+                <div class="th-bookings-empty-icon">✦</div>
+                <strong>No bookings found</strong>
+                <span>Your completed and upcoming visits will appear here.</span>
+            </div>`;
 
     } catch (e) {
         listEl.innerHTML = `<p style="color:var(--error);text-align:center;padding:24px 0;">Could not load bookings: ${e.message}</p>`;
     }
+};
+
+window.bk_bookAgainFromHistory = function(appointmentId) {
+    bk_selectedServices = [];
+    bk_activePromo = null;
+    bk_confirmedAppt = null;
+
+    try { bk_clearAllSelections(); } catch(e) {}
+
+    const timeEl = document.getElementById('bk_time');
+    const dateEl = document.getElementById('bk_date');
+    if (timeEl) timeEl.value = '';
+    if (dateEl) dateEl.value = '';
+
+    const slotsContainer = document.getElementById('bk_slotsContainer');
+    if (slotsContainer) slotsContainer.style.display = 'none';
+
+    toast('Choose your service to book again.', 'success');
+    goToStep('screen-services');
 };
 
 // ── EDIT 4: bk_bookAgain goes to mode select ─────────────

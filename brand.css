@@ -2589,3 +2589,239 @@ button:active,
   font-weight:600 !important;
 }
 /* === END THURAYA MY ACCOUNT LAYER === */
+
+
+/* =========================================================
+   THURAYA MY BOOKINGS PREMIUM UPGRADE
+   Scope: Booking history screen only. Logic-safe UI polish.
+   ========================================================= */
+#screen-mybookings #myBookingsList{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:18px !important;
+}
+
+.th-bookings-section{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+}
+
+.th-bookings-section-head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  padding:0 4px !important;
+  color:#2F2922 !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+}
+
+.th-bookings-section-head span{
+  font-size:.72rem !important;
+  font-weight:900 !important;
+  letter-spacing:.16em !important;
+  text-transform:uppercase !important;
+}
+
+.th-bookings-section-head em{
+  min-width:28px !important;
+  height:28px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:999px !important;
+  background:rgba(255,253,248,.88) !important;
+  border:1px solid rgba(221,211,197,.82) !important;
+  color:#0a0a0a !important;
+  font-size:.72rem !important;
+  font-style:normal !important;
+  font-weight:900 !important;
+}
+
+.th-booking-card{
+  width:100% !important;
+  padding:18px !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.95) !important;
+  border:1px solid rgba(221,211,197,.88) !important;
+  box-shadow:0 16px 36px rgba(35,26,16,.075) !important;
+  overflow:hidden !important;
+}
+
+.th-booking-card.featured{
+  background:linear-gradient(180deg,#FFFDF8 0%,#F7EFE4 100%) !important;
+  border-color:rgba(10,10,10,.16) !important;
+  box-shadow:0 22px 48px rgba(35,26,16,.12) !important;
+}
+
+.th-booking-topline{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  margin-bottom:12px !important;
+}
+
+.th-booking-kicker{
+  color:rgba(47,41,34,.62) !important;
+  font-size:.68rem !important;
+  font-weight:900 !important;
+  letter-spacing:.14em !important;
+  text-transform:uppercase !important;
+}
+
+.th-booking-status{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:28px !important;
+  padding:6px 10px !important;
+  border-radius:999px !important;
+  font-size:.66rem !important;
+  font-weight:900 !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+}
+
+.th-booking-status.completed{background:#F4EFE8 !important;color:#2F2922 !important;}
+.th-booking-status.active{background:#8F7638 !important;color:#fff !important;}
+.th-booking-status.cancelled{background:#F1E6E3 !important;color:#8A2D22 !important;}
+
+.th-booking-card h3{
+  margin:0 0 16px !important;
+  color:#0a0a0a !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.42rem !important;
+  line-height:1.05 !important;
+  font-weight:600 !important;
+  letter-spacing:-.03em !important;
+}
+
+.th-booking-mini-pill{
+  display:inline-flex !important;
+  margin-left:8px !important;
+  transform:translateY(-3px) !important;
+  padding:4px 8px !important;
+  border-radius:999px !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.62rem !important;
+  font-weight:900 !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+}
+
+.th-booking-meta-grid{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin-bottom:16px !important;
+}
+
+.th-booking-meta-grid div{
+  min-width:0 !important;
+  padding:12px !important;
+  border-radius:16px !important;
+  background:rgba(244,239,232,.78) !important;
+}
+
+.th-booking-meta-grid small{
+  display:block !important;
+  margin-bottom:5px !important;
+  color:rgba(47,41,34,.58) !important;
+  font-size:.64rem !important;
+  font-weight:900 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+}
+
+.th-booking-meta-grid strong{
+  display:block !important;
+  color:#0a0a0a !important;
+  font-size:.86rem !important;
+  line-height:1.22 !important;
+  font-weight:850 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.th-booking-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+}
+
+.th-booking-action{
+  appearance:none !important;
+  border:1px solid rgba(221,211,197,.95) !important;
+  background:#FFFDF8 !important;
+  color:#0a0a0a !important;
+  min-height:46px !important;
+  border-radius:999px !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.74rem !important;
+  font-weight:900 !important;
+  letter-spacing:.11em !important;
+  text-transform:uppercase !important;
+  transition:transform .18s ease, box-shadow .18s ease !important;
+}
+
+.th-booking-action.primary{
+  background:#0a0a0a !important;
+  color:#fff !important;
+  border-color:#0a0a0a !important;
+  box-shadow:0 12px 24px rgba(10,10,10,.16) !important;
+}
+
+.th-booking-action:active{transform:scale(.975) !important;}
+
+.th-bookings-empty{
+  padding:28px 20px !important;
+  text-align:center !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.94) !important;
+  border:1px solid rgba(221,211,197,.88) !important;
+  box-shadow:0 16px 36px rgba(35,26,16,.075) !important;
+  color:#2F2922 !important;
+}
+
+.th-bookings-empty-icon{
+  width:58px !important;
+  height:58px !important;
+  margin:0 auto 14px !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:999px !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-size:1.35rem !important;
+}
+
+.th-bookings-empty strong{
+  display:block !important;
+  color:#0a0a0a !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.45rem !important;
+  line-height:1.05 !important;
+  margin-bottom:8px !important;
+}
+
+.th-bookings-empty span{
+  display:block !important;
+  color:rgba(47,41,34,.72) !important;
+  font-size:.92rem !important;
+  line-height:1.42 !important;
+  margin-bottom:18px !important;
+}
+
+@media(max-width:430px){
+  .th-booking-card{padding:16px !important;border-radius:22px !important;}
+  .th-booking-card h3{font-size:1.32rem !important;}
+  .th-booking-meta-grid{gap:8px !important;}
+  .th-booking-meta-grid div{padding:11px !important;}
+  .th-booking-actions{grid-template-columns:1fr !important;}
+}
+/* === END THURAYA MY BOOKINGS PREMIUM UPGRADE === */
