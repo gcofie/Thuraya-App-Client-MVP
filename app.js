@@ -2136,10 +2136,11 @@ window.bk_upcomingDirections = function() {
 };
 
 window.bk_upcomingWhatsApp = function() {
-    const service = bk_nextUpcomingAppointment?.bookedService || 'my upcoming appointment';
+    const salonWhatsApp = '233241948225';
+    const service = bk_nextUpcomingAppointment?.bookedService || 'my appointment';
     const when = bk_nextUpcomingAppointment ? bk_formatClientDateTime(bk_nextUpcomingAppointment.dateString, bk_nextUpcomingAppointment.timeString) : '';
-    const msg = encodeURIComponent(`Hello THURAYA, I need help with ${service}${when ? ' on ' + when : ''}.`);
-    window.open(`https://wa.me/?text=${msg}`, '_blank', 'noopener');
+    const msg = encodeURIComponent(`Hello THURAYA, I am contacting you about ${service}${when ? ' on ' + when : ''}.`);
+    window.open(`https://wa.me/${salonWhatsApp}?text=${msg}`, '_blank', 'noopener');
 };
 
 window.bk_upcomingReschedule = function() {
@@ -2256,3 +2257,11 @@ window.bk_upcomingReschedule = function() {
     });
 })();
 // ── END THURAYA BOTTOM NAVIGATION LAYER ──────────────────
+
+
+// THURAYA WhatsApp direct salon chat fallback for engagement template actions.
+window.thurayaEngagementAction = window.thurayaEngagementAction || function(action) {
+    if (action === 'whatsapp') return window.bk_upcomingWhatsApp?.();
+    if (action === 'directions') return window.bk_upcomingDirections?.();
+    if (action === 'rebook') return window.bk_bookAgain?.();
+};
