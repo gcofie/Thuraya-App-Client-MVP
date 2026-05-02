@@ -2825,3 +2825,101 @@ button:active,
   .th-booking-actions{grid-template-columns:1fr !important;}
 }
 /* === END THURAYA MY BOOKINGS PREMIUM UPGRADE === */
+
+
+/* =========================================================
+   THURAYA BOTTOM NAV — PREMIUM SHORTCUT LAYER
+   Scope: Home / Services / My Bookings. Logic-safe navigation only.
+   ========================================================= */
+.thuraya-bottom-nav{
+  position:fixed !important;
+  left:50% !important;
+  bottom:calc(14px + env(safe-area-inset-bottom)) !important;
+  transform:translateX(-50%) !important;
+  width:min(354px, calc(100vw - 32px)) !important;
+  min-height:68px !important;
+  z-index:9996 !important;
+  display:grid !important;
+  grid-template-columns:repeat(3, 1fr) !important;
+  gap:6px !important;
+  padding:8px !important;
+  border-radius:999px !important;
+  background:rgba(10,10,10,.82) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  box-shadow:0 22px 54px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter:blur(22px) !important;
+  -webkit-backdrop-filter:blur(22px) !important;
+}
+
+.thuraya-bottom-nav-item{
+  appearance:none !important;
+  border:0 !important;
+  border-radius:999px !important;
+  background:transparent !important;
+  color:rgba(255,255,255,.66) !important;
+  min-height:52px !important;
+  padding:7px 8px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:3px !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  cursor:pointer !important;
+  transition:transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease !important;
+}
+
+.thuraya-bottom-nav-item:active{
+  transform:scale(.96) !important;
+}
+
+.thuraya-bottom-nav-icon{
+  font-size:1.05rem !important;
+  line-height:1 !important;
+  font-weight:800 !important;
+}
+
+.thuraya-bottom-nav-label{
+  font-size:.62rem !important;
+  line-height:1 !important;
+  font-weight:850 !important;
+  letter-spacing:.10em !important;
+  text-transform:uppercase !important;
+}
+
+.thuraya-bottom-nav-item.active{
+  background:#FFFDF8 !important;
+  color:#090807 !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18) !important;
+}
+
+/* Give account/history pages breathing room above nav. */
+#screen-booking-mode,
+#screen-services,
+#screen-mybookings,
+#screen-my-account,
+#screen-technician,
+#screen-datetime,
+#screen-confirm{
+  padding-bottom:118px !important;
+}
+
+/* Hide legacy sticky breakdown bar from fighting the bottom nav. */
+#bk_stickyBar{
+  display:none !important;
+}
+
+@media(min-width:780px){
+  .thuraya-bottom-nav{
+    bottom:calc(var(--thuraya-shell-gap, 14px) + 16px) !important;
+    width:354px !important;
+  }
+}
+
+@media(max-width:430px){
+  .thuraya-bottom-nav{
+    width:calc(100vw - 28px) !important;
+    bottom:calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+}
+/* === END THURAYA BOTTOM NAV === */

@@ -1888,3 +1888,87 @@ window.bk_prepareProfileEdit = function() {
     goToStep('screen-profile');
 };
 // ── END THURAYA MY ACCOUNT LAYER ─────────────────────────
+
+
+// ── THURAYA BOTTOM NAVIGATION LAYER ──────────────────────
+// Safe shortcut layer only. Does not change booking/payment/Firebase logic.
+(function(){
+    const NAV_HIDDEN_SCREENS = new Set([
+        'screen-welcome',
+        'screen-profile',
+        'screen-guest',
+        'screen-doc-viewer',
+        'screen-success',
+        'screen-group-success'
+    ]);
+
+    function bk_getActiveScreenId(){
+        const active = document.querySelector('.screen.active');
+        return active ? active.id : '';
+    }
+
+    window.bk_syncBottomNav = function(){
+        const nav = document.getElementById('thurayaBottomNav');
+        if (!nav) return;
+
+        const activeId = bk_getActiveScreenId();
+        const hasClient = !!(window.bk_clientProfile || bk_clientProfile || auth?.currentUser);
+        const shouldShow = hasClient && activeId && !NAV_HIDDEN_SCREENS.has(activeId);
+
+        nav.style.display = shouldShow ? 'grid' : 'none';
+        if (!shouldShow) return;
+
+        nav.querySelectorAll('.thuraya-bottom-nav-item').forEach(btn => btn.classList.remove('active'));
+
+        let target = 'home';
+        if (activeId === 'screen-services' || activeId === 'screen-group-services') target = 'services';
+        if (activeId === 'screen-mybookings') target = 'bookings';
+
+        const activeBtn = nav.querySelector(`[data-nav-target="${target}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+    };
+
+    window.bk_navHome = function(){
+        _screenHistory = ['screen-welcome', 'screen-booking-mode'];
+        showScreen('screen-booking-mode');
+        window.scrollTo({ top:0, behavior:'smooth' });
+        setTimeout(bk_syncBottomNav, 40);
+    };
+
+    window.bk_navServices = function(){
+        _screenHistory = ['screen-welcome', 'screen-booking-mode', 'screen-services'];
+        showScreen('screen-services');
+        if (typeof updateBreakdown === 'function') updateBreakdown();
+        window.scrollTo({ top:0, behavior:'smooth' });
+        setTimeout(bk_syncBottomNav, 40);
+    };
+
+    window.bk_navBookings = function(){
+        if (typeof bk_viewMyBookings === 'function') {
+            bk_viewMyBookings();
+        } else {
+            _screenHistory = ['screen-welcome', 'screen-booking-mode', 'screen-mybookings'];
+            showScreen('screen-mybookings');
+        }
+        setTimeout(bk_syncBottomNav, 80);
+    };
+
+    const originalShowScreen = window.showScreen;
+    if (typeof originalShowScreen === 'function' && !window.__thurayaBottomNavWrapped) {
+        window.showScreen = function(id){
+            const result = originalShowScreen.apply(this, arguments);
+            setTimeout(bk_syncBottomNav, 60);
+            return result;
+        };
+        window.__thurayaBottomNavWrapped = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setTimeout(bk_syncBottomNav, 700);
+    });
+
+    document.addEventListener('click', function(){
+        setTimeout(bk_syncBottomNav, 80);
+    });
+})();
+// ── END THURAYA BOTTOM NAVIGATION LAYER ──────────────────
