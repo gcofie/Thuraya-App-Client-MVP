@@ -2015,3 +2015,170 @@ img,svg,video,canvas{
   }
 }
 /* === END THURAYA STEP 3 DATE & TIME PREMIUM UPGRADE === */
+
+
+/* =========================================================
+   THURAYA STEP 4 — REVIEW & CONFIRM PREMIUM POLISH
+   Full replacement file generated from working Step 3.
+   Scope: Step 4 confirm + success trust polish only.
+   ========================================================= */
+
+#screen-confirm .step-header{
+  margin-bottom:20px !important;
+}
+
+#screen-confirm .confirm-card{
+  border-radius:26px !important;
+  padding:22px 22px 18px !important;
+  background:linear-gradient(180deg,#0f0f0f 0%,#050505 100%) !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  box-shadow:0 24px 54px rgba(0,0,0,.24) !important;
+  overflow:hidden !important;
+}
+
+#screen-confirm .confirm-row{
+  padding:15px 0 !important;
+  border-bottom:1px solid rgba(255,255,255,.09) !important;
+  align-items:flex-start !important;
+}
+
+#screen-confirm .confirm-row:last-child{
+  border-bottom:0 !important;
+}
+
+#screen-confirm .confirm-label{
+  color:rgba(255,255,255,.58) !important;
+  font-size:.68rem !important;
+  line-height:1.2 !important;
+  font-weight:850 !important;
+  letter-spacing:.15em !important;
+  text-transform:uppercase !important;
+}
+
+#screen-confirm .confirm-value{
+  color:#fff !important;
+  font-size:.96rem !important;
+  line-height:1.35 !important;
+  font-weight:800 !important;
+  max-width:58% !important;
+}
+
+#screen-confirm .confirm-divider{
+  background:rgba(255,255,255,.10) !important;
+  margin:10px 0 !important;
+}
+
+#screen-confirm .total-row{
+  margin:12px -6px 0 !important;
+  padding:18px 6px 4px !important;
+  border-top:1px solid rgba(255,255,255,.22) !important;
+  border-bottom:0 !important;
+}
+
+#screen-confirm .total-row .confirm-label{
+  color:rgba(255,255,255,.78) !important;
+}
+
+#screen-confirm #conf_total{
+  color:#fff !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.48rem !important;
+  line-height:1 !important;
+  font-weight:700 !important;
+  letter-spacing:.01em !important;
+}
+
+#screen-confirm .book-for-card,
+#screen-confirm .promo-block{
+  margin-top:16px !important;
+  border-radius:22px !important;
+}
+
+#screen-confirm .book-for-head h3{
+  margin:4px 0 0 !important;
+  font-size:1.05rem !important;
+  color:#0a0a0a !important;
+}
+
+#screen-confirm .book-for-kicker{
+  font-size:.68rem !important;
+  font-weight:850 !important;
+  letter-spacing:.14em !important;
+  text-transform:uppercase !important;
+  color:rgba(47,41,34,.58) !important;
+}
+
+#screen-confirm .book-for-option{
+  border-radius:18px !important;
+  min-height:52px !important;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+
+#screen-confirm .book-for-option.active,
+#screen-confirm .book-for-option:has(input:checked){
+  border-color:#0a0a0a !important;
+  box-shadow:0 10px 24px rgba(10,10,10,.08) !important;
+}
+
+#screen-confirm .promo-toggle-btn{
+  width:100% !important;
+  min-height:48px !important;
+  border-radius:18px !important;
+  color:#0a0a0a !important;
+  background:rgba(255,255,255,.54) !important;
+}
+
+#screen-confirm .step-footer{
+  margin-top:18px !important;
+}
+
+#screen-confirm #btnConfirmBooking{
+  min-height:62px !important;
+  border-radius:999px !important;
+  background:linear-gradient(180deg,#171717 0%,#050505 100%) !important;
+  color:#fff !important;
+  border:1px solid #050505 !important;
+  box-shadow:0 22px 50px rgba(0,0,0,.25) !important;
+  font-size:.82rem !important;
+  font-weight:900 !important;
+  letter-spacing:.18em !important;
+  text-transform:uppercase !important;
+  transition:transform .18s ease, box-shadow .18s ease !important;
+}
+
+#screen-confirm #btnConfirmBooking:active{
+  transform:scale(.975) !important;
+  box-shadow:0 14px 32px rgba(0,0,0,.20) !important;
+}
+
+#screen-confirm .confirm-note{
+  color:rgba(47,41,34,.62) !important;
+  font-size:.78rem !important;
+  line-height:1.45 !important;
+  margin-top:14px !important;
+}
+
+#screen-success .success-icon{
+  background:#0a0a0a !important;
+  box-shadow:0 18px 40px rgba(0,0,0,.18) !important;
+}
+
+#screen-success .success-actions .btn-primary{
+  border-radius:999px !important;
+}
+
+@media(max-width:430px){
+  #screen-confirm .confirm-card{
+    padding:21px 20px 17px !important;
+  }
+
+  #screen-confirm .confirm-value{
+    max-width:60% !important;
+    font-size:.92rem !important;
+  }
+
+  #screen-confirm #conf_total{
+    font-size:1.38rem !important;
+  }
+}
+/* === END THURAYA STEP 4 REVIEW & CONFIRM PREMIUM POLISH === */
