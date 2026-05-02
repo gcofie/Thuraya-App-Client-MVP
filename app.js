@@ -1334,6 +1334,9 @@ const bookForDetails = bk_validateBookForDetails();
         await batch.commit();
         bk_confirmedAppt = { ...apptData, id: apptRef.id };
 
+        try { await bk_createClientNotificationForBooking(bk_confirmedAppt); } catch(e) { console.warn('Notification save skipped:', e); }
+        try { bk_loadUpcomingAppointmentPreview(); } catch(e) {}
+
         populateSuccessScreen(bk_confirmedAppt);
 
         const viewBtn = document.querySelector('#screen-success .btn-outline');
@@ -1958,6 +1961,168 @@ window.bk_saveAccountProfile = async function() {
 };
 // ── END THURAYA MY ACCOUNT LAYER ─────────────────────────
 
+
+
+
+// ── THURAYA CLIENT NOTIFICATION LAYER ────────────────────
+// Safe in-app layer only. No SMS, WhatsApp, push or payment logic.
+let bk_clientNotifications = [];
+
+function bk_getClientNotificationKey() {
+    const email = (bk_currentUser?.email || bk_clientProfile?.email || '').toLowerCase();
+    const phone = (bk_clientProfile?.phone || bk_clientProfile?.Tel_Number || '').replace(/\D/g, '');
+    return email || (phone ? 'guest:' + phone : 'guest:unknown');
+}
+
+function bk_formatClientDateTime(dateString, timeString) {
+    let dateFormatted = dateString || 'Date pending';
+    let timeFormatted = timeString || '';
+    try {
+        dateFormatted = new Date(dateString + 'T00:00:00').toLocaleDateString('en-GB', {
+            weekday: 'short', day: 'numeric', month: 'short'
+        });
+    } catch(e) {}
+    try {
+        const [h, m] = String(timeString || '').split(':').map(Number);
+        if (Number.isFinite(h)) timeFormatted = `${h % 12 || 12}:${String(m || 0).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    } catch(e) {}
+    return `${dateFormatted}${timeFormatted ? ' • ' + timeFormatted : ''}`;
+}
+
+async function bk_createClientNotificationForBooking(appt) {
+    if (!appt) return;
+    const clientKey = bk_getClientNotificationKey();
+    const message = `${appt.bookedService || 'Your appointment'} confirmed for ${bk_formatClientDateTime(appt.dateString, appt.timeString)}.`;
+
+    await db.collection('Client_Notifications').add({
+        clientKey,
+        clientEmail: appt.clientEmail || bk_currentUser?.email || '',
+        clientPhone: appt.clientPhone || bk_clientProfile?.phone || '',
+        appointmentId: appt.id || '',
+        type: 'booking_confirmed',
+        title: 'Booking confirmed',
+        message,
+        read: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+window.bk_openNotifications = async function() {
+    goToStep('screen-notifications');
+    await bk_loadClientNotifications();
+};
+
+async function bk_loadClientNotifications() {
+    const listEl = document.getElementById('thNotificationList');
+    if (!listEl) return;
+
+    const clientKey = bk_getClientNotificationKey();
+    listEl.innerHTML = '<div class="loading-pulse">Loading notifications...</div>';
+
+    try {
+        const snap = await db.collection('Client_Notifications')
+            .where('clientKey', '==', clientKey)
+            .limit(30)
+            .get();
+
+        bk_clientNotifications = [];
+        snap.forEach(doc => bk_clientNotifications.push({ id: doc.id, ...doc.data() }));
+        bk_clientNotifications.sort((a, b) => {
+            const at = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+            const bt = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+            return bt - at;
+        });
+
+        if (!bk_clientNotifications.length) {
+            listEl.innerHTML = `
+                <div class="th-notification-empty">
+                    <div class="th-empty-icon">🔔</div>
+                    <strong>No notifications yet</strong>
+                    <span>Booking confirmations, reminders and THURAYA updates will appear here.</span>
+                </div>`;
+            return;
+        }
+
+        listEl.innerHTML = bk_clientNotifications.map(n => `
+            <article class="th-notification-card ${n.read ? '' : 'unread'}">
+                <div class="th-notification-icon">${n.type === 'booking_confirmed' ? '✓' : n.type === 'promo' ? '✦' : '🔔'}</div>
+                <div class="th-notification-copy">
+                    <strong>${n.title || 'THURAYA update'}</strong>
+                    <span>${n.message || ''}</span>
+                    <em>${n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Just now'}</em>
+                </div>
+            </article>`).join('');
+    } catch (e) {
+        listEl.innerHTML = `<div class="th-notification-empty"><strong>Notifications unavailable</strong><span>${e.message}</span></div>`;
+    }
+}
+
+async function bk_loadUpcomingAppointmentPreview() {
+    const card = document.getElementById('thUpcomingAppointmentCard');
+    if (!card || !bk_clientProfile) return;
+
+    const email = (bk_currentUser?.email || bk_clientProfile?.email || '').toLowerCase();
+    const phone = (bk_clientProfile?.phone || '').replace(/\D/g, '');
+
+    try {
+        let snap = null;
+        if (email) {
+            snap = await db.collection('Appointments').where('clientEmail', '==', email).get();
+        } else if (phone) {
+            snap = await db.collection('Appointments').where('clientPhone', '==', phone).get();
+        }
+        if (!snap || snap.empty) { card.style.display = 'none'; return; }
+
+        const activeStatuses = ['Scheduled', 'Confirmed', 'Arrived', 'In Progress'];
+        const nowKey = todayStr + '00:00';
+        const upcoming = [];
+        snap.forEach(doc => {
+            const a = { id: doc.id, ...doc.data() };
+            const key = (a.dateString || '') + (a.timeString || '');
+            if (activeStatuses.includes(a.status || '') && key >= nowKey) upcoming.push(a);
+        });
+        upcoming.sort((a, b) => ((a.dateString || '') + (a.timeString || '')).localeCompare((b.dateString || '') + (b.timeString || '')));
+
+        if (!upcoming.length) { card.style.display = 'none'; return; }
+        const next = upcoming[0];
+        const serviceEl = document.getElementById('thUpcomingService');
+        const dateEl = document.getElementById('thUpcomingDateTime');
+        if (serviceEl) serviceEl.textContent = next.bookedService || 'Your next THURAYA visit';
+        if (dateEl) dateEl.textContent = bk_formatClientDateTime(next.dateString, next.timeString);
+        card.style.display = 'block';
+    } catch(e) {
+        console.warn('Upcoming appointment preview skipped:', e);
+        card.style.display = 'none';
+    }
+}
+
+// Load notification preview after client entry and when returning home.
+(function(){
+    const previousAfterEntry = window.bk_afterClientEntry;
+    if (typeof previousAfterEntry === 'function' && !window.__thurayaNotificationAfterEntryWrapped) {
+        window.bk_afterClientEntry = function(){
+            const result = previousAfterEntry.apply(this, arguments);
+            setTimeout(bk_loadUpcomingAppointmentPreview, 700);
+            return result;
+        };
+        window.__thurayaNotificationAfterEntryWrapped = true;
+    }
+
+    const previousNavHome = window.bk_navHome;
+    if (typeof previousNavHome === 'function' && !window.__thurayaNotificationNavHomeWrapped) {
+        window.bk_navHome = function(){
+            const result = previousNavHome.apply(this, arguments);
+            setTimeout(bk_loadUpcomingAppointmentPreview, 500);
+            return result;
+        };
+        window.__thurayaNotificationNavHomeWrapped = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setTimeout(bk_loadUpcomingAppointmentPreview, 1200);
+    });
+})();
+// ── END THURAYA CLIENT NOTIFICATION LAYER ────────────────
 
 // ── THURAYA BOTTOM NAVIGATION LAYER ──────────────────────
 // Safe shortcut layer only. Does not change booking/payment/Firebase logic.

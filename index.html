@@ -342,6 +342,17 @@
                     <h2>How are you visiting?</h2>
                     <p>Book for yourself or bring a group along.</p>
                 </div>
+
+                <section id="thUpcomingAppointmentCard" class="th-upcoming-appointment-card" style="display:none;">
+                    <div class="th-upcoming-kicker">Upcoming appointment</div>
+                    <div class="th-upcoming-title" id="thUpcomingService">Your next THURAYA visit</div>
+                    <div class="th-upcoming-meta" id="thUpcomingDateTime">Date and time will appear here</div>
+                    <div class="th-upcoming-actions">
+                        <button type="button" class="th-mini-action primary" onclick="bk_viewMyBookings()">View</button>
+                        <button type="button" class="th-mini-action" onclick="bk_navServices()">Book Again</button>
+                    </div>
+                </section>
+
                 <div style="display:flex; flex-direction:column; gap:14px; margin-top:8px;">
                     <button class="mode-card" onclick="grp_soloMode()">
                         <div class="mode-card-icon">🪑</div>
@@ -786,6 +797,14 @@
                         </span>
                         <i>›</i>
                     </button>
+                    <button class="th-account-menu-card" onclick="bk_openNotifications()">
+                        <span class="th-account-menu-icon">🔔</span>
+                        <span>
+                            <strong>Notifications</strong>
+                            <em>Confirmations, reminders and offers</em>
+                        </span>
+                        <i>›</i>
+                    </button>
                     <button class="th-account-menu-card" onclick="goToStep('screen-client-care-library')">
                         <span class="th-account-menu-icon">✦</span>
                         <span>
@@ -909,6 +928,21 @@
                     <div class="th-empty-icon">👛</div>
                     <h3>Wallet coming next</h3>
                     <p>Recommended after payment integration, prepaid packages and refund rules are confirmed.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATIONS -->
+        <div class="screen" id="screen-notifications">
+            <div class="screen-inner">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <div class="step-header">
+                    <div class="step-badge">Notifications</div>
+                    <h2>Client Updates</h2>
+                    <p>Booking confirmations, upcoming reminders and THURAYA offers will appear here.</p>
+                </div>
+                <div id="thNotificationList">
+                    <div class="loading-pulse">Loading notifications...</div>
                 </div>
             </div>
         </div>

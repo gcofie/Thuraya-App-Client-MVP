@@ -2980,3 +2980,128 @@ button:active,
   max-width:56% !important;
 }
 /* === END THURAYA PROFILE EDIT UPGRADE === */
+
+
+/* =========================================================
+   THURAYA CLIENT NOTIFICATION LAYER
+   In-app notifications + upcoming appointment preview.
+   ========================================================= */
+.th-upcoming-appointment-card{
+  width:100% !important;
+  margin:0 0 16px !important;
+  padding:18px !important;
+  border-radius:24px !important;
+  background:linear-gradient(180deg,#111 0%,#050505 100%) !important;
+  color:#fff !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:0 22px 48px rgba(10,10,10,.20) !important;
+}
+.th-upcoming-kicker{
+  color:rgba(255,255,255,.62) !important;
+  font-size:.66rem !important;
+  font-weight:850 !important;
+  letter-spacing:.16em !important;
+  text-transform:uppercase !important;
+  margin-bottom:8px !important;
+}
+.th-upcoming-title{
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.22rem !important;
+  line-height:1.12 !important;
+  font-weight:500 !important;
+  margin-bottom:8px !important;
+}
+.th-upcoming-meta{
+  color:rgba(255,255,255,.72) !important;
+  font-size:.88rem !important;
+  line-height:1.35 !important;
+}
+.th-upcoming-actions{
+  display:flex !important;
+  gap:10px !important;
+  margin-top:14px !important;
+}
+.th-mini-action{
+  min-height:38px !important;
+  padding:8px 14px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  background:rgba(255,255,255,.06) !important;
+  color:#fff !important;
+  font-size:.76rem !important;
+  font-weight:850 !important;
+}
+.th-mini-action.primary{
+  background:#fff !important;
+  color:#111 !important;
+  border-color:#fff !important;
+}
+#thNotificationList{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+  padding-bottom:100px !important;
+}
+.th-notification-card{
+  display:grid !important;
+  grid-template-columns:42px minmax(0,1fr) !important;
+  gap:14px !important;
+  align-items:start !important;
+  padding:16px !important;
+  border-radius:22px !important;
+  background:rgba(255,253,248,.94) !important;
+  border:1px solid rgba(221,211,197,.82) !important;
+  box-shadow:0 14px 32px rgba(35,26,16,.07) !important;
+}
+.th-notification-card.unread{
+  border-color:rgba(200,169,77,.52) !important;
+  box-shadow:0 18px 40px rgba(200,169,77,.12) !important;
+}
+.th-notification-icon{
+  width:38px !important;
+  height:38px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  background:#111 !important;
+  color:#fff !important;
+  font-weight:900 !important;
+}
+.th-notification-copy{
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:5px !important;
+}
+.th-notification-copy strong{
+  color:#0a0a0a !important;
+  font-size:.98rem !important;
+  line-height:1.2 !important;
+}
+.th-notification-copy span{
+  color:#2F2922 !important;
+  font-size:.88rem !important;
+  line-height:1.4 !important;
+  opacity:.82 !important;
+}
+.th-notification-copy em{
+  color:rgba(47,41,34,.52) !important;
+  font-size:.74rem !important;
+  font-style:normal !important;
+  font-weight:750 !important;
+  margin-top:2px !important;
+}
+.th-notification-empty{
+  text-align:center !important;
+  padding:30px 20px !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.90) !important;
+  border:1px solid rgba(221,211,197,.82) !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  color:#2F2922 !important;
+}
+.th-notification-empty strong{font-size:1rem !important;color:#0a0a0a !important;}
+.th-notification-empty span{font-size:.88rem !important;color:rgba(47,41,34,.64) !important;line-height:1.45 !important;}
+/* === END THURAYA CLIENT NOTIFICATION LAYER === */
