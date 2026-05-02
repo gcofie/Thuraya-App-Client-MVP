@@ -1,0 +1,560 @@
+/* =========================================================
+   THURAYA CLIENT APP — STEP 2 GLOBAL MOBILE SCALE LOCK
+   Scope: layout/responsiveness only. JavaScript and booking logic untouched.
+   Target: 390–430px mobile-first, no horizontal scroll, black/white luxury palette.
+   ========================================================= */
+
+:root{
+  --primary:#000000;
+  --black:#000000;
+  --mid:#111111;
+  --off-white:#F8F7F3;
+  --cream:#F8F7F3;
+  --warm-white:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface-soft:#F8F7F3;
+  --text-muted:#404040;
+  --light-line:rgba(0,0,0,.14);
+  --border:rgba(0,0,0,.14);
+  --gold:#FFFFFF;
+  --gold-dark:#000000;
+}
+
+html,
+body{
+  width:100%;
+  max-width:100%;
+  min-height:100%;
+  overflow-x:hidden!important;
+  overscroll-behavior-x:none;
+}
+
+body{
+  background:#000!important;
+}
+
+*,*::before,*::after{
+  box-sizing:border-box;
+}
+
+img,svg,video,canvas,iframe{
+  max-width:100%;
+}
+
+button,input,select,textarea{
+  max-width:100%;
+}
+
+/* Real mobile: the app is the phone, not a simulator. */
+@media (max-width:779px){
+  #app{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:100dvh!important;
+    margin:0!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    overflow-x:hidden!important;
+    background:#F8F7F3!important;
+  }
+
+  .screen{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:100dvh!important;
+    overflow-x:hidden!important;
+    padding:
+      clamp(18px,5vw,24px)
+      clamp(14px,4.2vw,18px)
+      calc(112px + env(safe-area-inset-bottom,0px))!important;
+    background:#F8F7F3!important;
+  }
+
+  .screen.active{
+    display:block!important;
+  }
+
+  .screen-inner{
+    width:100%!important;
+    max-width:430px!important;
+    margin:0 auto!important;
+    padding:0!important;
+  }
+
+  .screen:not(#screen-welcome):not(#screen-doc-viewer)::before,
+  .screen.active:not(#screen-welcome):not(#screen-doc-viewer)::before{
+    content:"THURAYA"!important;
+    display:block!important;
+    width:calc(100% + (clamp(14px,4.2vw,18px) * 2))!important;
+    margin:calc(clamp(18px,5vw,24px) * -1) calc(clamp(14px,4.2vw,18px) * -1) clamp(18px,5vw,24px)!important;
+    padding:calc(18px + env(safe-area-inset-top,0px)) 18px 16px!important;
+    background:#000!important;
+    color:#F8F7F3!important;
+    text-align:center!important;
+    font-family:var(--font-serif)!important;
+    font-size:clamp(1.65rem,7.5vw,2.15rem)!important;
+    font-weight:400!important;
+    letter-spacing:clamp(.18em,5vw,.28em)!important;
+    line-height:1!important;
+    box-shadow:none!important;
+  }
+
+  .step-header{
+    margin-bottom:clamp(16px,5vw,22px)!important;
+  }
+
+  .step-badge{
+    background:#FFFFFF!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.14)!important;
+    border-radius:999px!important;
+    padding:7px 12px!important;
+    font-size:clamp(.62rem,2.6vw,.72rem)!important;
+    line-height:1!important;
+    letter-spacing:.12em!important;
+    margin-bottom:12px!important;
+    box-shadow:none!important;
+  }
+
+  .step-header h2,
+  .success-title,
+  .confirm-title{
+    font-size:clamp(2.05rem,10vw,2.85rem)!important;
+    line-height:.98!important;
+    letter-spacing:-.025em!important;
+    color:#000!important;
+    max-width:100%!important;
+    overflow-wrap:normal!important;
+  }
+
+  .step-header p,
+  .success-sub,
+  .confirm-note,
+  .field-hint{
+    font-size:clamp(.9rem,3.5vw,1rem)!important;
+    line-height:1.5!important;
+    color:#333!important;
+  }
+
+  .back-btn{
+    display:inline-flex!important;
+    align-items:center!important;
+    width:auto!important;
+    max-width:max-content!important;
+    min-height:auto!important;
+    margin:0 0 16px!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    color:#000!important;
+    box-shadow:none!important;
+    font-size:.9rem!important;
+  }
+
+  .mode-card,
+  .service-card,
+  .tech-option-card,
+  .tech-card,
+  .form-card,
+  .confirm-card,
+  .book-for-card,
+  .promo-block,
+  .group-option-card,
+  .group-capacity-panel,
+  .group-split-panel,
+  .group-manual-subgroup-card,
+  .group-billing-panel,
+  .cx-client-card,
+  .group-manual-planner-head,
+  .grp-info-box{
+    width:100%!important;
+    max-width:100%!important;
+    border-radius:18px!important;
+    padding:clamp(14px,4.2vw,18px)!important;
+    background:#FFFFFF!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.12)!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.06)!important;
+    overflow:hidden!important;
+  }
+
+  .mode-card{
+    min-height:88px!important;
+    display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) 18px!important;
+    gap:12px!important;
+    align-items:center!important;
+  }
+
+  .mode-card-icon,
+  .tech-option-icon,
+  .group-option-icon,
+  .grp-member-index{
+    background:#F8F7F3!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.08)!important;
+    flex:0 0 auto!important;
+  }
+
+  .mode-card-body,
+  .service-card-body,
+  .tech-card-body,
+  .tech-option-card div,
+  .group-option-card div{
+    min-width:0!important;
+  }
+
+  .mode-card-body strong,
+  .service-card-name,
+  .tech-option-card strong,
+  .tech-card strong,
+  .cx-client-card-title{
+    color:#000!important;
+    font-size:clamp(.94rem,3.8vw,1.05rem)!important;
+    line-height:1.25!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  .mode-card-body span,
+  .service-card-desc,
+  .tech-option-card span,
+  .tech-card span,
+  .cx-client-card-desc,
+  .cx-client-card-meta{
+    color:#333!important;
+    font-size:clamp(.8rem,3.2vw,.92rem)!important;
+    line-height:1.45!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  .mode-card-arrow,
+  .accent-text,
+  .service-price-pill,
+  .slot-btn span,
+  #bk_slots button span,
+  #grp_slots button span{
+    color:#000!important;
+  }
+
+  .mode-badge,
+  .group-recommended-badge,
+  .amount-pill{
+    background:#000!important;
+    color:#fff!important;
+    border:1px solid #000!important;
+  }
+
+  .dept-toggle,
+  .book-for-card .book-for-options{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+  }
+
+  .dept-btn,
+  .book-for-option,
+  .cx-client-tab,
+  .grp-tab{
+    min-width:0!important;
+    max-width:100%!important;
+    white-space:normal!important;
+    background:#fff!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.14)!important;
+    border-radius:14px!important;
+  }
+
+  .dept-btn.active,
+  .cx-client-tab.active,
+  .grp-tab--active,
+  .book-for-option.active,
+  .book-for-option.selected{
+    background:#000!important;
+    color:#fff!important;
+    border-color:#000!important;
+  }
+
+  #bk_serviceMenu,
+  #grp_serviceList,
+  .tech-option-cards,
+  .tech-list,
+  .group-option-list,
+  .group-manual-planner{
+    width:100%!important;
+    max-width:100%!important;
+    gap:12px!important;
+  }
+
+  .service-card{
+    display:flex!important;
+    gap:12px!important;
+    align-items:flex-start!important;
+  }
+
+  .counter-box{
+    flex:0 0 auto!important;
+  }
+
+  .counter-btn,
+  .grp-size-btn{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+    min-height:40px!important;
+    background:#fff!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.16)!important;
+  }
+
+  .slots-grid{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+    width:100%!important;
+  }
+
+  .slot-btn,
+  #bk_slots button,
+  #grp_slots button{
+    width:100%!important;
+    min-width:0!important;
+    min-height:58px!important;
+    padding:10px 8px!important;
+    border-radius:16px!important;
+    background:#fff!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.14)!important;
+    box-shadow:none!important;
+  }
+
+  .slot-btn.selected,
+  .slot-btn.active,
+  #bk_slots button.selected,
+  #bk_slots button.active,
+  #grp_slots button.selected,
+  #grp_slots button.active{
+    background:#000!important;
+    color:#fff!important;
+    border-color:#000!important;
+  }
+
+  .slot-btn.selected span,
+  .slot-btn.active span,
+  #bk_slots button.selected span,
+  #bk_slots button.active span,
+  #grp_slots button.selected span,
+  #grp_slots button.active span{
+    color:#fff!important;
+  }
+
+  input,
+  select,
+  textarea{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:50px!important;
+    border-radius:16px!important;
+    background:#fff!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.16)!important;
+    box-shadow:none!important;
+    font-size:16px!important; /* avoids iOS zoom */
+  }
+
+  .btn-primary,
+  .btn-primary.full,
+  .btn-outline,
+  .btn-secondary,
+  .btn-ghost,
+  #btnToTech,
+  #btnToDateTime,
+  #btnToConfirm,
+  #btnConfirmBooking,
+  #grp_toDateTimeBtn,
+  #grp_toConfirmBtn,
+  #grp_btnConfirm,
+  #btnSaveGuest,
+  #btnSaveProfile{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:54px!important;
+    border-radius:18px!important;
+    font-size:clamp(.78rem,3.2vw,.9rem)!important;
+    letter-spacing:.12em!important;
+    text-transform:uppercase!important;
+    box-shadow:none!important;
+  }
+
+  .btn-primary,
+  .btn-primary.full,
+  #btnToTech,
+  #btnToDateTime,
+  #btnToConfirm,
+  #btnConfirmBooking,
+  #grp_toDateTimeBtn,
+  #grp_toConfirmBtn,
+  #grp_btnConfirm,
+  #btnSaveGuest,
+  #btnSaveProfile{
+    background:#000!important;
+    color:#fff!important;
+    border:1px solid #000!important;
+  }
+
+  .btn-outline,
+  .btn-secondary{
+    background:#fff!important;
+    color:#000!important;
+    border:1px solid rgba(0,0,0,.16)!important;
+  }
+
+  .confirm-row,
+  .mini-row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)!important;
+    gap:12px!important;
+    align-items:start!important;
+  }
+
+  .confirm-value,
+  .mini-val{
+    text-align:right!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  .grp-size-picker{
+    gap:14px!important;
+    margin:28px 0!important;
+  }
+
+  .grp-size-display{
+    min-width:108px!important;
+    min-height:108px!important;
+    background:#fff!important;
+  }
+
+  .grp-tabs,
+  .cx-client-tabs{
+    display:flex!important;
+    gap:8px!important;
+    overflow-x:auto!important;
+    flex-wrap:nowrap!important;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:8px!important;
+    scrollbar-width:none;
+  }
+
+  .grp-tabs::-webkit-scrollbar,
+  .cx-client-tabs::-webkit-scrollbar{display:none;}
+
+  .grp-tab,
+  .cx-client-tab{
+    flex:0 0 auto!important;
+    white-space:nowrap!important;
+  }
+
+  .sticky-bar,
+  #bk_stickyBar{
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    transform:none!important;
+    border-radius:0!important;
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px))!important;
+    background:rgba(255,255,255,.98)!important;
+    border-top:1px solid rgba(0,0,0,.12)!important;
+  }
+
+  .sticky-footer{
+    width:100%!important;
+    max-width:430px!important;
+    margin:0 auto!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+
+  .sticky-actions{
+    width:100%!important;
+    display:flex!important;
+    gap:10px!important;
+  }
+
+  .sticky-actions .btn-primary{
+    flex:1 1 auto!important;
+  }
+
+  .bk-floating-signout{
+    top:calc(12px + env(safe-area-inset-top,0px))!important;
+    right:12px!important;
+    max-width:38vw!important;
+    padding:8px 10px!important;
+    font-size:.66rem!important;
+    background:#000!important;
+    color:#fff!important;
+    border:1px solid rgba(255,255,255,.28)!important;
+    box-shadow:none!important;
+  }
+}
+
+/* Very small phones: reduce columns where needed. */
+@media (max-width:374px){
+  .screen{
+    padding-left:12px!important;
+    padding-right:12px!important;
+  }
+
+  .screen-inner{
+    max-width:350px!important;
+  }
+
+  .dept-toggle,
+  .book-for-card .book-for-options,
+  .slots-grid{
+    grid-template-columns:1fr!important;
+  }
+
+  .mode-card{
+    grid-template-columns:38px minmax(0,1fr) 16px!important;
+  }
+
+  .step-header h2,
+  .success-title,
+  .confirm-title{
+    font-size:clamp(1.9rem,10vw,2.4rem)!important;
+  }
+}
+
+/* Desktop/tablet preview remains phone-sized and centered. */
+@media (min-width:780px){
+  #app{
+    width:430px!important;
+    max-width:430px!important;
+    min-height:844px!important;
+    max-height:calc(100vh - 28px)!important;
+    margin:14px auto!important;
+    overflow:hidden!important;
+  }
+
+  .screen{
+    width:100%!important;
+    max-width:430px!important;
+    max-height:calc(100vh - 28px)!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+  }
+
+  .screen-inner,
+  .sticky-footer{
+    max-width:390px!important;
+  }
+
+  .sticky-bar{
+    width:430px!important;
+    left:50%!important;
+    right:auto!important;
+    transform:translateX(-50%)!important;
+  }
+}
