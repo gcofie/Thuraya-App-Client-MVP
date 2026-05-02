@@ -1,251 +1,225 @@
 /* =========================================================
-   THURAYA CLIENT APP — ONE EXPERIENCE FINAL LOCK
-   Purpose: ONE mobile-first black luxury UI on PC and mobile.
-   Load LAST. CSS only. No booking logic changed.
+   THURAYA CLIENT APP — UNIFIED MOBILE-FIRST BASELINE
+   Purpose: make PC and mobile render the same centered app shell.
+   Load this file LAST. No JS / booking logic changes.
    ========================================================= */
 
 :root{
+  --thuraya-shell-max:430px;
+  --thuraya-content-max:390px;
   --thuraya-black:#000000;
   --thuraya-cloud:#f8f7f3;
-  --thuraya-card:#f1efeb;
-  --thuraya-text:#050505;
-  --thuraya-muted:#2c2a27;
-  --thuraya-line:rgba(255,255,255,.22);
-  --thuraya-accent:#8f7b3a;
+  --thuraya-paper:#f0ede8;
 }
 
-*{box-sizing:border-box;}
-html,body{
-  margin:0!important;
-  width:100%!important;
-  min-height:100%!important;
-  overflow-x:hidden!important;
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
-  -webkit-font-smoothing:antialiased;
-  text-rendering:geometricPrecision;
-}
+html,
 body{
-  display:flex!important;
-  justify-content:center!important;
-  align-items:stretch!important;
+  width:100% !important;
+  max-width:100% !important;
+  min-height:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow-x:hidden !important;
+  background:var(--thuraya-black) !important;
 }
+
+body{
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:stretch !important;
+}
+
 #app{
-  width:100%!important;
-  max-width:430px!important;
-  min-height:100vh!important;
-  min-height:100dvh!important;
-  margin:0 auto!important;
-  padding:0!important;
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
-  overflow-x:hidden!important;
-  position:relative!important;
-  box-shadow:none!important;
-  border-radius:0!important;
+  width:100% !important;
+  max-width:var(--thuraya-shell-max) !important;
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  position:relative !important;
+  overflow-x:hidden !important;
+  background:var(--thuraya-paper) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
 }
-.bg-texture{display:none!important;background:var(--thuraya-black)!important;}
+
+.bg-texture{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  max-width:none !important;
+  background:var(--thuraya-black) !important;
+  pointer-events:none !important;
+}
 
 .screen{
-  display:none!important;
-  width:100%!important;
-  max-width:430px!important;
-  min-height:100vh!important;
-  min-height:100dvh!important;
-  margin:0 auto!important;
-  overflow-x:hidden!important;
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
-  position:relative!important;
-}
-.screen.active{display:block!important;}
-.screen-inner{
-  width:100%!important;
-  max-width:390px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
-  padding-left:20px!important;
-  padding-right:20px!important;
-  box-sizing:border-box!important;
-  background:transparent!important;
+  display:none !important;
+  width:100% !important;
+  max-width:var(--thuraya-shell-max) !important;
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  margin:0 auto !important;
+  box-sizing:border-box !important;
+  overflow-x:hidden !important;
+  position:relative !important;
 }
 
-/* Keep welcome page full-screen and centered */
-#screen-welcome,
-#screen-welcome.active{
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
+.screen.active{
+  display:block !important;
+  justify-content:initial !important;
+  align-items:initial !important;
 }
-#screen-welcome.active{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
+
+.screen-inner,
+.welcome-inner,
+.success-inner,
+.doc-viewer-inner{
+  width:100% !important;
+  max-width:var(--thuraya-content-max) !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
 }
+
+/* Welcome stays mobile-first on PC too */
+#screen-welcome{
+  width:100% !important;
+  max-width:var(--thuraya-shell-max) !important;
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  margin:0 auto !important;
+  background:var(--thuraya-black) !important;
+  color:var(--thuraya-cloud) !important;
+  overflow:hidden !important;
+}
+
+#screen-welcome.active{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
 #screen-welcome .welcome-inner{
-  width:min(100%,420px)!important;
-  max-width:420px!important;
-  margin:0 auto!important;
-  padding-left:22px!important;
-  padding-right:22px!important;
-  text-align:center!important;
+  max-width:390px !important;
+  padding-left:22px !important;
+  padding-right:22px !important;
 }
 
-/* Floating sign-out should stay inside the app, not desktop viewport */
+/* Booking mode caption visibility */
+#screen-booking-mode .step-header p,
+#screen-booking-mode .screen-subtext,
+#screen-booking-mode .hero-subtext,
+#screen-booking-mode .caption-text{
+  color:var(--thuraya-cloud) !important;
+  opacity:.94 !important;
+}
+
+/* Keep all booking flow pages at the same phone scale */
+#screen-booking-mode .screen-inner,
+#screen-profile .screen-inner,
+#screen-guest .screen-inner,
+#screen-services .screen-inner,
+#screen-technician .screen-inner,
+#screen-datetime .screen-inner,
+#screen-confirm .screen-inner,
+#screen-success .screen-inner,
+#screen-group-size .screen-inner,
+#screen-group-services .screen-inner,
+#screen-group-datetime .screen-inner,
+#screen-group-confirm .screen-inner,
+#screen-group-success .screen-inner,
+#screen-mybookings .screen-inner,
+#screen-client-care-library .screen-inner{
+  width:100% !important;
+  max-width:390px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+/* Fixed/sticky UI must align to the centered app, not the browser viewport */
+.sticky-bar,
+.sticky-footer,
+#bk_stickyBar{
+  width:100% !important;
+  max-width:var(--thuraya-shell-max) !important;
+  left:50% !important;
+  right:auto !important;
+  transform:translateX(-50%) !important;
+  box-sizing:border-box !important;
+}
+
 .bk-floating-signout{
-  position:absolute!important;
-  top:16px!important;
-  right:16px!important;
-  z-index:30!important;
+  right:calc((100vw - min(100vw, var(--thuraya-shell-max))) / 2 + 14px) !important;
 }
 
-/* One black luxury booking-mode experience across PC + mobile */
-#screen-booking-mode,
-#screen-booking-mode.active{
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
+/* Prevent horizontal blowouts from long labels/cards */
+*,
+*::before,
+*::after{
+  box-sizing:border-box !important;
 }
-#screen-booking-mode::before{
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
-  box-shadow:none!important;
+
+img,
+svg,
+video,
+canvas{
+  max-width:100% !important;
 }
-#screen-booking-mode .screen-inner{
-  max-width:390px!important;
-  padding-top:clamp(84px,12dvh,112px)!important;
-  padding-left:20px!important;
-  padding-right:20px!important;
-  padding-bottom:56px!important;
+
+.mode-card,
+.service-card,
+.tech-option-card,
+.tech-card,
+.form-card,
+.confirm-card,
+.book-for-card,
+.promo-block,
+.group-option-card,
+.group-capacity-panel,
+.group-split-panel,
+.group-manual-subgroup-card,
+.group-billing-panel,
+.cx-client-card{
+  max-width:100% !important;
+  box-sizing:border-box !important;
 }
-#screen-booking-mode .step-header{
-  margin:0 0 34px!important;
-  color:var(--thuraya-cloud)!important;
+
+.mode-card-body,
+.service-card-body,
+.tech-card-body,
+.group-option-card *,
+.service-card *{
+  min-width:0 !important;
 }
-#screen-booking-mode .step-badge{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  min-height:34px!important;
-  padding:8px 20px!important;
-  border-radius:999px!important;
-  background:#f2f2f0!important;
-  color:#000!important;
-  border:1px solid rgba(255,255,255,.72)!important;
-  box-shadow:0 12px 28px rgba(0,0,0,.22)!important;
-  font-family:"DM Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
-  font-size:clamp(.72rem,2.7vw,.82rem)!important;
-  font-weight:800!important;
-  letter-spacing:.18em!important;
-  text-transform:uppercase!important;
+
+/* Small phones: keep same shell logic, slightly tighter inner gutter */
+@media (max-width:390px){
+  :root{--thuraya-content-max:calc(100vw - 28px);} 
+  #screen-welcome .welcome-inner{padding-left:18px !important;padding-right:18px !important;}
 }
-#screen-booking-mode .step-header h2{
-  color:rgba(248,247,243,.94)!important;
-  opacity:1!important;
-  font-family:"Cormorant Garamond",Georgia,serif!important;
-  font-size:clamp(3.05rem,11.5vw,4.8rem)!important;
-  line-height:.98!important;
-  font-weight:400!important;
-  letter-spacing:-.035em!important;
-  margin:clamp(48px,8dvh,72px) 0 0!important;
-}
-#screen-booking-mode .step-header p{
-  color:var(--thuraya-cloud)!important;
-  opacity:.9!important;
-  font-size:clamp(1rem,4.1vw,1.18rem)!important;
-  line-height:1.45!important;
-  margin:clamp(28px,4dvh,38px) 0 0!important;
-}
-#screen-booking-mode .screen-inner > div[style*="display:flex"]{
-  gap:18px!important;
-  margin-top:0!important;
-}
-#screen-booking-mode .mode-card{
-  width:100%!important;
-  min-height:clamp(136px,23dvh,172px)!important;
-  display:grid!important;
-  grid-template-columns:56px minmax(0,1fr) 22px!important;
-  align-items:center!important;
-  gap:18px!important;
-  padding:22px 24px!important;
-  border-radius:24px!important;
-  background:var(--thuraya-card)!important;
-  color:var(--thuraya-text)!important;
-  border:1px solid rgba(255,255,255,.24)!important;
-  box-shadow:0 20px 46px rgba(0,0,0,.32)!important;
-}
-#screen-booking-mode .mode-card-icon{
-  width:48px!important;
-  height:48px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  border-radius:999px!important;
-  background:#f8f7f3!important;
-  color:#000!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.65)!important;
-  font-size:1rem!important;
-}
-#screen-booking-mode .mode-card-body{
-  min-width:0!important;
-  text-align:left!important;
-}
-#screen-booking-mode .mode-card-body strong{
-  display:block!important;
-  color:var(--thuraya-text)!important;
-  font-size:clamp(1.05rem,4.4vw,1.22rem)!important;
-  line-height:1.12!important;
-  font-weight:800!important;
-  letter-spacing:-.02em!important;
-  margin:0 0 8px!important;
-}
-#screen-booking-mode .mode-card-body span{
-  display:block!important;
-  color:var(--thuraya-muted)!important;
-  font-size:clamp(.96rem,3.9vw,1.08rem)!important;
-  line-height:1.45!important;
-  font-weight:400!important;
-}
-#screen-booking-mode .mode-card-arrow{
-  color:var(--thuraya-accent)!important;
-  font-size:2rem!important;
-  line-height:1!important;
-}
+
+/* =========================================================
+   THURAYA — HARD THEME LOCK v2
+   Same black luxury experience on PC and mobile.
+   ========================================================= */
+html,body{background:#000!important;color:#f8f7f3!important;overflow-x:hidden!important;}
+body{display:flex!important;justify-content:center!important;align-items:stretch!important;}
+#app{width:100%!important;max-width:430px!important;min-height:100vh!important;min-height:100dvh!important;margin:0 auto!important;background:#000!important;overflow-x:hidden!important;}
+.bg-texture{background:#000!important;}
+.screen{width:100%!important;max-width:430px!important;min-height:100vh!important;min-height:100dvh!important;margin:0 auto!important;overflow-x:hidden!important;}
+.screen.active{display:block!important;}
+.screen-inner{width:100%!important;max-width:390px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box!important;}
+#screen-booking-mode,#screen-booking-mode.active{background:#000!important;color:#f8f7f3!important;}
+#screen-booking-mode::before{background:#000!important;color:#f8f7f3!important;box-shadow:none!important;}
+#screen-booking-mode .screen-inner{background:transparent!important;padding-left:20px!important;padding-right:20px!important;padding-top:clamp(84px,12dvh,112px)!important;}
+#screen-booking-mode .step-badge{background:#f2f2f0!important;color:#000!important;border:1px solid rgba(255,255,255,.72)!important;}
+#screen-booking-mode .step-header h2{color:rgba(248,247,243,.92)!important;opacity:1!important;font-size:clamp(3rem,11vw,4.6rem)!important;line-height:.98!important;}
+#screen-booking-mode .step-header p{color:#f8f7f3!important;opacity:.88!important;}
+#screen-booking-mode .mode-card{background:#f1efeb!important;color:#050505!important;border:1px solid rgba(255,255,255,.24)!important;box-shadow:0 20px 46px rgba(0,0,0,.32)!important;}
+#screen-booking-mode .mode-card-body strong{color:#050505!important;}
+#screen-booking-mode .mode-card-body span{color:#2c2a27!important;}
+#screen-booking-mode .mode-card-arrow{color:#8f7b3a!important;}
 #screen-booking-mode .mode-badge{display:none!important;}
-
-/* Other booking pages: black shell + readable cards */
-#screen-profile,#screen-guest,#screen-services,#screen-technician,#screen-datetime,#screen-confirm,#screen-success,
-#screen-group-size,#screen-group-services,#screen-group-datetime,#screen-group-confirm,#screen-group-success,
-#screen-mybookings,#screen-client-care-library{
-  background:var(--thuraya-black)!important;
-  color:var(--thuraya-cloud)!important;
-}
-#screen-profile .step-header h2,#screen-guest .step-header h2,#screen-services .step-header h2,#screen-technician .step-header h2,#screen-datetime .step-header h2,#screen-confirm .step-header h2,
-#screen-group-size .step-header h2,#screen-group-services .step-header h2,#screen-group-datetime .step-header h2,#screen-group-confirm .step-header h2,#screen-mybookings .step-header h2,#screen-client-care-library .step-header h2{
-  color:var(--thuraya-cloud)!important;
-}
-#screen-profile .step-header p,#screen-guest .step-header p,#screen-services .step-header p,#screen-technician .step-header p,#screen-datetime .step-header p,#screen-confirm .step-header p,
-#screen-group-size .step-header p,#screen-group-services .step-header p,#screen-group-datetime .step-header p,#screen-group-confirm .step-header p,#screen-mybookings .step-header p,#screen-client-care-library .step-header p{
-  color:rgba(248,247,243,.86)!important;
-}
-.form-card,.service-card,.tech-card,.tech-option-card,.confirm-card,.book-for-card,.promo-block,.group-option-card,.group-capacity-panel,.group-split-panel,.group-manual-subgroup-card,.group-billing-panel,.cx-client-card{
-  background:var(--thuraya-card)!important;
-  color:var(--thuraya-text)!important;
-  border:1px solid rgba(255,255,255,.24)!important;
-  border-radius:22px!important;
-}
-
-/* Tablet/desktop still shows same mobile app, centered */
-@media (min-width:431px){
-  body{background:var(--thuraya-black)!important;}
-  #app{max-width:430px!important;}
-}
-@media (max-width:779px){
-  html,body,#app,.screen,.screen.active{background:var(--thuraya-black)!important;}
-  .screen.active{display:block!important;}
-  #screen-welcome.active{display:flex!important;}
-  .screen-inner{max-width:390px!important;padding-left:20px!important;padding-right:20px!important;}
-}
-@media (max-width:374px){
-  .screen-inner{padding-left:16px!important;padding-right:16px!important;}
-  #screen-booking-mode .mode-card{padding:18px 18px!important;grid-template-columns:48px minmax(0,1fr) 18px!important;gap:14px!important;}
-  #screen-booking-mode .mode-card-icon{width:44px!important;height:44px!important;}
-}
+@media(max-width:779px){html,body,#app,.screen,.screen.active{background:#000!important}.screen.active{display:block!important}#screen-booking-mode .screen-inner{max-width:390px!important;padding-left:20px!important;padding-right:20px!important}}

@@ -1,0 +1,224 @@
+/* THURAYA FINAL APP LOCK — single source for PC + mobile booking screens
+   Purpose: stop desktop/mobile split by loading LAST after styles.css + brand.css.
+   Logic untouched. */
+
+:root{
+  --thuraya-black:#000000;
+  --thuraya-cloud:#F8F7F3;
+  --thuraya-card:#F1EFEB;
+  --thuraya-card-border:rgba(248,247,243,.28);
+  --thuraya-card-text:#050505;
+  --thuraya-muted:#2C2A27;
+  --thuraya-arrow:#8F7B3A;
+}
+
+*{box-sizing:border-box;}
+html,body{
+  margin:0!important;
+  width:100%!important;
+  min-height:100%!important;
+  overflow-x:hidden!important;
+  background:#000!important;
+  color:var(--thuraya-cloud)!important;
+}
+body{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+}
+#app{
+  width:100%!important;
+  max-width:430px!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+  margin:0 auto!important;
+  padding:0!important;
+  background:#000!important;
+  color:var(--thuraya-cloud)!important;
+  position:relative!important;
+  overflow-x:hidden!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+}
+.bg-texture{background:#000!important;display:block!important;}
+
+.screen{
+  display:none!important;
+  width:100%!important;
+  max-width:430px!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+  margin:0 auto!important;
+  background:#000!important;
+  color:var(--thuraya-cloud)!important;
+  overflow-x:hidden!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+.screen.active{display:block!important;}
+.screen-inner{
+  width:100%!important;
+  max-width:390px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  padding-left:20px!important;
+  padding-right:20px!important;
+  box-sizing:border-box!important;
+  background:transparent!important;
+}
+
+/* Make every post-login booking screen use the black luxury shell */
+.screen:not(#screen-welcome):not(#screen-doc-viewer),
+.screen:not(#screen-welcome):not(#screen-doc-viewer).active{
+  background:#000!important;
+  color:var(--thuraya-cloud)!important;
+}
+.screen:not(#screen-welcome):not(#screen-doc-viewer)::before{
+  background:#000!important;
+  color:var(--thuraya-cloud)!important;
+  box-shadow:none!important;
+}
+
+/* Booking mode page — identical visual system on PC and mobile */
+#screen-booking-mode .screen-inner{
+  max-width:390px!important;
+  padding-top:clamp(72px,10vh,96px)!important;
+  padding-bottom:48px!important;
+}
+#screen-booking-mode .step-header{
+  margin:0 0 28px!important;
+  text-align:left!important;
+}
+#screen-booking-mode .step-badge{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:30px!important;
+  padding:7px 16px!important;
+  margin:0 0 32px!important;
+  border-radius:999px!important;
+  background:#f2f2f0!important;
+  color:#000!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  box-shadow:0 14px 32px rgba(255,255,255,.05)!important;
+  font-family:"DM Sans",system-ui,sans-serif!important;
+  font-size:clamp(.70rem,2.8vw,.78rem)!important;
+  font-weight:800!important;
+  letter-spacing:.22em!important;
+  text-transform:uppercase!important;
+}
+#screen-booking-mode .step-header h2{
+  color:rgba(248,247,243,.14)!important;
+  opacity:1!important;
+  font-family:"Cormorant Garamond",Georgia,serif!important;
+  font-size:clamp(3.15rem,12vw,4.55rem)!important;
+  line-height:.95!important;
+  font-weight:400!important;
+  letter-spacing:-.045em!important;
+  margin:0!important;
+  max-width:360px!important;
+}
+#screen-booking-mode .step-header p{
+  color:#f8f7f3!important;
+  opacity:.92!important;
+  font-family:"DM Sans",system-ui,sans-serif!important;
+  font-size:clamp(1.08rem,4.1vw,1.28rem)!important;
+  line-height:1.35!important;
+  margin:26px 0 0!important;
+  max-width:350px!important;
+}
+#screen-booking-mode .step-header + div{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:14px!important;
+  margin-top:0!important;
+}
+#screen-booking-mode .mode-card{
+  width:100%!important;
+  min-height:132px!important;
+  display:grid!important;
+  grid-template-columns:54px minmax(0,1fr) 20px!important;
+  align-items:center!important;
+  gap:18px!important;
+  padding:22px 24px!important;
+  border-radius:24px!important;
+  background:var(--thuraya-card)!important;
+  color:var(--thuraya-card-text)!important;
+  border:1px solid var(--thuraya-card-border)!important;
+  box-shadow:0 20px 46px rgba(0,0,0,.34)!important;
+  text-align:left!important;
+}
+#screen-booking-mode .mode-card-icon{
+  width:48px!important;
+  height:48px!important;
+  border-radius:50%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#F7F4EF!important;
+  border:1px solid rgba(255,255,255,.7)!important;
+  font-size:1.1rem!important;
+  box-shadow:none!important;
+}
+#screen-booking-mode .mode-card-body{min-width:0!important;}
+#screen-booking-mode .mode-card-body strong{
+  display:block!important;
+  color:#050505!important;
+  font-family:"DM Sans",system-ui,sans-serif!important;
+  font-size:clamp(1.08rem,4.1vw,1.26rem)!important;
+  font-weight:800!important;
+  line-height:1.1!important;
+  margin:0 0 10px!important;
+}
+#screen-booking-mode .mode-card-body span{
+  display:block!important;
+  color:#2c2a27!important;
+  font-family:"DM Sans",system-ui,sans-serif!important;
+  font-size:clamp(1rem,3.8vw,1.12rem)!important;
+  line-height:1.42!important;
+  margin:0!important;
+}
+#screen-booking-mode .mode-card-arrow,
+#screen-booking-mode .mode-card-arrow[style]{
+  color:var(--thuraya-arrow)!important;
+  font-size:2rem!important;
+  line-height:1!important;
+}
+#screen-booking-mode .mode-badge{display:none!important;}
+
+/* Sign-out placement consistent */
+#bkFloatingSignOut,
+.bk-floating-signout{
+  position:fixed!important;
+  top:max(16px,env(safe-area-inset-top,0px) + 10px)!important;
+  right:calc((100vw - min(100vw,430px))/2 + 18px)!important;
+  z-index:999!important;
+  border-radius:999px!important;
+  background:rgba(0,0,0,.38)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+}
+
+/* Other booking pages keep readable black theme, but cards/inputs remain light */
+.service-card,.tech-option-card,.tech-card,.form-card,.confirm-card,.book-for-card,.promo-block,
+.group-option-card,.group-capacity-panel,.group-split-panel,.group-manual-subgroup-card,.group-billing-panel,.cx-client-card{
+  background:var(--thuraya-card)!important;
+  color:#050505!important;
+  border:1px solid rgba(248,247,243,.26)!important;
+  border-radius:22px!important;
+}
+input,select,textarea{
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
+@media (min-width:431px){
+  body{background:#000!important;}
+  #app{max-width:430px!important;}
+}
+@media (max-width:430px){
+  #app,.screen{max-width:100vw!important;}
+  .screen-inner{max-width:100%!important;padding-left:20px!important;padding-right:20px!important;}
+  #screen-booking-mode .screen-inner{padding-top:72px!important;}
+  #screen-booking-mode .mode-card{min-height:128px!important;padding:21px 22px!important;border-radius:24px!important;}
+}
