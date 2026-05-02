@@ -1800,15 +1800,13 @@ img,svg,video,canvas{
 
 
 /* =========================================================
-   THURAYA PAGE 1 FINAL INTERACTION LAYER
-   Floating pill CTA + medium luxury selection feedback
+   THURAYA PAGE 1 FORCE PATCH — FLOATING CTA + MEDIUM SELECT
    Scope: #screen-services only. Logic untouched.
    ========================================================= */
 #screen-services #bk_serviceMenu .service-card{
   position:relative !important;
-  cursor:pointer !important;
-  transition:transform .18s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease !important;
-  will-change:transform !important;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease !important;
+  -webkit-tap-highlight-color:transparent !important;
 }
 
 #screen-services #bk_serviceMenu .service-card:active{
@@ -1818,9 +1816,9 @@ img,svg,video,canvas{
 #screen-services #bk_serviceMenu .service-card.selected{
   transform:translateY(-1px) !important;
   background:linear-gradient(180deg,#FFFDF8 0%,#FFF7EC 100%) !important;
-  border-color:rgba(183,138,66,.76) !important;
-  border-width:1.6px !important;
-  box-shadow:0 18px 38px rgba(183,138,66,.20), inset 0 0 0 1px rgba(183,138,66,.14) !important;
+  border-color:rgba(183,138,66,.82) !important;
+  border-width:1.8px !important;
+  box-shadow:0 18px 42px rgba(183,138,66,.22), inset 0 0 0 1px rgba(183,138,66,.16) !important;
 }
 
 #screen-services #bk_serviceMenu .service-card::after{
@@ -1856,6 +1854,8 @@ img,svg,video,canvas{
 
 #screen-services .thuraya-inline-continue{
   display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
 }
 
 #bk_stickyBar{
@@ -1864,38 +1864,37 @@ img,svg,video,canvas{
   pointer-events:none !important;
 }
 
-#thurayaFloatingServiceCTA{
+#screen-services #thurayaFloatingServiceCTA{
   position:fixed !important;
   left:50% !important;
   bottom:calc(18px + env(safe-area-inset-bottom)) !important;
   transform:translateX(-50%) !important;
-  z-index:10050 !important;
+  z-index:2147483000 !important;
   width:min(390px, calc(100vw - 34px)) !important;
-  min-height:66px !important;
+  min-height:68px !important;
   padding:10px 10px 10px 18px !important;
   border-radius:999px !important;
-  background:rgba(10,10,10,.96) !important;
+  background:rgba(10,10,10,.97) !important;
   color:#fff !important;
-  border:1px solid rgba(255,255,255,.12) !important;
-  box-shadow:0 24px 58px rgba(0,0,0,.34) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  box-shadow:0 24px 58px rgba(0,0,0,.38) !important;
   backdrop-filter:blur(18px) !important;
   -webkit-backdrop-filter:blur(18px) !important;
-  display:none !important;
+  display:grid !important;
   grid-template-columns:minmax(0,1fr) auto !important;
   gap:12px !important;
   align-items:center !important;
 }
 
-#screen-services.active ~ #thurayaFloatingServiceCTA,
-body:has(#screen-services.active) #thurayaFloatingServiceCTA{
-  display:grid !important;
+#screen-services:not(.active) #thurayaFloatingServiceCTA{
+  display:none !important;
 }
 
-#thurayaFloatingServiceCTA .thuraya-floating-copy{
+#screen-services #thurayaFloatingServiceCTA .thuraya-floating-copy{
   min-width:0 !important;
 }
 
-#thurayaFloatingServiceCTA .thuraya-floating-title{
+#screen-services #thurayaFloatingServiceCTA .thuraya-floating-title{
   font-family:var(--font-sans, system-ui, sans-serif) !important;
   font-size:.84rem !important;
   line-height:1.2 !important;
@@ -1906,7 +1905,7 @@ body:has(#screen-services.active) #thurayaFloatingServiceCTA{
   text-overflow:ellipsis !important;
 }
 
-#thurayaFloatingServiceCTA .thuraya-floating-sub{
+#screen-services #thurayaFloatingServiceCTA .thuraya-floating-sub{
   margin-top:3px !important;
   color:rgba(255,255,255,.62) !important;
   font-size:.70rem !important;
@@ -1916,7 +1915,7 @@ body:has(#screen-services.active) #thurayaFloatingServiceCTA{
   text-overflow:ellipsis !important;
 }
 
-#thurayaFloatingServiceCTA button{
+#screen-services #thurayaFloatingServiceCTA button{
   min-height:46px !important;
   padding:0 18px !important;
   border-radius:999px !important;
@@ -1932,23 +1931,23 @@ body:has(#screen-services.active) #thurayaFloatingServiceCTA{
   transition:transform .18s ease, opacity .18s ease !important;
 }
 
-#thurayaFloatingServiceCTA button:active{
+#screen-services #thurayaFloatingServiceCTA button:active{
   transform:scale(.96) !important;
 }
 
-#thurayaFloatingServiceCTA.is-disabled{
+#screen-services #thurayaFloatingServiceCTA.is-disabled{
   opacity:.78 !important;
 }
 
-#thurayaFloatingServiceCTA.is-disabled button{
+#screen-services #thurayaFloatingServiceCTA.is-disabled button{
   opacity:.45 !important;
   cursor:not-allowed !important;
 }
 
 @media(max-width:430px){
-  #thurayaFloatingServiceCTA{
+  #screen-services #thurayaFloatingServiceCTA{
     width:calc(100vw - 28px) !important;
     bottom:calc(14px + env(safe-area-inset-bottom)) !important;
   }
 }
-/* === END THURAYA PAGE 1 FINAL INTERACTION LAYER === */
+/* === END THURAYA PAGE 1 FORCE PATCH === */

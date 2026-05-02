@@ -1742,70 +1742,93 @@ document.addEventListener('DOMContentLoaded', function() {
 // ── END THURAYA FINAL CTA EVENT SYNC ──────────────────────
 
 
-// ── THURAYA FLOATING SERVICE CTA — UI ONLY ───────────────
-// Mirrors existing service selection state. Does not change booking logic.
-function bk_ensureFloatingServiceCTA() {
-    let cta = document.getElementById('thurayaFloatingServiceCTA');
-    if (cta) return cta;
-
-    cta = document.createElement('div');
-    cta.id = 'thurayaFloatingServiceCTA';
-    cta.className = 'is-disabled';
-    cta.innerHTML = `
-        <div class="thuraya-floating-copy">
-            <div class="thuraya-floating-title" id="thurayaFloatingServiceTitle">Select a service</div>
-            <div class="thuraya-floating-sub" id="thurayaFloatingServiceSub">Step 1 of 4 · Choose your ritual</div>
-        </div>
-        <button type="button" id="thurayaFloatingServiceBtn">Continue</button>
-    `;
-    document.body.appendChild(cta);
-
-    const btn = document.getElementById('thurayaFloatingServiceBtn');
-    if (btn) {
-        btn.addEventListener('click', () => {
-            if (btn.disabled) return;
-            goToStep('screen-technician');
-        });
-    }
-    return cta;
-}
-
-function bk_syncFloatingServiceCTA() {
-    const cta = bk_ensureFloatingServiceCTA();
-    const title = document.getElementById('thurayaFloatingServiceTitle');
-    const sub = document.getElementById('thurayaFloatingServiceSub');
-    const btn = document.getElementById('thurayaFloatingServiceBtn');
-
-    const selectedCount = Array.isArray(bk_selectedServices) ? bk_selectedServices.reduce((n, s) => n + (s.qty || 1), 0) : 0;
-    const totalMins = Array.isArray(bk_selectedServices) ? bk_selectedServices.reduce((n, s) => n + ((Number(s.dur) || 0) * (s.qty || 1)), 0) : 0;
-    const subtotal = Array.isArray(bk_selectedServices) ? bk_selectedServices.reduce((n, s) => n + ((Number(s.price) || 0) * (s.qty || 1)), 0) : 0;
-
-    const active = selectedCount > 0 || bk_hasServiceSelectedUI();
-    cta.classList.toggle('is-disabled', !active);
-    if (btn) btn.disabled = !active;
-
-    if (!active) {
-        if (title) title.textContent = 'Select a service';
-        if (sub) sub.textContent = 'Step 1 of 4 · Choose your ritual';
-        return;
+// ── THURAYA FLOATING SERVICE CTA — FORCE VISIBLE PATCH ─────
+// UI-only: mirrors existing service selection state. Booking logic untouched.
+(function(){
+    function getSelectedCount(){
+        if (Array.isArray(window.bk_selectedServices)) {
+            return window.bk_selectedServices.reduce((n, s) => n + (Number(s.qty) || 1), 0);
+        }
+        return document.querySelectorAll('#bk_serviceMenu .service-card.selected').length;
     }
 
-    if (title) title.textContent = selectedCount === 1 ? '1 service selected' : `${selectedCount} services selected`;
-    if (sub) {
-        const parts = [];
-        if (subtotal > 0) parts.push(`${subtotal.toFixed(0)} GHC`);
-        if (totalMins > 0) parts.push(`${totalMins} mins`);
-        sub.textContent = parts.length ? parts.join(' · ') : 'Continue to technician selection';
+    function getTotalMins(){
+        if (!Array.isArray(window.bk_selectedServices)) return 0;
+        return window.bk_selectedServices.reduce((n, s) => n + ((Number(s.dur) || 0) * (Number(s.qty) || 1)), 0);
     }
-}
 
-const bk_originalFinalSyncCTAs = bk_finalSyncCTAs;
-bk_finalSyncCTAs = function() {
-    bk_originalFinalSyncCTAs();
-    try { bk_syncFloatingServiceCTA(); } catch(e) { console.warn('Floating CTA sync skipped:', e); }
-};
+    function getSubtotal(){
+        if (!Array.isArray(window.bk_selectedServices)) return 0;
+        return window.bk_selectedServices.reduce((n, s) => n + ((Number(s.price) || 0) * (Number(s.qty) || 1)), 0);
+    }
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(bk_syncFloatingServiceCTA, 700);
-});
-// ── END THURAYA FLOATING SERVICE CTA ─────────────────────
+    window.bk_syncFloatingServiceCTA = function(){
+        const cta = document.getElementById('thurayaFloatingServiceCTA');
+        if (!cta) return;
+        const title = document.getElementById('thurayaFloatingServiceTitle');
+        const sub = document.getElementById('thurayaFloatingServiceSub');
+        const btn = document.getElementById('thurayaFloatingServiceBtn');
+        const isServiceScreen = document.getElementById('screen-services')?.classList.contains('active');
+
+        cta.style.display = isServiceScreen ? 'grid' : 'none';
+
+        const selectedCount = getSelectedCount();
+        const active = selectedCount > 0 || (typeof bk_hasServiceSelectedUI === 'function' && bk_hasServiceSelectedUI());
+
+        cta.classList.toggle('is-disabled', !active);
+        if (btn) btn.disabled = !active;
+
+        if (!active) {
+            if (title) title.textContent = 'Select a service';
+            if (sub) sub.textContent = 'Step 1 of 4 · Choose your ritual';
+            return;
+        }
+
+        const totalMins = getTotalMins();
+        const subtotal = getSubtotal();
+        if (title) title.textContent = selectedCount === 1 ? '1 service selected' : selectedCount + ' services selected';
+        if (sub) {
+            const parts = [];
+            if (subtotal > 0) parts.push(Math.round(subtotal) + ' GHC');
+            if (totalMins > 0) parts.push(totalMins + ' mins');
+            sub.textContent = parts.length ? parts.join(' · ') : 'Continue to technician selection';
+        }
+    };
+
+    document.addEventListener('click', function(e){
+        if (e.target && e.target.id === 'thurayaFloatingServiceBtn') {
+            if (e.target.disabled) return;
+            if (typeof goToStep === 'function') goToStep('screen-technician');
+            return;
+        }
+        if (e.target?.closest?.('#bk_serviceMenu .service-card, #bk_serviceMenu button, .dept-btn')) {
+            setTimeout(window.bk_syncFloatingServiceCTA, 70);
+        }
+    });
+
+    document.addEventListener('change', function(e){
+        if (e.target?.closest?.('#bk_serviceMenu')) setTimeout(window.bk_syncFloatingServiceCTA, 70);
+    });
+
+    const previousShowScreen = window.showScreen;
+    if (typeof previousShowScreen === 'function') {
+        window.showScreen = function(id){
+            previousShowScreen(id);
+            setTimeout(window.bk_syncFloatingServiceCTA, 80);
+        };
+    }
+
+    const previousFinalSync = window.bk_finalSyncCTAs;
+    if (typeof previousFinalSync === 'function') {
+        window.bk_finalSyncCTAs = function(){
+            previousFinalSync();
+            setTimeout(window.bk_syncFloatingServiceCTA, 20);
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setTimeout(window.bk_syncFloatingServiceCTA, 400);
+        setTimeout(window.bk_syncFloatingServiceCTA, 1000);
+    });
+})();
+// ── END THURAYA FLOATING SERVICE CTA FORCE PATCH ──────────
