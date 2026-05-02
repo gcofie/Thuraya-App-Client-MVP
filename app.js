@@ -557,10 +557,10 @@ function _buildCard(s, dept) {
                     ${descHtml}${priceTag}
                 </div>
                 <div class="counter-box">
-                    <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',-1)">−</button>
+                    <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',-1,'${dept}')">−</button>
                     <input type="number" id="bk_qty_${s.id}" value="0" min="0" readonly
                         style="width:44px;height:36px;text-align:center;padding:4px;font-weight:700;border:1px solid var(--border);border-radius:6px;">
-                    <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',1)">+</button>
+                    <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',1,'${dept}')">+</button>
                 </div>
             </div>`;
     }
@@ -573,7 +573,7 @@ function _buildCard(s, dept) {
                style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`;
 
     return `
-        <div class="service-card" onclick="bk_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${name}')">
+        <div class="service-card" onclick="bk_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${name}','${dept}')">
             ${inputEl}
             <div class="service-card-body">
                 <div class="service-card-name">${name} ${tagHtml}</div>
@@ -582,7 +582,7 @@ function _buildCard(s, dept) {
         </div>`;
 }
 
-window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, name) {
+window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, name, dept) {
     event.preventDefault();
     const input = document.getElementById('bk_cb_' + id);
     if (!input) return;
@@ -601,13 +601,13 @@ window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, na
         if (!wasSelected) {
             input.checked = true;
             card.classList.add('selected');
-            bk_selectedServices.push({ id, type, price, dur, name, qty: 1 });
+            bk_selectedServices.push({ id, type, price, dur, name, qty: 1, dept: dept || bk_selectedDept });
         }
     } else {
         input.checked = !input.checked;
         card.classList.toggle('selected', input.checked);
         if (input.checked) {
-            bk_selectedServices.push({ id, type, price, dur, name, qty: 1 });
+            bk_selectedServices.push({ id, type, price, dur, name, qty: 1, dept: dept || bk_selectedDept });
         } else {
             bk_selectedServices = bk_selectedServices.filter(s => s.id !== id);
         }
@@ -615,13 +615,13 @@ window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, na
     updateBreakdown();
 };
 
-window.bk_updateCounter = function(id, price, dur, name, delta) {
+window.bk_updateCounter = function(id, price, dur, name, delta, dept) {
     const input = document.getElementById('bk_qty_' + id);
     if (!input) return;
     let val = Math.max(0, (parseInt(input.value) || 0) + delta);
     input.value = val;
     bk_selectedServices = bk_selectedServices.filter(s => s.id !== id);
-    if (val > 0) bk_selectedServices.push({ id, type: 'counter', price, dur, name, qty: val });
+    if (val > 0) bk_selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept: dept || bk_selectedDept });
     updateBreakdown();
 };
 
@@ -783,7 +783,13 @@ async function loadTechs() {
             // Hide techs marked invisible to clients.
             if (d.visibleToClients === false) return;
 
-            bk_techs.push({ email: doc.id, name: d.name || doc.id });
+            bk_techs.push({
+                email: doc.id,
+                name: d.name || doc.id,
+                // Therapy assignment comes from Staff App.
+                // Existing records without this field are treated as Both for safety.
+                therapyTypes: d.therapyTypes || d.therapyType || d.therapy || ['hand', 'foot']
+            });
         });
 
         console.log('Client booking techs loaded:', bk_techs.length, bk_techs.map(t => t.name || t.email));
@@ -791,6 +797,63 @@ async function loadTechs() {
         console.error('Client booking loadTechs failed:', e);
         bk_techs = [];
     }
+}
+
+// ── Therapy-based technician filtering ────────────────────
+// Staff App saves therapyTypes as ['hand'], ['foot'], or ['hand','foot'].
+// Legacy / unassigned technicians are treated as both to avoid disrupting operations.
+function bk_normalizeTherapyTypes(value) {
+    let raw = value;
+    if (!raw) raw = ['hand', 'foot'];
+    if (!Array.isArray(raw)) raw = [raw];
+
+    const out = new Set();
+    raw.forEach(v => {
+        const t = String(v || '').trim().toLowerCase();
+        if (!t) return;
+        if (t === 'both' || t === 'hand & foot' || t === 'hand/foot') {
+            out.add('hand');
+            out.add('foot');
+        } else if (t.includes('hand')) {
+            out.add('hand');
+        } else if (t.includes('foot') || t.includes('feet')) {
+            out.add('foot');
+        }
+    });
+
+    if (!out.size) {
+        out.add('hand');
+        out.add('foot');
+    }
+    return Array.from(out);
+}
+
+function bk_getRequiredTherapyTypes() {
+    const required = new Set();
+
+    (bk_selectedServices || []).forEach(s => {
+        const dept = String(s.dept || '').toLowerCase();
+        if (dept.includes('hand')) required.add('hand');
+        if (dept.includes('foot')) required.add('foot');
+    });
+
+    if (!required.size) {
+        const dept = String(bk_selectedDept || '').toLowerCase();
+        if (dept.includes('foot')) required.add('foot');
+        else required.add('hand');
+    }
+
+    return Array.from(required);
+}
+
+function bk_techMatchesSelectedTherapy(tech) {
+    const techTypes = bk_normalizeTherapyTypes(tech?.therapyTypes);
+    const required = bk_getRequiredTherapyTypes();
+    return required.every(t => techTypes.includes(t));
+}
+
+function bk_getEligibleTechsForSelectedServices() {
+    return (bk_techs || []).filter(bk_techMatchesSelectedTherapy);
 }
 
 // ── Technician selection ──────────────────────────────────
@@ -825,11 +888,12 @@ window.selectTechOption = function(option) {
 
 function renderTechList() {
     const listEl = document.getElementById('bk_techList');
-    if (!bk_techs.length) {
-        listEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:16px;">No technicians available.</p>';
+    const eligibleTechs = bk_getEligibleTechsForSelectedServices();
+    if (!eligibleTechs.length) {
+        listEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:16px;">No technicians are assigned to this therapy yet. Choose Any Available or contact THURAYA.</p>';
         return;
     }
-    listEl.innerHTML = bk_techs.map(t => {
+    listEl.innerHTML = eligibleTechs.map(t => {
         const initial = (t.name || '?')[0].toUpperCase();
         const selectedEmail = document.getElementById('bk_techEmail').value;
         const isSelected = selectedEmail === t.email;
@@ -876,13 +940,14 @@ window.bk_generateSlots = async function() {
 
     const mode = document.getElementById('bk_techMode').value;
     const specificEmail = document.getElementById('bk_techEmail').value;
+    const eligibleTechs = bk_getEligibleTechsForSelectedServices();
     const techsToCheck = mode === 'specific' && specificEmail
-        ? [specificEmail]
-        : bk_techs.map(t => t.email);
+        ? (eligibleTechs.some(t => t.email === specificEmail) ? [specificEmail] : [])
+        : eligibleTechs.map(t => t.email);
 
     if (!techsToCheck.length) {
         container.style.display = 'none';
-        toast('No technicians available for this date.', 'warning');
+        toast('No technicians assigned to the selected therapy are available. Please choose another service or contact THURAYA.', 'warning');
         return;
     }
 
