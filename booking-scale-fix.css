@@ -757,3 +757,64 @@ html,body,#app{
     transform:translateX(-50%)!important;
   }
 }
+
+
+/* =========================================================
+   THURAYA SCALE CLEAN FINAL — CASCADE NEUTRALISER
+   Purpose: single source of truth after removing mobile-scale.css.
+   This prevents styles.css / brand.css flex centering from leaking into
+   booking screens and keeps every internal page on the same mobile width.
+   ========================================================= */
+
+#app{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:hidden!important;
+}
+
+/* Defensive cap even if browser viewport/zoom misses the mobile breakpoint */
+.screen:not(#screen-welcome) .screen-inner{
+  width:100%!important;
+  max-width:430px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+@media (max-width:779px){
+  .screen.active{
+    display:block!important;
+    justify-content:initial!important;
+    align-items:initial!important;
+  }
+
+  .screen:not(#screen-welcome).active{
+    display:block!important;
+  }
+
+  .screen:not(#screen-welcome) .screen-inner,
+  .sticky-footer,
+  .bottom-nav,
+  .booking-nav{
+    width:100%!important;
+    max-width:390px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .slot-btn,
+  .service-card,
+  .tech-card,
+  .option-card,
+  .group-card{
+    transform-origin:center center!important;
+  }
+}
+
+@media (min-width:780px) and (max-width:1024px){
+  .screen:not(#screen-welcome) .screen-inner{
+    max-width:430px!important;
+  }
+}
