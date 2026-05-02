@@ -303,17 +303,32 @@ window.grp_switchDept = function(dept, btn) {
 function grp_renderServiceList() {
     const container = document.getElementById('grp_serviceList');
     if (!container) return;
+
     const member = grp_members[grp_activeMember];
     const dept = member.dept || 'Hand';
     const sel = member.selectedServices || [];
 
-    const aliases = { 'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS' };
+    /*
+      Group Booking Accordion — Option B:
+      - all sections collapsed by default
+      - multiple sections can stay open
+      - member tabs and booking logic remain unchanged
+    */
+    const aliases = {
+        'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS',
+        'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
+        'O FOOT THERAPY RITUALS': 'FOOT THERAPY RITUALS',
+        'O ADD ONS & UPGRADES': 'ADD ONS & UPGRADES',
+        'O HAND THERAPY & ENHANCEMENT RITUALS': 'HAND THERAPY & ENHANCEMENT RITUALS'
+    };
+
     const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
     const dbData = { Hand: {}, Foot: {} };
 
     (bk_menuServices || []).forEach(s => {
-        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
+        let cat = ((s.category || s.subCategory || s.mainCategory || 'Uncategorized').trim().replace(/\s+/g, ' '));
         cat = aliases[cat] || aliases[cat.toUpperCase()] || cat;
+
         if (s.department === 'Both') {
             ['Hand','Foot'].forEach(d => {
                 if (!dbData[d][cat]) dbData[d][cat] = [];
@@ -327,14 +342,49 @@ function grp_renderServiceList() {
         }
     });
 
-    Object.values(dbData).forEach(dObj => Object.values(dObj).forEach(arr => arr.sort((a,b) => (typeOrder[a.inputType] ?? 1) - (typeOrder[b.inputType] ?? 1))));
-    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    Object.values(dbData).forEach(dObj => Object.values(dObj).forEach(arr => {
+        arr.sort((a,b) =>
+            (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+            (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+            (Number(a.order) || 999) - (Number(b.order) || 999) ||
+            (a.name || '').localeCompare(b.name || '', undefined, { numeric:true, sensitivity:'base' })
+        );
+    }));
+
+    const romanMap = { I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7, VIII:8, IX:9, X:10 };
+    function sectionRank(cat) {
+        const upper = String(cat || '').trim().toUpperCase();
+        const roman = upper.match(/^(I|II|III|IV|V|VI|VII|VIII|IX|X)\./);
+        if (roman) return romanMap[roman[1]] || 50;
+        const numeric = upper.match(/^(\d+)\./);
+        if (numeric) return Number(numeric[1]);
+        if (upper.includes('HAND THERAPY')) return 10;
+        if (upper.includes('PLEIADES')) return 20;
+        if (upper.includes('NAIL ARCHITECTURE')) return 30;
+        if (upper.includes('DESIGNER')) return 40;
+        if (upper.includes('EMBELLISH')) return 50;
+        if (upper.includes('ADD')) return 80;
+        if (upper.includes('FINISH')) return 85;
+        if (upper.includes('FOOT')) return 10;
+        return 99;
+    }
+
+    function helperText(cat, items) {
+        const upper = String(cat || '').toUpperCase();
+        const count = items.length;
+        if (upper.includes('ADD') || upper.includes('UPGRADE') || upper.includes('EMBELLISH') || upper.includes('DESIGNER')) {
+            return `Enhancements · optional · ${count} option${count === 1 ? '' : 's'}`;
+        }
+        if (items.some(s => (s.inputType || 'radio') !== 'radio')) {
+            return `Choose ritual · optional add-ons · ${count} option${count === 1 ? '' : 's'}`;
+        }
+        return `Core treatments · choose one · ${count} option${count === 1 ? '' : 's'}`;
+    }
+
     const sortedCats = Object.keys(dbData[dept] || {}).sort((a,b) => {
-        const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
-        const aNum = numRe.test(aU), bNum = numRe.test(bU);
-        if (aNum && !bNum) return -1;
-        if (!aNum && bNum) return 1;
-        return aU.localeCompare(bU, undefined, { numeric:true, sensitivity:'base' });
+        const ar = sectionRank(a), br = sectionRank(b);
+        if (ar !== br) return ar - br;
+        return a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' });
     });
 
     if (!sortedCats.length) {
@@ -343,23 +393,73 @@ function grp_renderServiceList() {
     }
 
     let html = '';
-    sortedCats.forEach(cat => {
-        const items = dbData[dept][cat];
+    sortedCats.forEach((cat, index) => {
+        const items = dbData[dept][cat] || [];
         const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
         const multis = items.filter(s => (s.inputType || 'radio') !== 'radio');
-        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
+        const sectionId = `grp_menu_section_${grp_activeMember}_${dept}_${index}`;
+        const helper = helperText(cat, items);
+
+        html += `
+            <div class="thuraya-accordion-section grp-accordion-section" data-category="${cat}">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="grp_toggleMenuSection(this)">
+                    <span class="thuraya-accordion-title-wrap">
+                        <span class="thuraya-accordion-title">${cat}</span>
+                        <span class="thuraya-accordion-meta">${helper}</span>
+                    </span>
+                    <span class="thuraya-accordion-chevron">›</span>
+                </button>
+                <div class="thuraya-accordion-body" id="${sectionId}">
+                    <div class="thuraya-accordion-inner">`;
+
         if (singles.length && multis.length) {
-            html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
+            html += `<div class="menu-subgroup-label">Choose your ritual <span>— select one</span></div>`;
             singles.forEach(s => html += grp_buildCard(s, dept, sel));
-            html += `<div class="menu-subgroup-divider"></div><div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
+
+            html += `<div class="menu-subgroup-divider"></div>
+                     <div class="menu-subgroup-label">Enhancements &amp; Add-ons <span>— select any</span></div>`;
             multis.forEach(s => html += grp_buildCard(s, dept, sel));
         } else {
             items.forEach(s => html += grp_buildCard(s, dept, sel));
         }
-        html += '</div>';
+
+        html += `
+                    </div>
+                </div>
+            </div>`;
     });
+
     container.innerHTML = html;
+
+    // Auto-open sections containing selected services for current member.
+    sel.forEach(selected => {
+        const input = document.getElementById('grp_cb_' + selected.id);
+        const qty = document.getElementById('grp_qty_' + selected.id);
+        const anchor = input || qty;
+        const section = anchor?.closest('.thuraya-accordion-section');
+        if (section) {
+            section.classList.add('open');
+            const head = section.querySelector('.thuraya-accordion-head');
+            if (head) head.setAttribute('aria-expanded', 'true');
+        }
+    });
 }
+
+
+// ── THURAYA GROUP SERVICE MENU ACCORDION — OPTION B ───────
+// Multiple sections can stay open. All group service sections start collapsed.
+window.grp_toggleMenuSection = function(btn) {
+    const section = btn?.closest('.thuraya-accordion-section');
+    if (!section) return;
+
+    const isOpen = section.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+    setTimeout(() => {
+        if (typeof window.grp_polishAndWireCTAs === 'function') window.grp_polishAndWireCTAs();
+    }, 80);
+};
+// ── END THURAYA GROUP SERVICE MENU ACCORDION ──────────────
 
 function grp_escapeJs(str) {
     return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');

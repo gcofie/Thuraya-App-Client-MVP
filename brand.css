@@ -1558,3 +1558,242 @@ img,svg,video,canvas{
   }
 }
 /* === END THURAYA SERVICE MENU ACCORDION OPTION B === */
+
+
+
+/* =========================================================
+   THURAYA GROUP SERVICE MENU ACCORDION — OPTION B
+   Matches Individual Booking: all collapsed by default,
+   multiple sections can stay open.
+   ========================================================= */
+
+#grp_serviceList{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:14px !important;
+  padding:2px 0 44px !important;
+}
+
+#grp_serviceList .menu-main-block,
+#grp_serviceList .menu-main-heading,
+#grp_serviceList .menu-section,
+#grp_serviceList .menu-section-heading{
+  display:contents !important;
+}
+
+#grp_serviceList .thuraya-accordion-section{
+  width:100% !important;
+  overflow:hidden !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.80) !important;
+  border:1px solid rgba(221,211,197,.90) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.07) !important;
+}
+
+#grp_serviceList .thuraya-accordion-head{
+  width:100% !important;
+  min-height:76px !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 36px !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding:18px 18px !important;
+  border:0 !important;
+  background:rgba(255,253,248,.94) !important;
+  color:#0a0a0a !important;
+  text-align:left !important;
+  cursor:pointer !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+}
+
+#grp_serviceList .thuraya-accordion-title-wrap{
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:6px !important;
+}
+
+#grp_serviceList .thuraya-accordion-title{
+  color:#0a0a0a !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.98rem !important;
+  line-height:1.16 !important;
+  font-weight:900 !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+}
+
+#grp_serviceList .thuraya-accordion-meta{
+  color:rgba(47,41,34,.62) !important;
+  font-size:.74rem !important;
+  line-height:1.25 !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+
+#grp_serviceList .thuraya-accordion-chevron{
+  width:34px !important;
+  height:34px !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#F4EFE8 !important;
+  color:#0a0a0a !important;
+  font-size:1.35rem !important;
+  line-height:1 !important;
+  transition:transform .22s ease, background .22s ease !important;
+}
+
+#grp_serviceList .thuraya-accordion-section.open .thuraya-accordion-chevron{
+  transform:rotate(90deg) !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+}
+
+#grp_serviceList .thuraya-accordion-body{
+  max-height:0 !important;
+  overflow:hidden !important;
+  transition:max-height .32s ease !important;
+}
+
+#grp_serviceList .thuraya-accordion-section.open .thuraya-accordion-body{
+  max-height:2400px !important;
+}
+
+#grp_serviceList .thuraya-accordion-inner{
+  padding:0 14px 16px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+}
+
+#grp_serviceList .menu-subgroup-label{
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.70rem !important;
+  line-height:1.2 !important;
+  font-weight:850 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  color:rgba(47,41,34,.62) !important;
+  margin:2px 0 -2px !important;
+}
+
+#grp_serviceList .menu-subgroup-label span{
+  color:rgba(47,41,34,.46) !important;
+  font-size:.68rem !important;
+  font-weight:650 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+
+#grp_serviceList .menu-subgroup-divider{
+  height:1px !important;
+  width:100% !important;
+  margin:4px 0 2px !important;
+  background:rgba(35,26,16,.08) !important;
+}
+
+#grp_serviceList .service-card{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:38px minmax(0,1fr) !important;
+  align-items:start !important;
+  gap:14px !important;
+  min-height:0 !important;
+  padding:17px 17px !important;
+  margin:0 !important;
+  border-radius:20px !important;
+  background:rgba(255,253,248,.96) !important;
+  border:1px solid rgba(221,211,197,.82) !important;
+  box-shadow:0 12px 26px rgba(35,26,16,.06) !important;
+  overflow:hidden !important;
+}
+
+#grp_serviceList .service-card:has(.counter-box){
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center !important;
+}
+
+#grp_serviceList .service-card input[type="radio"],
+#grp_serviceList .service-card input[type="checkbox"]{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  min-height:24px !important;
+  margin:4px 0 0 !important;
+  padding:0 !important;
+  accent-color:#0a0a0a !important;
+}
+
+#grp_serviceList .service-card-body{
+  min-width:0 !important;
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+}
+
+#grp_serviceList .service-card-name{
+  color:#0a0a0a !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:1rem !important;
+  line-height:1.15 !important;
+  font-weight:850 !important;
+  letter-spacing:-.018em !important;
+  margin:0 !important;
+}
+
+#grp_serviceList .service-card-desc{
+  color:#2F2922 !important;
+  font-size:.91rem !important;
+  line-height:1.40 !important;
+  margin:0 !important;
+  opacity:.86 !important;
+}
+
+#grp_serviceList .service-price-pill{
+  display:inline-flex !important;
+  align-items:center !important;
+  width:max-content !important;
+  max-width:100% !important;
+  margin-top:4px !important;
+  padding:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#0a0a0a !important;
+  font-family:var(--font-serif, Georgia, serif) !important;
+  font-size:1.15rem !important;
+  line-height:1 !important;
+  font-weight:600 !important;
+  letter-spacing:.02em !important;
+}
+
+#grp_serviceList .service-card.selected{
+  border-color:#0a0a0a !important;
+  border-width:1.35px !important;
+  background:#FFFDF8 !important;
+  box-shadow:0 16px 34px rgba(10,10,10,.11) !important;
+}
+
+@media(max-width:430px){
+  #grp_serviceList .thuraya-accordion-head{
+    min-height:72px !important;
+    padding:17px 17px !important;
+  }
+
+  #grp_serviceList .thuraya-accordion-title{
+    font-size:.93rem !important;
+  }
+
+  #grp_serviceList .thuraya-accordion-meta{
+    font-size:.72rem !important;
+  }
+
+  #grp_serviceList .thuraya-accordion-inner{
+    padding:0 13px 15px !important;
+  }
+}
+/* === END THURAYA GROUP SERVICE MENU ACCORDION OPTION B === */
