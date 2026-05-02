@@ -1,5 +1,6 @@
-
-/* THURAYA — Final Luxury Alignment (Safe) */
+/* THURAYA — Clean Luxury Theme Restore
+   Safe restore file. No hiding rules.
+*/
 
 #screen-welcome .logo-mark {
   margin: 0 auto 24px !important;
@@ -18,44 +19,12 @@
 #screen-welcome .logo-tagline {
   margin-top: 6px !important;
   margin-bottom: 28px !important;
-  opacity: 0.7 !important;
+  opacity: 0.9 !important;
+  color: #F8F7F3 !important;
 }
 
 #screen-welcome .welcome-copy {
   margin-bottom: 36px !important;
   line-height: 1.5 !important;
-  opacity: 0.85 !important;
-}
-
-/* =========================================
-   THURAYA — REMOVE BOTTOM SIGN-IN MESSAGE
-   FINAL (WELCOME SCREEN ONLY)
-   Added to current luxury-theme.css
-========================================= */
-
-/* Hide the beige/cloud sign-in benefit box at the bottom of welcome page */
-#screen-welcome .guest-note,
-#screen-welcome .info-card,
-#screen-welcome .welcome-card,
-#screen-welcome .signin-note,
-#screen-welcome .benefit-card,
-#screen-welcome .message-card,
-#screen-welcome .signin-benefit,
-#screen-welcome .guest-benefit,
-#screen-welcome div[class*="note"],
-#screen-welcome div[class*="card"],
-#screen-welcome div[class*="message"],
-#screen-welcome div[class*="benefit"],
-#screen-welcome p[class*="note"],
-#screen-welcome p[class*="message"],
-#screen-welcome p[class*="benefit"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
+  opacity: 0.9 !important;
 }
