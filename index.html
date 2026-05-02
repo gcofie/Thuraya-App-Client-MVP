@@ -286,217 +286,192 @@
     }
   </style>
 
-<style id="thurayaWelcomeMicroFinal">
-/* THURAYA — welcome micro final
-   Only changes:
-   1) tagline display
-   2) luxury divider under tagline
-   3) email sign-in link color
-   No JavaScript or layout structure touched.
+<style id="thurayaWelcomeFinalOneShot">
+/* THURAYA — FINAL WELCOME ONE-SHOT FIX
+   Scope: welcome page only.
+   Fixes:
+   - real monogram from supplied reference
+   - exact tagline
+   - luxury divider
+   - email link cloud white
+   - removes bottom sign-in benefit card
 */
 
-/* New tagline */
-#screen-welcome .logo-tagline {
-    color: #F8F7F3 !important;
-    font-family: "Cormorant Garamond", Georgia, serif !important;
-    font-style: italic !important;
-    font-weight: 400 !important;
-    letter-spacing: 0.035em !important;
-    text-align: center !important;
+#screen-welcome {
+    background:#000000 !important;
+    color:#F8F7F3 !important;
 }
 
-/* More luxury divider under tagline */
+#screen-welcome .thuraya-final-monogram {
+    width:112px !important;
+    height:124px !important;
+    margin:0 auto 28px !important;
+    padding:0 !important;
+    border:none !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:visible !important;
+}
+
+#screen-welcome .thuraya-final-monogram img {
+    width:112px !important;
+    height:auto !important;
+    display:block !important;
+    object-fit:contain !important;
+}
+
+#screen-welcome .logo-tagline {
+    color:#F8F7F3 !important;
+    font-family:"Cormorant Garamond", Georgia, serif !important;
+    font-style:italic !important;
+    font-weight:400 !important;
+    letter-spacing:.025em !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+}
+
 #screen-welcome .logo-tagline::before {
-    content: none !important;
-    display: none !important;
+    content:none !important;
+    display:none !important;
 }
 
 #screen-welcome .logo-tagline::after {
-    content: "" !important;
-    display: block !important;
-    width: 230px !important;
-    height: 9px !important;
-    margin: 20px auto 0 !important;
-    background:
-        linear-gradient(90deg,
-            transparent 0%,
-            rgba(248,247,243,0.00) 4%,
-            rgba(248,247,243,0.55) 5%,
-            rgba(248,247,243,0.55) 42%,
-            transparent 42%,
-            transparent 58%,
-            rgba(248,247,243,0.55) 58%,
-            rgba(248,247,243,0.55) 95%,
-            rgba(248,247,243,0.00) 96%,
-            transparent 100%
-        ) center 4px / 100% 1px no-repeat !important;
+    content:"" !important;
+    display:block !important;
+    width:230px !important;
+    height:1px !important;
+    margin:22px auto 0 !important;
+    background:linear-gradient(90deg,
+        transparent 0%,
+        rgba(248,247,243,.52) 7%,
+        rgba(248,247,243,.52) 43%,
+        transparent 43%,
+        transparent 57%,
+        rgba(248,247,243,.52) 57%,
+        rgba(248,247,243,.52) 93%,
+        transparent 100%
+    ) !important;
 }
 
-/* Center diamond for luxury divider */
 #screen-welcome .logo-block {
-    position: relative !important;
+    position:relative !important;
 }
 
 #screen-welcome .logo-block::after {
-    content: "◇" !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: calc(100% - 24px) !important;
-    transform: translateX(-50%) !important;
-    color: #F8F7F3 !important;
-    font-size: 16px !important;
-    line-height: 1 !important;
+    content:"◇" !important;
+    position:absolute !important;
+    left:50% !important;
+    top:calc(100% - 24px) !important;
+    transform:translateX(-50%) !important;
+    color:#F8F7F3 !important;
+    font-size:16px !important;
+    line-height:1 !important;
 }
 
-/* Email sign-in link: cloud white.
-   This catches links/buttons injected by phase-9b-email-password-auth.js too. */
 #screen-welcome a,
 #screen-welcome .btn-ghost,
-#screen-welcome button.btn-ghost,
-#screen-welcome button[onclick*="email"],
-#screen-welcome button[onclick*="Email"],
 #screen-welcome [id*="email"],
-#screen-welcome [id*="Email"],
-#screen-welcome [class*="email"],
-#screen-welcome [class*="Email"] {
-    color: #F8F7F3 !important;
-    text-decoration-color: #F8F7F3 !important;
-}
-
-/* If the email link was styled inline with gold variables, override it on welcome only */
-#screen-welcome [style*="gold"],
-#screen-welcome [style*="var(--gold"],
-#screen-welcome [style*="#c8a94d"],
-#screen-welcome [style*="#C8A94D"] {
-    color: #F8F7F3 !important;
-    border-color: rgba(248,247,243,0.58) !important;
-}
-
-/* Keep the existing welcome card black/white if your current good file already has it */
-#screen-welcome .welcome-card,
-#screen-welcome .info-card,
-#screen-welcome .signin-benefit,
-#screen-welcome .guest-benefit,
-#screen-welcome [class*="benefit"] {
-    background: #000000 !important;
-    color: #F8F7F3 !important;
-    border-color: rgba(248,247,243,0.58) !important;
-}
-</style>
-
-
-<style id="thurayaWelcomeMotionFinal">
-/* THURAYA — Welcome Final Spacing + Motion
-   Scope: welcome screen only. No JavaScript touched.
-*/
-
-/* Hide the bottom sign-in benefit card/message */
-#screen-welcome .welcome-card,
-#screen-welcome .info-card,
-#screen-welcome .signin-benefit,
-#screen-welcome .guest-benefit,
-#screen-welcome [class*="benefit"],
-#screen-welcome [class*="guest-note"],
-#screen-welcome [class*="signin-note"] {
-    display: none !important;
-}
-
-/* Final spacing rhythm */
-#screen-welcome .logo-block {
-    margin-bottom: 38px !important;
-}
-
-#screen-welcome .welcome-copy {
-    margin-top: 34px !important;
-    margin-bottom: 46px !important;
-}
-
-#screen-welcome .welcome-actions {
-    gap: 16px !important;
+#screen-welcome [class*="email"] {
+    color:#F8F7F3 !important;
+    text-decoration-color:#F8F7F3 !important;
 }
 
 #screen-welcome #btnGoogleSignIn {
-    margin-bottom: 4px !important;
-}
-
-#screen-welcome .divider {
-    margin: 4px 0 6px !important;
+    background:#F8F7F3 !important;
+    color:#000000 !important;
 }
 
 #screen-welcome #btnGuestSignIn {
-    margin-bottom: 18px !important;
-}
-
-#screen-welcome .btn-ghost,
-#screen-welcome a,
-#screen-welcome [class*="email"] {
-    margin-top: 4px !important;
-    color: #F8F7F3 !important;
-    text-decoration-color: #F8F7F3 !important;
+    background:#000000 !important;
+    color:#F8F7F3 !important;
+    border-color:rgba(248,247,243,.62) !important;
 }
 
 #screen-welcome .welcome-footnote {
-    margin-top: 46px !important;
+    color:rgba(248,247,243,.72) !important;
 }
 
-/* Motion */
-#screen-welcome.active .logo-block {
-    animation: thFadeUp 700ms ease-out both;
+/* CSS-level removal for likely benefit/card variants */
+#screen-welcome .welcome-inner > *[data-thuraya-remove="true"],
+#screen-welcome .welcome-inner > .signin-benefit,
+#screen-welcome .welcome-inner > .guest-benefit,
+#screen-welcome .welcome-inner > .welcome-card,
+#screen-welcome .welcome-inner > .info-card,
+#screen-welcome .welcome-inner > .benefit-card,
+#screen-welcome .welcome-inner > .message-card,
+#screen-welcome .welcome-inner > .guest-note,
+#screen-welcome .welcome-inner > .signin-note {
+    display:none !important;
 }
 
-#screen-welcome.active .welcome-copy {
-    animation: thFadeUp 780ms ease-out both;
-    animation-delay: 120ms;
-}
-
-#screen-welcome.active .welcome-actions {
-    animation: thFadeUp 820ms ease-out both;
-    animation-delay: 220ms;
-}
-
-#screen-welcome.active .welcome-footnote {
-    animation: thFadeUp 900ms ease-out both;
-    animation-delay: 320ms;
-}
-
-/* Button feel */
-#screen-welcome button {
-    transition: transform 180ms ease, opacity 180ms ease, border-color 180ms ease !important;
-}
-
-#screen-welcome button:active {
-    transform: scale(0.985) !important;
-}
-
-#screen-welcome #btnGuestSignIn:hover {
-    border-color: rgba(248,247,243,0.82) !important;
-}
-
-@keyframes thFadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(14px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Respect accessibility */
-@media (prefers-reduced-motion: reduce) {
-    #screen-welcome.active .logo-block,
-    #screen-welcome.active .welcome-copy,
-    #screen-welcome.active .welcome-actions,
-    #screen-welcome.active .welcome-footnote {
-        animation: none !important;
+@media(max-width:430px){
+    #screen-welcome .thuraya-final-monogram {
+        width:104px !important;
+        height:116px !important;
+        margin-bottom:24px !important;
     }
 
-    #screen-welcome button {
-        transition: none !important;
+    #screen-welcome .thuraya-final-monogram img {
+        width:104px !important;
+    }
+
+    #screen-welcome .logo-tagline {
+        font-size:.88rem !important;
+        white-space:nowrap !important;
+        letter-spacing:.01em !important;
+    }
+
+    #screen-welcome .logo-tagline::after {
+        width:205px !important;
     }
 }
 </style>
+
+<script id="thurayaWelcomeFinalOneShotScript">
+/* Visual-only cleanup for welcome page. No booking flow logic touched. */
+(function () {
+    function cleanWelcome() {
+        var welcome = document.getElementById("screen-welcome");
+        if (!welcome) return;
+
+        /* Remove the beige sign-in benefit message if generated dynamically */
+        var nodes = welcome.querySelectorAll("div, p, section, article");
+        nodes.forEach(function (el) {
+            var text = (el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+            if (
+                text.includes("sign in to save your details") ||
+                text.includes("guest booking is still available")
+            ) {
+                el.style.setProperty("display", "none", "important");
+                el.style.setProperty("visibility", "hidden", "important");
+                el.style.setProperty("height", "0", "important");
+                el.style.setProperty("margin", "0", "important");
+                el.style.setProperty("padding", "0", "important");
+                el.setAttribute("data-thuraya-remove", "true");
+            }
+
+            if (text.includes("or sign in with email")) {
+                el.style.setProperty("color", "#F8F7F3", "important");
+                el.style.setProperty("text-decoration-color", "#F8F7F3", "important");
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", cleanWelcome);
+    window.addEventListener("load", cleanWelcome);
+
+    /* In case phase-9b injects the message after load */
+    var observer = new MutationObserver(cleanWelcome);
+    document.addEventListener("DOMContentLoaded", function () {
+        var welcome = document.getElementById("screen-welcome");
+        if (welcome) observer.observe(welcome, { childList: true, subtree: true });
+    });
+})();
+</script>
 
 </head>
 <body>
@@ -515,7 +490,9 @@
         <div class="screen active" id="screen-welcome">
             <div class="welcome-inner">
                 <div class="logo-block">
-                    <div class="logo-mark">T</div>
+                    <div class="logo-mark thuraya-final-monogram">
+                        <img src="data:image/png;base64,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" alt="THURAYA monogram">
+                    </div>
                     <h1 class="logo-wordmark">THURAYA</h1>
                     <p class="logo-tagline">The HAUTE Nail Bar Address for COSMOPOLITAN Nails</p>
                 </div>
