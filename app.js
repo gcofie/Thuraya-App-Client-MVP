@@ -1740,3 +1740,127 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(bk_finalSyncCTAs, 600);
 });
 // ── END THURAYA FINAL CTA EVENT SYNC ──────────────────────
+
+// ── THURAYA PAGE 1 FLOATING PILL CTA — UI ONLY ───────────
+// CTA: Floating pill. Selection: Medium luxury but clear.
+// This layer reads existing bk_selectedServices and navigates with existing goToStep.
+(function(){
+    function money(n){
+        const value = Number(n || 0);
+        return value.toLocaleString('en-GH', { maximumFractionDigits: 0 });
+    }
+
+    function ensureFloatingCTA(){
+        let cta = document.getElementById('thurayaFloatingServiceCTA');
+        if (cta) return cta;
+
+        cta = document.createElement('div');
+        cta.id = 'thurayaFloatingServiceCTA';
+        cta.className = 'thuraya-floating-service-cta';
+        cta.innerHTML = `
+            <div class="thuraya-floating-service-cta__copy">
+                <div class="thuraya-floating-service-cta__title" id="thurayaFloatingServiceTitle">Select a service</div>
+                <div class="thuraya-floating-service-cta__meta" id="thurayaFloatingServiceMeta">Step 1 of 4 · Your ritual begins here</div>
+            </div>
+            <button type="button" class="thuraya-floating-service-cta__btn" id="thurayaFloatingServiceBtn" disabled>Continue</button>
+        `;
+        document.body.appendChild(cta);
+
+        const btn = document.getElementById('thurayaFloatingServiceBtn');
+        if (btn) {
+            btn.addEventListener('click', function(){
+                if (btn.disabled) return;
+                goToStep('screen-technician');
+            });
+        }
+
+        return cta;
+    }
+
+    function isServiceScreenActive(){
+        const screen = document.getElementById('screen-services');
+        return !!(screen && screen.classList.contains('active'));
+    }
+
+    function selectedSummary(){
+        const selected = Array.isArray(window.bk_selectedServices) ? window.bk_selectedServices : (typeof bk_selectedServices !== 'undefined' ? bk_selectedServices : []);
+        const count = selected.reduce((sum, s) => sum + Number(s.qty || 1), 0);
+        const duration = selected.reduce((sum, s) => sum + (Number(s.dur || 0) * Number(s.qty || 1)), 0);
+        const subtotal = selected.reduce((sum, s) => sum + (Number(s.price || 0) * Number(s.qty || 1)), 0);
+        return { count, duration, subtotal };
+    }
+
+    window.bk_syncFloatingServiceCTA = function(){
+        const cta = ensureFloatingCTA();
+        const title = document.getElementById('thurayaFloatingServiceTitle');
+        const meta = document.getElementById('thurayaFloatingServiceMeta');
+        const btn = document.getElementById('thurayaFloatingServiceBtn');
+        const serviceScreen = isServiceScreenActive();
+        const summary = selectedSummary();
+        const hasSelection = summary.count > 0 || (typeof bk_hasServiceSelectedUI === 'function' && bk_hasServiceSelectedUI());
+
+        cta.classList.toggle('is-visible', serviceScreen);
+
+        if (title) {
+            title.textContent = hasSelection
+                ? `${summary.count || 1} service${(summary.count || 1) === 1 ? '' : 's'} selected`
+                : 'Select a service';
+        }
+
+        if (meta) {
+            meta.textContent = hasSelection
+                ? `GHC ${money(summary.subtotal)} · ${summary.duration || 0} mins`
+                : 'Step 1 of 4 · Your ritual begins here';
+        }
+
+        if (btn) {
+            btn.disabled = !hasSelection;
+            btn.textContent = hasSelection ? 'Continue' : 'Select';
+        }
+
+        const sticky = document.getElementById('bk_stickyBar');
+        if (sticky && serviceScreen) {
+            sticky.classList.add('thuraya-service-hidden');
+            sticky.style.display = 'none';
+        }
+    };
+
+    const originalSync = window.bk_finalSyncCTAs;
+    if (typeof originalSync === 'function') {
+        window.bk_finalSyncCTAs = function(){
+            originalSync.apply(this, arguments);
+            window.bk_syncFloatingServiceCTA();
+        };
+    }
+
+    document.addEventListener('click', function(e){
+        if (e.target && e.target.closest && (
+            e.target.closest('#bk_serviceMenu') ||
+            e.target.closest('.dept-btn') ||
+            e.target.closest('.back-btn') ||
+            e.target.closest('#thurayaFloatingServiceCTA')
+        )) {
+            setTimeout(window.bk_syncFloatingServiceCTA, 60);
+        }
+    });
+
+    document.addEventListener('change', function(e){
+        if (e.target && e.target.closest && e.target.closest('#bk_serviceMenu')) {
+            setTimeout(window.bk_syncFloatingServiceCTA, 60);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setTimeout(window.bk_syncFloatingServiceCTA, 350);
+        setTimeout(window.bk_syncFloatingServiceCTA, 900);
+    });
+
+    const originalShowScreen = window.showScreen;
+    if (typeof originalShowScreen === 'function') {
+        window.showScreen = function(id){
+            originalShowScreen.apply(this, arguments);
+            setTimeout(window.bk_syncFloatingServiceCTA, 80);
+        };
+    }
+})();
+// ── END THURAYA PAGE 1 FLOATING PILL CTA ─────────────────
