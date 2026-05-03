@@ -1564,7 +1564,6 @@ function bk_updateStickyBarOptionA() {
     const inline = bk_ensureServiceInlineContinue();
     if (inline) {
         inline.wrap.style.display = active ? 'block' : 'none';
-        inline.wrap.classList.toggle('th-visible', active);
         bk_styleInlineServiceCTA(inline.btn, active);
     }
 }
