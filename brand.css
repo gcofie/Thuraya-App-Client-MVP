@@ -3306,3 +3306,185 @@ button:active,
 #screen-services .thuraya-inline-continue{display:none !important;}
 #screen-services{padding-bottom:180px !important;}
 /* === END THURAYA FINAL CORRECTION === */
+
+/* =========================================================
+   THURAYA FINAL MICRO POLISH — PRODUCTION INTERACTION LAYER
+   Scope: Client App service-selection feel only. Logic untouched.
+   ========================================================= */
+#bk_stickyBar,
+#bk_stickyBar.thuraya-option-a-sticky{
+  display:none !important;
+  pointer-events:none !important;
+}
+
+#screen-services #bk_serviceMenu{
+  padding-bottom:18px !important;
+}
+
+#screen-services .thuraya-accordion-section{
+  transition:
+    transform .22s cubic-bezier(.2,.8,.2,1),
+    box-shadow .24s ease,
+    border-color .24s ease,
+    background .24s ease !important;
+  will-change:transform !important;
+}
+
+#screen-services .thuraya-accordion-section:active{
+  transform:scale(.992) !important;
+}
+
+#screen-services .thuraya-accordion-section.open{
+  border-color:rgba(10,10,10,.18) !important;
+  box-shadow:0 20px 46px rgba(35,26,16,.105) !important;
+  background:rgba(255,253,248,.98) !important;
+}
+
+#screen-services .thuraya-accordion-head{
+  -webkit-tap-highlight-color:transparent !important;
+}
+
+#screen-services .thuraya-accordion-chevron{
+  transition:
+    transform .26s cubic-bezier(.2,.8,.2,1),
+    background .22s ease,
+    color .22s ease,
+    box-shadow .22s ease !important;
+}
+
+#screen-services .thuraya-accordion-section.open > .thuraya-accordion-head .thuraya-accordion-chevron{
+  transform:rotate(90deg) !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  box-shadow:0 12px 26px rgba(10,10,10,.16) !important;
+}
+
+#screen-services .thuraya-accordion-body{
+  transition:max-height .36s cubic-bezier(.2,.8,.2,1), opacity .22s ease !important;
+  opacity:.98 !important;
+}
+
+#screen-services .thuraya-accordion-section:not(.open) .thuraya-accordion-body{
+  opacity:0 !important;
+}
+
+#screen-services .thuraya-accordion-inner{
+  padding-top:2px !important;
+  padding-bottom:18px !important;
+}
+
+#screen-services .service-card{
+  position:relative !important;
+  cursor:pointer !important;
+  -webkit-tap-highlight-color:transparent !important;
+  transition:
+    transform .18s cubic-bezier(.2,.8,.2,1),
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background .2s ease !important;
+}
+
+#screen-services .service-card:active{
+  transform:scale(.985) !important;
+}
+
+#screen-services .service-card.selected{
+  border-color:#0a0a0a !important;
+  border-width:1.7px !important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#F8F1E8 100%) !important;
+  box-shadow:0 18px 38px rgba(10,10,10,.13), inset 0 0 0 1px rgba(200,169,77,.10) !important;
+}
+
+#screen-services .service-card.selected::after{
+  content:"✓" !important;
+  position:absolute !important;
+  top:16px !important;
+  right:16px !important;
+  width:34px !important;
+  height:34px !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-size:1rem !important;
+  font-weight:900 !important;
+  box-shadow:0 12px 26px rgba(10,10,10,.18) !important;
+}
+
+#screen-services .service-card.selected .service-card-name{
+  padding-right:42px !important;
+}
+
+#screen-services .service-card input[type="radio"],
+#screen-services .service-card input[type="checkbox"]{
+  transition:transform .18s ease, box-shadow .18s ease !important;
+}
+
+#screen-services .service-card.selected input[type="radio"],
+#screen-services .service-card.selected input[type="checkbox"]{
+  transform:scale(1.08) !important;
+  box-shadow:0 0 0 5px rgba(10,10,10,.06) !important;
+}
+
+#screen-services .service-card-name{
+  letter-spacing:-.02em !important;
+}
+
+#screen-services .service-card-desc{
+  color:rgba(47,41,34,.78) !important;
+  line-height:1.46 !important;
+}
+
+#screen-services .service-price-pill{
+  margin-top:7px !important;
+  letter-spacing:.015em !important;
+}
+
+#bk_serviceContinueWrap{
+  opacity:0 !important;
+  transform:translateY(14px) !important;
+  transition:opacity .24s ease, transform .28s cubic-bezier(.2,.8,.2,1) !important;
+}
+
+#bk_serviceContinueWrap.th-visible{
+  opacity:1 !important;
+  transform:translateY(0) !important;
+}
+
+#btnToTechInline{
+  min-height:58px !important;
+  border-radius:999px !important;
+  box-shadow:0 20px 44px rgba(10,10,10,.20) !important;
+  transition:
+    transform .18s cubic-bezier(.2,.8,.2,1),
+    box-shadow .2s ease,
+    opacity .2s ease !important;
+}
+
+#btnToTechInline:active{
+  transform:scale(.985) !important;
+}
+
+#btnToTechInline:not(:disabled){
+  animation:thurayaCtaReady .42s ease both !important;
+}
+
+@keyframes thurayaCtaReady{
+  0%{transform:translateY(8px);opacity:.72;}
+  100%{transform:translateY(0);opacity:1;}
+}
+
+@media(hover:hover){
+  #screen-services .service-card:hover{
+    transform:translateY(-1px) !important;
+    border-color:rgba(143,118,56,.32) !important;
+    box-shadow:0 16px 34px rgba(35,26,16,.085) !important;
+  }
+  #screen-services .service-card.selected:hover{
+    border-color:#0a0a0a !important;
+    box-shadow:0 20px 42px rgba(10,10,10,.14) !important;
+  }
+}
+/* === END THURAYA FINAL MICRO POLISH === */
