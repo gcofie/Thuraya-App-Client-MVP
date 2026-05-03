@@ -1054,7 +1054,7 @@ function renderFootMenuCustom(dept) {
         }
     });
 
-    setTimeout(bk_finalSyncCTAs, 60);
+    setTimeout(() => { bk_syncAllAccordionHeights(container); bk_finalSyncCTAs(); }, 60);
     updateBreakdown();
 }
 
@@ -1064,20 +1064,54 @@ function renderMenuForDept(dept) {
     return renderMenuForDeptLegacy(dept);
 }
 
-// ── THURAYA SERVICE MENU ACCORDION — OPTION B ─────────────
+// ── THURAYA SERVICE MENU INTERACTION POLISH — SAFE UI ONLY ─────────────
 // Multiple sections can stay open. All sections start collapsed.
+// This updates only visual/tap behavior; booking, Firebase and selection logic are untouched.
+function bk_syncAccordionHeight(section) {
+    if (!section) return;
+    const body = section.querySelector(':scope > .thuraya-accordion-body');
+    if (!body) return;
+
+    if (section.classList.contains('open')) {
+        body.style.maxHeight = body.scrollHeight + 'px';
+    } else {
+        body.style.maxHeight = '0px';
+    }
+}
+
+function bk_syncAccordionAncestors(section) {
+    let parent = section?.parentElement?.closest('.thuraya-accordion-section');
+    while (parent) {
+        bk_syncAccordionHeight(parent);
+        parent = parent.parentElement?.closest('.thuraya-accordion-section');
+    }
+}
+
+function bk_syncAllAccordionHeights(scope) {
+    const root = scope || document;
+    root.querySelectorAll('.thuraya-accordion-section').forEach(section => bk_syncAccordionHeight(section));
+}
+
 window.bk_toggleMenuSection = function(btn) {
     const section = btn?.closest('.thuraya-accordion-section');
     if (!section) return;
 
     const isOpen = section.classList.toggle('open');
     btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    section.classList.add('th-menu-touched');
+
+    bk_syncAccordionHeight(section);
+    bk_syncAccordionAncestors(section);
 
     setTimeout(() => {
+        bk_syncAccordionHeight(section);
+        bk_syncAccordionAncestors(section);
         if (typeof bk_finalSyncCTAs === 'function') bk_finalSyncCTAs();
-    }, 80);
+    }, 260);
 };
-// ── END THURAYA SERVICE MENU ACCORDION ────────────────────
+
+window.addEventListener('resize', () => bk_syncAllAccordionHeights(document));
+// ── END THURAYA SERVICE MENU INTERACTION POLISH ────────────────────
 
 function bk_jsString(value) {
     return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');

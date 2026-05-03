@@ -3658,3 +3658,102 @@ button:active,
   clear:both;
 }
 /* === END THURAYA SIGN OUT SCROLL FIX === */
+
+
+/* =========================================================
+   THURAYA MENU INTERACTION POLISH — APPLE-LEVEL MOTION
+   Scope: Client App service accordions only. Logic untouched.
+   ========================================================= */
+#bk_serviceMenu .thuraya-accordion-section,
+#grp_serviceList .thuraya-accordion-section{
+  transform:translateZ(0) !important;
+  transition:transform .18s ease, box-shadow .24s ease, border-color .24s ease, background .24s ease !important;
+  will-change:transform !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-section:active,
+#grp_serviceList .thuraya-accordion-section:active{
+  transform:scale(.992) !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-section.open,
+#grp_serviceList .thuraya-accordion-section.open{
+  border-color:rgba(10,10,10,.18) !important;
+  background:rgba(255,253,248,.96) !important;
+  box-shadow:0 20px 42px rgba(35,26,16,.105) !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-head,
+#grp_serviceList .thuraya-accordion-head{
+  -webkit-tap-highlight-color:transparent !important;
+  touch-action:manipulation !important;
+  transition:background .22s ease, transform .18s ease !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-head:active,
+#grp_serviceList .thuraya-accordion-head:active{
+  transform:scale(.99) !important;
+  background:#FFFDF8 !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-section.open > .thuraya-accordion-head,
+#grp_serviceList .thuraya-accordion-section.open > .thuraya-accordion-head{
+  background:linear-gradient(180deg,#FFFDF8 0%,#F7F1E8 100%) !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-body,
+#grp_serviceList .thuraya-accordion-body{
+  max-height:0;
+  overflow:hidden !important;
+  opacity:.98 !important;
+  transition:max-height .34s cubic-bezier(.22,.61,.36,1), opacity .22s ease !important;
+  will-change:max-height !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-section.open > .thuraya-accordion-body,
+#grp_serviceList .thuraya-accordion-section.open > .thuraya-accordion-body{
+  opacity:1 !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-chevron,
+#grp_serviceList .thuraya-accordion-chevron{
+  transition:transform .28s cubic-bezier(.22,.61,.36,1), background .22s ease, color .22s ease, box-shadow .22s ease !important;
+}
+
+#bk_serviceMenu .thuraya-accordion-section.open > .thuraya-accordion-head .thuraya-accordion-chevron,
+#grp_serviceList .thuraya-accordion-section.open > .thuraya-accordion-head .thuraya-accordion-chevron{
+  transform:rotate(90deg) !important;
+  box-shadow:0 10px 22px rgba(10,10,10,.14) !important;
+}
+
+#bk_serviceMenu .service-card,
+#grp_serviceList .service-card{
+  transition:transform .18s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease !important;
+  -webkit-tap-highlight-color:transparent !important;
+}
+
+#bk_serviceMenu .service-card:active,
+#grp_serviceList .service-card:active{
+  transform:scale(.985) !important;
+}
+
+#bk_serviceMenu .service-card.selected,
+#grp_serviceList .service-card.selected{
+  transform:translateY(-1px) !important;
+}
+
+@media (prefers-reduced-motion: reduce){
+  #bk_serviceMenu .thuraya-accordion-section,
+  #grp_serviceList .thuraya-accordion-section,
+  #bk_serviceMenu .thuraya-accordion-head,
+  #grp_serviceList .thuraya-accordion-head,
+  #bk_serviceMenu .thuraya-accordion-body,
+  #grp_serviceList .thuraya-accordion-body,
+  #bk_serviceMenu .thuraya-accordion-chevron,
+  #grp_serviceList .thuraya-accordion-chevron,
+  #bk_serviceMenu .service-card,
+  #grp_serviceList .service-card{
+    transition:none !important;
+  }
+}
+/* === END THURAYA MENU INTERACTION POLISH === */
