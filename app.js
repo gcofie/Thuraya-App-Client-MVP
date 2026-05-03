@@ -1058,8 +1058,169 @@ function renderFootMenuCustom(dept) {
     updateBreakdown();
 }
 
+
+// ── THURAYA HAND MENU — FOOT-STYLE ACCORDION ─────────────
+// Uses the approved Hand reference data as structure, but renders it with the
+// same clean accordion UX as Foot Therapy. Firebase/Staff App values still win
+// through th_findServiceMatch() before each card is built.
+function th_collectHandLeafServices(node, out=[]) {
+    if (!node) return out;
+    if (!Array.isArray(node.children) || !node.children.length) {
+        if (node.name || node.displayName) out.push(node);
+        return out;
+    }
+    node.children.forEach(child => th_collectHandLeafServices(child, out));
+    return out;
+}
+
+function th_handMeta(node, count) {
+    const title = String(node?.title || '').toLowerCase();
+    if (title.includes('add') || title.includes('upgrade')) return `Choose your ritual • optional add-ons available • ${count} option${count === 1 ? '' : 's'}`;
+    if (title.includes('pleiades')) return `Enhancements • structure, design and finish • ${count} option${count === 1 ? '' : 's'}`;
+    if (title.includes('repair')) return `Maintenance • corrective services • ${count} option${count === 1 ? '' : 's'}`;
+    return `Core treatments • choose one • ${count} option${count === 1 ? '' : 's'}`;
+}
+
+function renderHandMenuFootStyle(dept) {
+    const container = document.getElementById('bk_serviceMenu');
+    if (!container) return;
+
+    container.classList.remove('th-ref-menu');
+
+    const order = [
+        'Hand Therapies & Rituals',
+        'Luxe Add Ons & Upgrades',
+        'Pleiades Studio',
+        'Repairs'
+    ];
+
+    const nodes = (THURAYA_HAND_MENU_REFERENCE || []).map(node => {
+        const cleanTitle = String(node.title || '')
+            .replace(/^\s*\d+\.\s*/, '')
+            .trim();
+        return { ...node, cleanTitle };
+    });
+
+    const byTitle = {};
+    nodes.forEach(node => { byTitle[node.cleanTitle] = node; });
+
+    function renderHandSection(node, index) {
+        const cat = node.cleanTitle || node.title || 'Services';
+        const refs = th_collectHandLeafServices(node, []);
+        const services = refs
+            .map((ref, serviceIndex) => th_findServiceMatch(ref, `hand_${th_slug(cat)}_${serviceIndex}`, `bk_hand_${th_slug(cat)}`))
+            .filter(s => !s.status || s.status === 'Active');
+
+        if (!services.length) return '';
+
+        return `
+            <div class="thuraya-accordion-section" data-category="${th_refEscape(cat)}">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="bk_hand_section_${index}" onclick="bk_toggleMenuSection(this)">
+                    <span class="thuraya-accordion-title-wrap">
+                        <span class="thuraya-accordion-title">${th_refEscape(cat)}</span>
+                        <span class="thuraya-accordion-meta">${th_refEscape(th_handMeta(node, services.length))}</span>
+                    </span>
+                    <span class="thuraya-accordion-chevron">›</span>
+                </button>
+                <div class="thuraya-accordion-body" id="bk_hand_section_${index}">
+                    <div class="thuraya-accordion-inner">
+                        ${services.map(s => _buildCard(s, dept)).join('')}
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    let html = '';
+    const rendered = new Set();
+
+    order.forEach((title, index) => {
+        const node = byTitle[title];
+        if (!node) return;
+        rendered.add(title);
+        html += renderHandSection(node, index);
+    });
+
+    // Option B fallback: if the Staff App introduces new Hand categories, show them after the curated menu.
+    const knownServiceNames = new Set();
+    (THURAYA_HAND_MENU_REFERENCE || []).forEach(node => {
+        th_collectHandLeafServices(node, []).forEach(ref => {
+            if (ref.name) knownServiceNames.add(th_norm(ref.name));
+            if (ref.displayName) knownServiceNames.add(th_norm(ref.displayName));
+        });
+    });
+
+    const fallback = {};
+    (bk_menuServices || []).forEach(s => {
+        const serviceDept = String(s.department || 'Hand').toLowerCase();
+        const belongsToHand = serviceDept === 'both' || serviceDept.includes('hand') || (!serviceDept.includes('foot'));
+        if (!belongsToHand) return;
+        if (knownServiceNames.has(th_norm(s.name))) return;
+        if (s.status && s.status !== 'Active') return;
+
+        let cat = String(s.mainCategory || s.subCategory || s.category || 'More Services')
+            .trim()
+            .replace(/^(?:[A-Z]|\d+)\.\s*/i, '')
+            .replace(/^O\s+/i, '')
+            .trim() || 'More Services';
+
+        if (/^services?$/i.test(cat)) cat = 'More Services';
+        if (!fallback[cat]) fallback[cat] = [];
+        fallback[cat].push(s);
+    });
+
+    Object.keys(fallback)
+        .sort((a,b) => a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' }))
+        .forEach((cat, index) => {
+            const items = fallback[cat] || [];
+            if (!items.length) return;
+            html += `
+                <div class="thuraya-accordion-section" data-category="${th_refEscape(cat)}">
+                    <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="bk_hand_extra_section_${index}" onclick="bk_toggleMenuSection(this)">
+                        <span class="thuraya-accordion-title-wrap">
+                            <span class="thuraya-accordion-title">${th_refEscape(cat)}</span>
+                            <span class="thuraya-accordion-meta">Additional services • ${items.length} option${items.length === 1 ? '' : 's'}</span>
+                        </span>
+                        <span class="thuraya-accordion-chevron">›</span>
+                    </button>
+                    <div class="thuraya-accordion-body" id="bk_hand_extra_section_${index}">
+                        <div class="thuraya-accordion-inner">
+                            ${items.map(s => _buildCard(s, dept)).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+    container.innerHTML = html || '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No hand therapy services available.</p>';
+
+    // Restore selected state after re-render and auto-open selected sections only.
+    bk_selectedServices.forEach(sel => {
+        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const qty = document.getElementById('bk_qty_' + sel.id);
+        if (cb) {
+            cb.checked = true;
+            cb.closest('.service-card')?.classList.add('selected');
+            const section = cb.closest('.thuraya-accordion-section');
+            if (section) {
+                section.classList.add('open');
+                section.querySelector('.thuraya-accordion-head')?.setAttribute('aria-expanded', 'true');
+            }
+        }
+        if (qty) {
+            qty.value = sel.qty || 1;
+            const section = qty.closest('.thuraya-accordion-section');
+            if (section) {
+                section.classList.add('open');
+                section.querySelector('.thuraya-accordion-head')?.setAttribute('aria-expanded', 'true');
+            }
+        }
+    });
+
+    setTimeout(() => { bk_syncAllAccordionHeights(container); bk_finalSyncCTAs(); }, 60);
+    updateBreakdown();
+}
+
 function renderMenuForDept(dept) {
-    if (dept === 'Hand') return renderThurayaReferenceMenuForDept(dept);
+    if (dept === 'Hand') return renderHandMenuFootStyle(dept);
     if (dept === 'Foot') return renderFootMenuCustom(dept);
     return renderMenuForDeptLegacy(dept);
 }
