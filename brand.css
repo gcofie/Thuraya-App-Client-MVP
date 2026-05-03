@@ -3628,3 +3628,33 @@ button:active,
   #bk_serviceMenu.th-ref-menu .submenu{padding:15px !important;}
 }
 /* === END THURAYA CLIENT APP OPTION A REFERENCE MENU PATCH === */
+
+
+/* =========================================================
+   THURAYA SIGN OUT SCROLL FIX
+   Moves Sign Out into the active page content and removes fixed overlay behavior.
+   Logic untouched.
+   ========================================================= */
+.screen-inner .bk-floating-signout{
+  position:relative !important;
+  top:auto !important;
+  left:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  float:right !important;
+  display:block;
+  width:auto !important;
+  max-width:none !important;
+  min-height:42px !important;
+  margin:0 0 16px 14px !important;
+  padding:10px 22px !important;
+  border-radius:999px !important;
+  z-index:5 !important;
+}
+.screen-inner::after{
+  content:"";
+  display:block;
+  clear:both;
+}
+/* === END THURAYA SIGN OUT SCROLL FIX === */

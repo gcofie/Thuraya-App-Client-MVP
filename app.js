@@ -51,8 +51,14 @@ function showScreen(id) {
         s.style.display = 'none';
     });
     const target = document.getElementById(id);
-    if (target) { target.style.display = 'flex'; requestAnimationFrame(() => target.classList.add('active')); }
-    setTimeout(bk_finalSyncCTAs, 80);
+    if (target) {
+        target.style.display = 'flex';
+        requestAnimationFrame(() => target.classList.add('active'));
+    }
+    setTimeout(() => {
+        if (typeof bk_placeFloatingSignOut === 'function') bk_placeFloatingSignOut(target);
+        bk_finalSyncCTAs();
+    }, 80);
 }
 
 function goToStep(id) {
@@ -2210,7 +2216,27 @@ let bk_clientExperienceUnsub = null;
 
 function bk_showFloatingSignOut(show) {
     const btn = document.getElementById('bkFloatingSignOut');
-    if (btn) btn.style.display = show ? 'block' : 'none';
+    if (btn) {
+        btn.style.display = show ? 'block' : 'none';
+        if (show && typeof bk_placeFloatingSignOut === 'function') {
+            bk_placeFloatingSignOut(document.querySelector('.screen.active'));
+        }
+    }
+}
+
+function bk_placeFloatingSignOut(activeScreen) {
+    const btn = document.getElementById('bkFloatingSignOut');
+    const screen = activeScreen || document.querySelector('.screen.active');
+    if (!btn || !screen || screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') return;
+
+    const inner = screen.querySelector('.screen-inner') || screen;
+    const backBtn = inner.querySelector('.back-btn');
+
+    if (backBtn && backBtn.nextSibling !== btn) {
+        backBtn.insertAdjacentElement('afterend', btn);
+    } else if (!backBtn && inner.firstChild !== btn) {
+        inner.insertBefore(btn, inner.firstChild);
+    }
 }
 
 function bk_moveStagingBannerToBottom() {
