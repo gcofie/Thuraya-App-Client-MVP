@@ -966,12 +966,8 @@ function renderFootMenuCustom(dept) {
         );
     });
 
-    let html = '';
-    order.forEach((cat, index) => {
-        const items = grouped[cat] || [];
-        if (!items.length) return;
-        const sectionId = `bk_foot_section_${index}`;
-        html += `
+    function renderFootSection(cat, items, sectionId) {
+        return `
             <div class="thuraya-accordion-section" data-category="${cat}">
                 <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="bk_toggleMenuSection(this)">
                     <span class="thuraya-accordion-title-wrap">
@@ -986,7 +982,28 @@ function renderFootMenuCustom(dept) {
                     </div>
                 </div>
             </div>`;
+    }
+
+    let html = '';
+    const renderedCats = new Set();
+
+    // Curated luxury order first.
+    order.forEach((cat, index) => {
+        const items = grouped[cat] || [];
+        if (!items.length) return;
+        renderedCats.add(cat);
+        html += renderFootSection(cat, items, `bk_foot_section_${index}`);
     });
+
+    // Option B fallback: any new Staff App categories appear after the curated menu.
+    Object.keys(grouped)
+        .filter(cat => cat && !renderedCats.has(cat) && !/^services?$/i.test(cat.trim()))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+        .forEach((cat, index) => {
+            const items = grouped[cat] || [];
+            if (!items.length) return;
+            html += renderFootSection(cat, items, `bk_foot_extra_section_${index}`);
+        });
 
     container.innerHTML = html || '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No foot therapy services available.</p>';
 
