@@ -3272,3 +3272,37 @@ button:active,
   #bk_stickyBar .sticky-actions{display:grid !important;grid-template-columns:.7fr 1.3fr !important;}
 }
 /* === END THURAYA PRODUCTION MENU SYNC + OPTION A STICKY CTA === */
+
+
+/* =========================================================
+   THURAYA FINAL CORRECTION — COMPLETE REFERENCE MENU
+   Adds nested submenu/system accordion support and Option A sticky CTA.
+   Source: approved reference file thuraya_menu_simulated_after_edit (5).html.
+   ========================================================= */
+#bk_stickyBar.thuraya-option-a-sticky{display:block !important;}
+.th-menu-submenu.thuraya-accordion-section,
+.th-menu-system.thuraya-accordion-section{
+  width:100% !important;
+  overflow:hidden !important;
+  border-radius:20px !important;
+  background:rgba(250,246,239,.78) !important;
+  border:1px solid rgba(221,211,197,.78) !important;
+  margin:10px 0 !important;
+  box-shadow:0 12px 26px rgba(35,26,16,.045) !important;
+}
+.th-menu-system.thuraya-accordion-section{
+  background:rgba(255,253,248,.92) !important;
+  border-radius:18px !important;
+}
+.th-menu-submenu.thuraya-accordion-section > .thuraya-accordion-head,
+.th-menu-system.thuraya-accordion-section > .thuraya-accordion-head{
+  min-height:66px !important;
+  padding:15px !important;
+  background:transparent !important;
+}
+.th-menu-submenu .thuraya-accordion-title{font-size:.82rem !important;letter-spacing:.10em !important;}
+.th-menu-system .thuraya-accordion-title{font-size:.88rem !important;letter-spacing:.04em !important;text-transform:none !important;}
+.th-menu-badge{display:inline-flex !important;width:max-content !important;margin-bottom:3px !important;padding:4px 9px !important;border-radius:999px !important;border:1px solid rgba(200,169,77,.35) !important;color:var(--gold-dark) !important;font-size:.58rem !important;font-weight:900 !important;letter-spacing:.12em !important;text-transform:uppercase !important;}
+#screen-services .thuraya-inline-continue{display:none !important;}
+#screen-services{padding-bottom:180px !important;}
+/* === END THURAYA FINAL CORRECTION === */

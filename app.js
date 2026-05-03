@@ -660,25 +660,26 @@ function th_slug(value) {
 function th_norm(value) {
     return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
-function th_findServiceMatch(ref, placementKey) {
-    const names = [ref.name, ref.displayName].filter(Boolean).map(th_norm);
-    const match = (bk_menuServices || []).find(s => names.includes(th_norm(s.name)) || th_norm(s.name).includes(th_norm(ref.name)));
+function th_findServiceMatch(ref, placementKey, radioGroup) {
+    const wanted = [ref.name, ref.displayName].filter(Boolean).map(th_norm);
+    const match = (bk_menuServices || []).find(s => wanted.includes(th_norm(s.name)) || wanted.some(w => th_norm(s.name).includes(w) || w.includes(th_norm(s.name))));
     const merged = { ...(match || {}), ...ref };
     merged.name = ref.displayName || ref.name || match?.name || 'Service';
     merged.id = `th_${placementKey}_${match?.id || th_slug(ref.name || ref.displayName)}`;
     merged.department = 'Hand';
     merged.status = 'Active';
+    merged.radioGroup = radioGroup || `bk_ref_${placementKey}`;
     return merged;
 }
-function th_renderServiceRef(ref, dept, placementKey) {
-    return _buildCard(th_findServiceMatch(ref, placementKey), dept);
+function th_renderServiceRef(ref, dept, placementKey, radioGroup) {
+    return _buildCard(th_findServiceMatch(ref, placementKey, radioGroup), dept);
 }
 function th_renderNode(node, dept, level, path) {
     const key = `${path}_${th_slug(node.key || node.title || node.name)}`;
-    if (!node.children) return th_renderServiceRef(node, dept, key);
+    if (!node.children) return th_renderServiceRef(node, dept, key, path);
 
     const childHtml = node.children.map(child => th_renderNode(child, dept, level + 1, key)).join('');
-    const cls = level === 0 ? 'thuraya-accordion-section th-menu-main' : (level === 1 ? 'th-menu-submenu' : 'th-menu-system');
+    const cls = level === 0 ? 'thuraya-accordion-section th-menu-main' : (level === 1 ? 'thuraya-accordion-section th-menu-submenu' : 'thuraya-accordion-section th-menu-system');
     const badge = node.badge ? `<span class="th-menu-badge">${node.badge}</span>` : '';
     return `
         <div class="${cls}">
@@ -779,7 +780,7 @@ function _buildCard(s, dept) {
             </div>`;
     }
 
-    const groupName = type === 'radio' ? `bk_base_${dept}` : `bk_cb_${s.id}`;
+    const groupName = type === 'radio' ? (s.radioGroup || `bk_base_${dept}`) : `bk_cb_${s.id}`;
     const inputEl   = type === 'radio'
         ? `<input type="radio"    name="${groupName}" id="bk_cb_${s.id}"
                style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`
