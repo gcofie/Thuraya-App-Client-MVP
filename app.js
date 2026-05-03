@@ -693,13 +693,37 @@ function th_norm(value) {
 }
 function th_findServiceMatch(ref, placementKey, radioGroup) {
     const wanted = [ref.name, ref.displayName].filter(Boolean).map(th_norm);
-    const match = (bk_menuServices || []).find(s => wanted.includes(th_norm(s.name)) || wanted.some(w => th_norm(s.name).includes(w) || w.includes(th_norm(s.name))));
-    const merged = { ...(match || {}), ...ref };
+    const match = (bk_menuServices || []).find(s =>
+        wanted.includes(th_norm(s.name)) ||
+        wanted.some(w => th_norm(s.name).includes(w) || w.includes(th_norm(s.name)))
+    );
+
+    // Staff App / Firebase values must win whenever a matching live service exists.
+    // The reference structure remains only as the luxury display shell and fallback.
+    const livePrice = match && match.price !== undefined && match.price !== null && match.price !== '' ? Number(match.price) : undefined;
+    const liveDuration = match && match.duration !== undefined && match.duration !== null && match.duration !== '' ? Number(match.duration) : undefined;
+    const liveDesc = match?.desc || match?.description || match?.serviceDescription;
+
+    const merged = {
+        ...ref,
+        ...(match || {}),
+        price: Number.isFinite(livePrice) ? livePrice : (Number(ref.price) || 0),
+        duration: Number.isFinite(liveDuration) ? liveDuration : (Number(ref.duration) || 0),
+        desc: liveDesc || ref.desc || '',
+        inputType: match?.inputType || ref.inputType || 'radio',
+        tag: match?.tag || ref.tag || '',
+        priceLabel: match?.priceLabel || (Number.isFinite(livePrice) ? '' : (ref.priceLabel || ''))
+    };
+
+    // Keep approved client-facing labels such as "Full Set", while syncing the live values behind them.
     merged.name = ref.displayName || ref.name || match?.name || 'Service';
+
+    // Keep a placement-safe ID so repeated reference sections do not collide visually/selection-wise.
     merged.id = `th_${placementKey}_${match?.id || th_slug(ref.name || ref.displayName)}`;
     merged.department = 'Hand';
-    merged.status = 'Active';
+    merged.status = match?.status || ref.status || 'Active';
     merged.radioGroup = radioGroup || `bk_ref_${placementKey}`;
+    merged.liveSynced = !!match;
     return merged;
 }
 function th_refEscape(value) {
