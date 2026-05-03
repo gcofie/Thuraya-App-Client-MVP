@@ -671,58 +671,196 @@ function th_findServiceMatch(ref, placementKey, radioGroup) {
     merged.radioGroup = radioGroup || `bk_ref_${placementKey}`;
     return merged;
 }
-function th_renderServiceRef(ref, dept, placementKey, radioGroup) {
-    return _buildCard(th_findServiceMatch(ref, placementKey, radioGroup), dept);
+function th_refEscape(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
-function th_renderNode(node, dept, level, path) {
-    const key = `${path}_${th_slug(node.key || node.title || node.name)}`;
-    if (!node.children) return th_renderServiceRef(node, dept, key, path);
 
-    const childHtml = node.children.map(child => th_renderNode(child, dept, level + 1, key)).join('');
-    const cls = level === 0 ? 'thuraya-accordion-section th-menu-main' : (level === 1 ? 'thuraya-accordion-section th-menu-submenu' : 'thuraya-accordion-section th-menu-system');
-    const badge = node.badge ? `<span class="th-menu-badge">${node.badge}</span>` : '';
+function th_priceLabel(service) {
+    if (service.priceLabel) return service.priceLabel;
+    const price = Number(service.price) || 0;
+    return price === 0 ? 'Consultation' : `GHC${price}`;
+}
+
+function th_buildReferenceServiceCard(ref, dept, placementKey, radioGroup, variant='simple') {
+    const s = th_findServiceMatch(ref, placementKey, radioGroup);
+    const type = s.inputType || 'radio';
+    const id = s.id;
+    const name = s.name || 'Service';
+    const dur = Number(s.duration) || 0;
+    const price = Number(s.price) || 0;
+    const groupName = type === 'radio' ? (s.radioGroup || radioGroup || `bk_ref_${placementKey}`) : `bk_cb_${id}`;
+    const safeId = bk_jsString(id);
+    const safeName = bk_jsString(name);
+    const safeDept = bk_jsString(dept);
+    const safeGroup = bk_jsString(groupName);
+    const label = th_refEscape(th_priceLabel(s));
+    const desc = th_refEscape(s.desc || '');
+    const title = th_refEscape(name);
+    const inputId = `bk_cb_${id}`;
+    const selected = (bk_selectedServices || []).some(item => item.id === id);
+    const selectedClass = selected ? ' selected' : '';
+    const checkedAttr = selected ? ' checked' : '';
+
+    if (type === 'counter') {
+        const qty = (bk_selectedServices || []).find(item => item.id === id)?.qty || 0;
+        return `
+            <div class="service th-ref-counter-service${qty > 0 ? ' selected' : ''}">
+                <div class="service-row">
+                    <div class="service-name">${title}</div>
+                    <div class="price">${label}</div>
+                </div>
+                ${desc ? `<div class="service-desc">${desc}</div>` : ''}
+                <div class="th-ref-counter-row">
+                    <button type="button" class="counter-btn" onclick="bk_updateCounter('${safeId}',${price},${dur},'${safeName}',-1,'${safeDept}')">−</button>
+                    <input type="number" id="bk_qty_${id}" value="${qty}" min="0" readonly>
+                    <button type="button" class="counter-btn" onclick="bk_updateCounter('${safeId}',${price},${dur},'${safeName}',1,'${safeDept}')">+</button>
+                </div>
+            </div>`;
+    }
+
+    const inputType = type === 'radio' ? 'radio' : 'checkbox';
     return `
-        <div class="${cls}">
-            <button type="button" class="thuraya-accordion-head th-menu-head" aria-expanded="false" onclick="bk_toggleMenuSection(this)">
-                <span class="thuraya-accordion-title-wrap">
-                    ${badge}
-                    <span class="thuraya-accordion-title">${node.title}</span>
-                    <span class="thuraya-accordion-meta">${node.description || ''}</span>
-                </span>
-                <span class="thuraya-accordion-chevron">›</span>
-            </button>
-            <div class="thuraya-accordion-body">
-                <div class="thuraya-accordion-inner th-menu-level-${level}">${childHtml}</div>
+        <div class="${variant === 'service' ? 'service' : 'simple-service'} th-ref-selectable service-card${selectedClass}"
+             onclick="bk_toggleCard(event,this,'${safeId}','${type}','${safeGroup}',${price},${dur},'${safeName}','${safeDept}')">
+            <input type="${inputType}" name="${th_refEscape(groupName)}" id="${th_refEscape(inputId)}" ${checkedAttr}
+                   style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;">
+            <div class="service-row">
+                <div class="service-name">${title}</div>
+                <div class="price">${label}</div>
             </div>
+            ${desc ? `<div class="service-desc">${desc}</div>` : ''}
+            ${variant === 'simple' ? `<button type="button" tabindex="-1" class="cta">${type === 'checkbox' ? 'Add Upgrade' : (title.toLowerCase().includes('repair') ? 'Select Repair' : 'Select Ritual')}</button>` : ''}
         </div>`;
 }
-function renderThurayaReferenceMenuForDept(dept) {
-    const container = document.getElementById('bk_serviceMenu');
-    if (!container) return;
-    container.innerHTML = THURAYA_HAND_MENU_REFERENCE.map(node => th_renderNode(node, dept, 0, 'hand')).join('');
-    bk_selectedServices.forEach(sel => {
+
+function th_renderServiceRef(ref, dept, placementKey, radioGroup, variant='simple') {
+    return th_buildReferenceServiceCard(ref, dept, placementKey, radioGroup, variant);
+}
+
+function th_isServiceNode(node) {
+    return !node.children;
+}
+
+function th_systemIcon(node) {
+    const t = String(node.title || '').trim();
+    if (/^A1/i.test(t)) return 'A1';
+    if (/^A2/i.test(t)) return 'A2';
+    if (/^A3/i.test(t)) return 'A3';
+    if (/^A4/i.test(t)) return 'A4';
+    if (/^C1/i.test(t)) return 'C1';
+    if (/^C2/i.test(t)) return 'C2';
+    if (/gel systems/i.test(t)) return 'G';
+    return '✦';
+}
+
+function th_renderSubmenu(node, dept, path, depth=1) {
+    const key = `${path}_${th_slug(node.key || node.title || node.name)}`;
+    const serviceChildren = (node.children || []).filter(th_isServiceNode);
+    const groupChildren = (node.children || []).filter(child => !th_isServiceNode(child));
+
+    const servicesHtml = serviceChildren.map(child => th_renderServiceRef(child, dept, `${key}_${th_slug(child.name || child.displayName)}`, key, 'simple')).join('');
+    const groupsHtml = groupChildren.map(child => {
+        const childKey = `${key}_${th_slug(child.key || child.title || child.name)}`;
+        const grandChildren = child.children || [];
+        const allGrandChildrenAreServices = grandChildren.length && grandChildren.every(th_isServiceNode);
+
+        if (allGrandChildrenAreServices) {
+            return th_renderSystem(child, dept, childKey);
+        }
+
+        const nested = grandChildren.map(grand => {
+            if (th_isServiceNode(grand)) return th_renderServiceRef(grand, dept, `${childKey}_${th_slug(grand.name || grand.displayName)}`, childKey, 'service');
+            return th_renderSubmenu(grand, dept, childKey, depth + 1);
+        }).join('');
+
+        return `
+            <div class="system">
+                <div class="system-head">
+                    <div class="system-icon">${th_refEscape(th_systemIcon(child))}</div>
+                    <div>
+                        <h4>${th_refEscape(child.title || '')}</h4>
+                        <p>${th_refEscape(child.description || '')}</p>
+                    </div>
+                </div>
+                ${nested}
+            </div>`;
+    }).join('');
+
+    return `
+        <div class="submenu">
+            <h3>${th_refEscape(node.title || '')}</h3>
+            ${node.description ? `<p class="desc">${th_refEscape(node.description)}</p>` : ''}
+            ${servicesHtml}
+            ${groupsHtml}
+        </div>`;
+}
+
+function th_renderSystem(node, dept, path) {
+    const services = (node.children || []).map(child => th_renderServiceRef(child, dept, `${path}_${th_slug(child.name || child.displayName)}`, path, 'service')).join('');
+    return `
+        <div class="system">
+            <div class="system-head">
+                <div class="system-icon">${th_refEscape(th_systemIcon(node))}</div>
+                <div>
+                    <h4>${th_refEscape(node.title || '')}</h4>
+                    <p>${th_refEscape(node.description || '')}</p>
+                </div>
+            </div>
+            ${services}
+        </div>`;
+}
+
+function th_renderTopNode(node, dept, index) {
+    const key = `hand_${th_slug(node.key || node.title || index)}`;
+    const openAttr = (node.key === 'hand-rituals' || node.key === 'pleiades-studio') ? ' open' : '';
+    const serviceChildren = (node.children || []).filter(th_isServiceNode);
+    const groupChildren = (node.children || []).filter(child => !th_isServiceNode(child));
+    const servicesHtml = serviceChildren.map(child => th_renderServiceRef(child, dept, `${key}_${th_slug(child.name || child.displayName)}`, key, 'simple')).join('');
+    const groupsHtml = groupChildren.map(child => th_renderSubmenu(child, dept, key)).join('');
+    const badge = node.badge ? `<div class="badge">${th_refEscape(node.badge)}</div>` : '';
+    const contentInner = node.badge ? `<div class="menu-card">${badge}${servicesHtml}${groupsHtml}</div>` : `${servicesHtml}${groupsHtml}`;
+
+    return `
+        <details class="th-ref-details"${openAttr}>
+            <summary>
+                <div class="title-block">
+                    <strong>${th_refEscape(node.title || '')}</strong>
+                    <span>${th_refEscape(node.description || '')}</span>
+                </div>
+                <div class="chev">+</div>
+            </summary>
+            <div class="content">${contentInner}</div>
+        </details>`;
+}
+
+function th_openSelectedReferenceSections(container) {
+    (bk_selectedServices || []).forEach(sel => {
         document.querySelectorAll(`[id="bk_cb_${sel.id}"]`).forEach(input => {
             input.checked = true;
-            input.closest('.service-card')?.classList.add('selected');
-            let section = input.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
-            while (section) {
-                section.classList.add('open');
-                const head = section.querySelector(':scope > .thuraya-accordion-head');
-                if (head) head.setAttribute('aria-expanded', 'true');
-                section = section.parentElement?.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
-            }
+            input.closest('.th-ref-selectable')?.classList.add('selected');
+            input.closest('details')?.setAttribute('open', '');
         });
         document.querySelectorAll(`[id="bk_qty_${sel.id}"]`).forEach(qty => {
             qty.value = sel.qty || 1;
-            let section = qty.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
-            while (section) {
-                section.classList.add('open');
-                const head = section.querySelector(':scope > .thuraya-accordion-head');
-                if (head) head.setAttribute('aria-expanded', 'true');
-                section = section.parentElement?.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
-            }
+            qty.closest('.th-ref-counter-service')?.classList.toggle('selected', Number(sel.qty || 0) > 0);
+            qty.closest('details')?.setAttribute('open', '');
         });
     });
+}
+
+function renderThurayaReferenceMenuForDept(dept) {
+    const container = document.getElementById('bk_serviceMenu');
+    if (!container) return;
+
+    container.classList.add('th-ref-menu');
+    container.innerHTML = THURAYA_HAND_MENU_REFERENCE.map((node, index) => th_renderTopNode(node, dept, index)).join('');
+    th_openSelectedReferenceSections(container);
+
     setTimeout(bk_finalSyncCTAs, 60);
     updateBreakdown();
 }
@@ -835,6 +973,7 @@ window.bk_updateCounter = function(id, price, dur, name, delta, dept) {
     if (!input) return;
     let val = Math.max(0, (parseInt(input.value) || 0) + delta);
     input.value = val;
+    input.closest('.th-ref-counter-service')?.classList.toggle('selected', val > 0);
     bk_selectedServices = bk_selectedServices.filter(s => s.id !== id);
     if (val > 0) bk_selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept: dept || bk_selectedDept });
     updateBreakdown();
