@@ -2593,3 +2593,7 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     if (action === 'directions') return window.bk_upcomingDirections?.();
     if (action === 'rebook') return window.bk_bookAgain?.();
 };
+
+
+// THURAYA REFERENCE EXACT V3 — built from uploaded current app.js on 2026-05-03.
+console.log('Thuraya Reference Exact V3 current production menu loaded.');
