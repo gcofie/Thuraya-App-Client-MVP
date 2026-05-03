@@ -1482,55 +1482,89 @@ function bk_finalSyncCTAs() {
 }
 // ── END THURAYA FINAL CTA PATCH ───────────────────────────
 
+function bk_ensureServiceInlineContinue() {
+    const menu = document.getElementById('bk_serviceMenu');
+    if (!menu) return null;
+
+    let wrap = document.getElementById('bk_serviceContinueWrap');
+    let btn = document.getElementById('btnToTechInline');
+
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'bk_serviceContinueWrap';
+        wrap.style.cssText = [
+            'width:100%',
+            'display:none',
+            'margin:26px 0 150px',
+            'padding:0',
+            'background:transparent',
+            'border:0',
+            'box-shadow:none'
+        ].join(';');
+    }
+
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'btnToTechInline';
+        btn.type = 'button';
+        btn.className = 'btn-primary full';
+        btn.textContent = 'Continue →';
+        btn.style.cssText = [
+            'width:100%',
+            'min-height:56px',
+            'border-radius:22px',
+            'font-weight:900',
+            'letter-spacing:.14em',
+            'text-transform:uppercase'
+        ].join(';');
+    }
+
+    if (!wrap.contains(btn)) wrap.appendChild(btn);
+    if (wrap.parentElement !== menu.parentElement || wrap.previousElementSibling !== menu) {
+        menu.insertAdjacentElement('afterend', wrap);
+    }
+
+    return { wrap, btn };
+}
+
+function bk_styleInlineServiceCTA(btn, active) {
+    if (!btn) return;
+    btn.disabled = !active;
+    btn.style.border = active ? '1px solid #050505' : '1px solid #CEC8BE';
+    btn.style.background = active ? 'linear-gradient(180deg,#151515 0%,#050505 100%)' : '#CEC8BE';
+    btn.style.color = active ? '#fff' : '#756F66';
+    btn.style.boxShadow = active ? '0 18px 40px rgba(10,10,10,.20)' : 'none';
+    btn.style.cursor = active ? 'pointer' : 'not-allowed';
+    btn.onclick = function(){
+        if (!btn.disabled) goToStep('screen-technician');
+    };
+}
+
 function bk_updateStickyBarOptionA() {
     const bar = document.getElementById('bk_stickyBar');
-    if (!bar) return;
-
+    const empty = document.getElementById('bk_stickyEmpty');
     const full = document.getElementById('bk_stickyFull');
-    const list = document.getElementById('bk_breakdownList');
-    const tax = document.getElementById('bk_taxBreakdown');
-    const durEl = document.getElementById('bk_totalDuration');
-    const totalEl = document.getElementById('bk_totalCost');
-    const continueBtn = document.getElementById('btnToTech');
+    const oldStickyBtn = document.getElementById('btnToTech');
+
+    // Luxury minimal mode: remove the bottom instant summary card completely.
+    if (bar) bar.style.display = 'none';
+    if (empty) empty.style.display = 'none';
+    if (full) full.style.display = 'none';
 
     const selected = bk_selectedServices || [];
-    const hasSelection = selected.length > 0;
+    const active = selected.length > 0;
 
-    // Hide the empty sticky message completely so it never blocks the menu.
-    const empty = document.getElementById('bk_stickyEmpty');
-    if (empty) empty.style.display = 'none';
-
-    // Only show the sticky breakdown after at least one service is selected.
-    if (!hasSelection) {
-        bar.style.display = 'none';
-        if (full) full.style.display = 'none';
-        if (continueBtn) continueBtn.disabled = true;
-        return;
+    // Keep the original sticky button disabled/hidden for safety, but do not use it visually.
+    if (oldStickyBtn) {
+        oldStickyBtn.disabled = !active;
+        oldStickyBtn.onclick = function(){ if (active) goToStep('screen-technician'); };
     }
 
-    bar.style.display = 'block';
-
-    const subtotal = selected.reduce((sum, item) => sum + (Number(item.price) || 0) * (item.qty || 1), 0);
-    const totalMins = selected.reduce((sum, item) => sum + (Number(item.dur) || 0) * (item.qty || 1), 0);
-    const taxes = applyTaxes(subtotal);
-
-    if (full) full.style.display = 'block';
-    if (list) {
-        list.innerHTML = selected.map(item => `
-            <div class="sticky-line-item">
-                <span>${item.name}${item.qty > 1 ? ' × ' + item.qty : ''}</span>
-                <strong>${((Number(item.price) || 0) * (item.qty || 1)).toFixed(2)} GHC</strong>
-            </div>`).join('');
-    }
-    if (tax) tax.innerHTML = taxes.taxLines?.length ? taxes.taxLines.map(t => `
-        <div class="sticky-line-item tax"><span>${t.name} (${t.rate}%)</span><strong>${t.amount.toFixed(2)} GHC</strong></div>
-    `).join('') : '';
-    if (durEl) durEl.textContent = totalMins;
-    if (totalEl) totalEl.textContent = taxes.grandTotal.toFixed(2);
-    if (continueBtn) {
-        continueBtn.disabled = false;
-        continueBtn.textContent = 'Continue →';
-        continueBtn.onclick = function(){ goToStep('screen-technician'); };
+    // Provide a clean inline Continue button below the menu instead of the bulky summary card.
+    const inline = bk_ensureServiceInlineContinue();
+    if (inline) {
+        inline.wrap.style.display = active ? 'block' : 'none';
+        bk_styleInlineServiceCTA(inline.btn, active);
     }
 }
 
