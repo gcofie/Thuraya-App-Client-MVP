@@ -1,14 +1,12 @@
 /* =========================
-   THURAYA BRAND SYSTEM — FINAL
+   THURAYA BRAND SYSTEM — FINAL (FIXED)
    ========================= */
 
 :root {
-  /* Core Brand */
   --black: #0A0A0A;
   --cloud: #F0EEE9;
   --white: #FFFFFF;
 
-  /* Background */
   --bg-main: linear-gradient(
     180deg,
     #F0EEE9 0%,
@@ -16,28 +14,22 @@
     #FFFFFF 100%
   );
 
-  /* Text */
   --text-primary: #0A0A0A;
   --text-secondary: #6F6A63;
   --text-muted: #9A948C;
 
-  /* Borders */
   --border-soft: rgba(0,0,0,0.06);
   --border-light: rgba(0,0,0,0.08);
 
-  /* Cards */
   --card-bg: #FFFFFF;
   --card-shadow: 0 18px 45px rgba(10,10,10,0.06);
   --radius: 20px;
 
-  /* Accent */
   --gold: #B59E4B;
 
-  /* Buttons */
   --btn-primary-bg: #0A0A0A;
   --btn-primary-text: #FFFFFF;
 
-  /* Motion */
   --ease: all 0.25s ease;
 }
 
@@ -47,10 +39,26 @@
 
 body {
   margin: 0;
-  background: var(--bg-main);
+  background: var(--bg-main) !important;
   color: var(--text-primary);
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  -webkit-font-smoothing: antialiased;
+}
+
+/* 🔥 FORCE FIX FOR DARK SCREEN */
+body,
+.app,
+.main,
+.screen,
+.page,
+.container {
+  background: var(--bg-main) !important;
+}
+
+/* REMOVE DARK HERO BACKGROUNDS */
+.hero,
+.booking-hero,
+.top-section {
+  background: transparent !important;
 }
 
 /* =========================
@@ -84,7 +92,6 @@ body {
 
 .service-desc {
   color: var(--text-secondary);
-  line-height: 1.5;
 }
 
 /* =========================
@@ -104,7 +111,6 @@ body {
 button {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-text);
-  border: none;
   border-radius: 999px;
   padding: 14px 18px;
   font-size: 12px;
@@ -112,10 +118,6 @@ button {
   text-transform: uppercase;
   font-weight: 800;
   transition: var(--ease);
-}
-
-.cta:hover {
-  opacity: 0.9;
 }
 
 .cta:active {
@@ -133,8 +135,6 @@ button {
   padding: 16px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  transition: var(--ease);
 }
 
 .thuraya-accordion-chevron {
@@ -146,31 +146,7 @@ button {
 }
 
 /* =========================
-   SELECTION STATE
-   ========================= */
-
-.service-card.selected,
-.simple-service.selected {
-  border: 1px solid var(--black);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-/* =========================
-   MICRO INTERACTIONS
-   ========================= */
-
-.thuraya-accordion-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.thuraya-accordion-section.open .thuraya-accordion-body {
-  max-height: 1000px;
-}
-
-/* =========================
-   UPCOMING APPOINTMENT — FINAL POLISH
+   UPCOMING APPOINTMENT
    ========================= */
 
 .upcoming-card {
@@ -187,26 +163,21 @@ button {
   transform: scale(0.99);
 }
 
-/* Header label */
 .upcoming-card .label {
   letter-spacing: 0.08em;
   font-weight: 700;
   color: #6F6A63;
 }
 
-/* Title */
 .upcoming-card h3 {
-  font-family: Georgia, "Times New Roman", serif;
   font-size: 22px;
   margin: 6px 0 8px;
 }
 
-/* Date */
 .upcoming-card .date {
   color: #6F6A63;
 }
 
-/* Badge */
 .upcoming-card .badge {
   background: rgba(181, 158, 75, 0.15);
   color: #8A7838;
@@ -214,23 +185,8 @@ button {
   padding: 6px 12px;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.08em;
 }
 
-/* Buttons */
 .upcoming-card button {
   min-height: 52px;
-}
-
-/* Primary */
-.upcoming-card .primary-btn {
-  background: #0A0A0A;
-  color: #FFFFFF;
-}
-
-/* Secondary */
-.upcoming-card .secondary-btn {
-  background: #F0EEE9;
-  color: #0A0A0A;
-  border: 1px solid rgba(0,0,0,0.1);
 }
