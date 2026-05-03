@@ -133,7 +133,7 @@ function applyTaxes(listedTotal) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const dateEl = document.getElementById('bk_date');
-    if (dateEl) dateEl.min = todayStr;
+    if (dateEl) { dateEl.min = todayStr; dateEl.value = dateEl.value && dateEl.value < todayStr ? todayStr : dateEl.value; }
 
     loadTaxConfig();
     loadMenu();
@@ -349,7 +349,7 @@ function loadMenu() {
     });
 }
 
-function renderMenuForDept(dept) {
+function renderMenuForDeptLegacy(dept) {
     const container = document.getElementById('bk_serviceMenu');
     if (!container) return;
 
@@ -525,6 +525,212 @@ function renderMenuForDept(dept) {
 }
 
 
+
+// ── THURAYA PRODUCTION MENU STRUCTURE — HAND THERAPY ─────
+// Reference-approved structure: Category → Main Menu → Sub Menu → System Group → Service.
+// This is UI/data rendering only. Booking selection still uses the existing bk_toggleCard / _buildCard flow.
+const THURAYA_HAND_MENU_REFERENCE = [
+  {
+    key: 'hand-rituals',
+    title: '1. Hand Therapies & Rituals',
+    description: 'Restorative and grooming rituals designed for softness, balance, and refined presentation.',
+    children: [
+      { name: 'Youthful Touch — Hand Renewal', duration: 45, price: 220, inputType: 'radio', desc: 'A 45-minute hand renewal ritual for visible softness, care, and refined presentation.' },
+      { name: 'Silken Restore — Hand Balance', duration: 30, price: 165, inputType: 'radio', desc: 'A 30-minute balancing hand treatment focused on hydration, comfort, and a smooth finish.' },
+      { name: 'Precision Groom — Men', duration: 45, price: 220, inputType: 'radio', desc: 'A 45-minute grooming ritual designed for clean, confident, masculine hand care.' }
+    ]
+  },
+  {
+    key: 'luxe-addons',
+    title: '2. Luxe Add Ons & Upgrades',
+    description: 'Enhancements designed to elevate your base service with finishing indulgence and polish upgrades.',
+    children: [
+      {
+        key: 'finishing-indulgences', title: 'A. Finishing Indulgences', description: 'Comfort-led upgrades that extend the ritual through massage, warmth, and restoration.',
+        children: [
+          { name: 'Lush Arm Sculpt Massage', price: 50, inputType: 'checkbox', desc: 'A sculpting arm massage add-on to soften tension and complete the hand ritual.' },
+          { name: 'Paraffin Restoration Mask', price: 50, inputType: 'checkbox', desc: 'A warm paraffin mask to seal moisture and restore a supple hand feel.' },
+          { name: 'Hot Stone Arm Massage', price: 80, inputType: 'checkbox', desc: 'A heated stone massage upgrade for deeper relaxation and premium finishing.' }
+        ]
+      },
+      {
+        key: 'polish-finish-luxe', title: 'B. Polish & Finish', description: 'Finishing options that refine the final look with polish, tip work, or chrome expression.',
+        children: [
+          { name: 'Gel Polish Upgrade', price: 60, inputType: 'checkbox', desc: 'A long-lasting gel polish finish added to your selected hand ritual.' },
+          { name: 'French Tips', price: 105, inputType: 'checkbox', desc: 'A timeless tip finish for clean elegance and refined detail.' },
+          { name: 'Chrome / Manicure', price: 180, inputType: 'checkbox', desc: 'A reflective chrome finish for a modern, high-impact manicure aesthetic.' }
+        ]
+      }
+    ]
+  },
+  {
+    key: 'pleiades-studio',
+    title: '3. Pleiades Studio',
+    description: 'Nail enhancements suite: extensions, layovers, brush-on systems, and design.',
+    badge: 'Enhancement Suite',
+    children: [
+      {
+        key: 'nail-architecture', title: 'A. Nail Architecture', description: 'Acrylic, Gel X extensions, brush-on gel, and structural systems designed to enhance form, durability, and aesthetic balance.',
+        children: [
+          {
+            key: 'acrylic', title: 'A1. Acrylic', description: 'Classic acrylic enhancement system for durable structure, clean length, and refined shape.',
+            children: [
+              { name: 'Acrylic Full Set', displayName: 'Full Set', duration: 90, price: 300, inputType: 'radio', desc: 'A 90-minute full acrylic set for durable structure and polished presentation.' },
+              { name: 'Acrylic Infill', displayName: 'Infill', duration: 60, price: 250, inputType: 'radio', desc: 'A 60-minute maintenance service to refresh growth and restore balance.' },
+              { name: 'Acrylic Removal Only', displayName: 'Removal Only', duration: 45, price: 150, inputType: 'radio', desc: 'A 45-minute safe removal service for existing acrylic enhancements.' },
+              { name: 'Acrylic Removal + New Set', displayName: 'Removal + New Set', duration: 120, price: 350, inputType: 'radio', desc: 'A 120-minute full refresh: removal followed by a new acrylic set.' }
+            ]
+          },
+          {
+            key: 'sculpt-acrylic', title: 'Sculpt Acrylic', description: 'Advanced sculpted acrylic structure for stronger shape control and an elevated enhancement finish.',
+            children: [
+              { name: 'Sculpt Acrylic Full Set', displayName: 'Full Set', duration: 105, price: 380, inputType: 'radio', desc: 'A 105-minute sculpted acrylic full set for advanced structure and shaping.' },
+              { name: 'Sculpt Acrylic Infill', displayName: 'Infill', duration: 75, price: 280, inputType: 'radio', desc: 'A 75-minute sculpt acrylic maintenance service restoring shape and balance.' },
+              { name: 'Sculpt Acrylic Removal + New Set', displayName: 'Removal + New Set', duration: 120, price: 460, inputType: 'radio', desc: 'A 120-minute sculpt acrylic refresh with removal and new structure.' }
+            ]
+          },
+          {
+            key: 'gel-systems', title: 'Gel Systems', description: 'Gel-based enhancement systems including Gel X, BIAB, and DuraGel for flexible or durable structure.',
+            children: [
+              { key: 'gel-x', title: 'A2. Gel X', description: 'Lightweight extension system offering flexibility, comfort, and a natural finish.', children: [
+                { name: 'Gel X Polish Only', displayName: 'Polish Only', price: 145, inputType: 'radio', desc: 'A clean polish application on Gel X base for a refined finish.' },
+                { name: 'Gel X Extensions', displayName: 'Extensions', price: 330, priceLabel: 'GHC300–360', inputType: 'radio', desc: 'Full-length Gel X extensions with seamless structure and natural feel.' },
+                { name: 'Gel X Infill', displayName: 'Infill', price: 280, inputType: 'radio', desc: 'Maintenance service restoring structure, balance, and polish integrity.' },
+                { name: 'Gel X Removal + New Set', displayName: 'Removal + New Set', price: 340, inputType: 'radio', desc: 'Complete removal followed by a fresh Gel X application.' }
+              ]},
+              { key: 'biab', title: 'A3. BIAB', description: 'Builder gel system focused on strength, natural overlays, and nail health.', children: [
+                { name: 'BIAB Overlay', displayName: 'Overlay', price: 280, inputType: 'radio', desc: 'Strengthening overlay enhancing natural nail durability and structure.' },
+                { name: 'BIAB Extensions', displayName: 'Extensions', price: 360, inputType: 'radio', desc: 'Structured builder gel extensions with a natural, balanced aesthetic.' },
+                { name: 'BIAB Infill', displayName: 'Infill', price: 300, inputType: 'radio', desc: 'Refinement and balance restoration for an existing BIAB structure.' },
+                { name: 'BIAB Removal + New Set', displayName: 'Removal + New Set', price: 420, inputType: 'radio', desc: 'Complete refresh with new BIAB structure and finish.' }
+              ]},
+              { key: 'duragel', title: 'A4. DuraGel', description: 'High-durability gel system designed for long-lasting strength and structure.', children: [
+                { name: 'DuraGel Full Set', displayName: 'Full Set', price: 360, inputType: 'radio', desc: 'Full structured gel application designed for durable daily wear.' },
+                { name: 'DuraGel Infill', displayName: 'Infill', price: 300, inputType: 'radio', desc: 'Maintenance and structural correction for an existing DuraGel set.' },
+                { name: 'DuraGel Removal + New Set', displayName: 'Removal + New Set', price: 420, inputType: 'radio', desc: 'Complete removal followed by a new durable gel structure.' }
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key: 'polish-finish-pleiades', title: 'B. Polish & Finish', description: 'Finishing polish and styling options repeated within Pleiades Studio for enhancement clients.',
+        children: [
+          { name: 'Gel Polish Upgrade', price: 60, inputType: 'checkbox', desc: 'A durable polish upgrade for enhancement services requiring a finished color layer.' },
+          { name: 'French Tips', price: 105, inputType: 'checkbox', desc: 'A refined tip style for enhancement sets requiring a timeless finish.' },
+          { name: 'Chrome / Manicure', price: 180, inputType: 'checkbox', desc: 'A high-shine chrome or manicure finish for a statement enhancement look.' }
+        ]
+      },
+      {
+        key: 'design-canvas', title: 'C. Design Canvas', description: 'Design enhancement structure for creative nail artistry from minimal editorial detail to couture expression.',
+        children: [
+          { key: 'editorial-art', title: 'C1. Editorial Art', description: 'Visible design details for refined creative expression per nail.', children: [
+            { name: 'Simple Art', price: 12, priceLabel: 'GHC12 / nail', inputType: 'counter', desc: 'Minimal editorial detailing for clean, elegant nail art accents.' },
+            { name: 'Detailed Art', price: 18, priceLabel: 'GHC18 / nail', inputType: 'counter', desc: 'More intricate art work for expressive detail and elevated visual interest.' }
+          ]},
+          { key: 'couture-art', title: 'C2. Couture Art', description: 'Custom design direction for clients seeking a bespoke nail art concept.', children: [
+            { name: 'Custom Design', price: 0, priceLabel: 'Consultation', inputType: 'checkbox', desc: 'Bespoke design work priced and planned after consultation based on detail and complexity.' }
+          ]}
+        ]
+      },
+      {
+        key: 'embellishment-drawers', title: 'D. Embellishment Drawers', description: 'Dimensional and decorative embellishments that add texture, sparkle, and couture detail.',
+        children: [
+          { name: '3D Art', price: 15, inputType: 'counter', desc: 'Dimensional nail art elements for expressive sculptural detail.' },
+          { name: 'Stones & Crystals', price: 10, inputType: 'counter', desc: 'Sparkle and crystal detailing added to selected nails for a luxury finish.' },
+          { name: 'Metals / Pearls', price: 10, inputType: 'counter', desc: 'Metallic or pearl embellishments for refined decorative accents.' }
+        ]
+      }
+    ]
+  },
+  {
+    key: 'repairs',
+    title: '4. Repairs',
+    description: 'Maintenance and corrective services for durability, polish, and restoration.',
+    children: [
+      { name: 'Nail Repair', price: 25, inputType: 'checkbox', desc: 'Targeted correction to restore strength and visual balance to a damaged nail.' },
+      { name: 'Stick-ons', price: 240, inputType: 'radio', desc: 'Quick enhancement set for a polished look with efficient application.' }
+    ]
+  }
+];
+
+function th_slug(value) {
+    return String(value || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+}
+function th_norm(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function th_findServiceMatch(ref, placementKey) {
+    const names = [ref.name, ref.displayName].filter(Boolean).map(th_norm);
+    const match = (bk_menuServices || []).find(s => names.includes(th_norm(s.name)) || th_norm(s.name).includes(th_norm(ref.name)));
+    const merged = { ...(match || {}), ...ref };
+    merged.name = ref.displayName || ref.name || match?.name || 'Service';
+    merged.id = `th_${placementKey}_${match?.id || th_slug(ref.name || ref.displayName)}`;
+    merged.department = 'Hand';
+    merged.status = 'Active';
+    return merged;
+}
+function th_renderServiceRef(ref, dept, placementKey) {
+    return _buildCard(th_findServiceMatch(ref, placementKey), dept);
+}
+function th_renderNode(node, dept, level, path) {
+    const key = `${path}_${th_slug(node.key || node.title || node.name)}`;
+    if (!node.children) return th_renderServiceRef(node, dept, key);
+
+    const childHtml = node.children.map(child => th_renderNode(child, dept, level + 1, key)).join('');
+    const cls = level === 0 ? 'thuraya-accordion-section th-menu-main' : (level === 1 ? 'th-menu-submenu' : 'th-menu-system');
+    const badge = node.badge ? `<span class="th-menu-badge">${node.badge}</span>` : '';
+    return `
+        <div class="${cls}">
+            <button type="button" class="thuraya-accordion-head th-menu-head" aria-expanded="false" onclick="bk_toggleMenuSection(this)">
+                <span class="thuraya-accordion-title-wrap">
+                    ${badge}
+                    <span class="thuraya-accordion-title">${node.title}</span>
+                    <span class="thuraya-accordion-meta">${node.description || ''}</span>
+                </span>
+                <span class="thuraya-accordion-chevron">›</span>
+            </button>
+            <div class="thuraya-accordion-body">
+                <div class="thuraya-accordion-inner th-menu-level-${level}">${childHtml}</div>
+            </div>
+        </div>`;
+}
+function renderThurayaReferenceMenuForDept(dept) {
+    const container = document.getElementById('bk_serviceMenu');
+    if (!container) return;
+    container.innerHTML = THURAYA_HAND_MENU_REFERENCE.map(node => th_renderNode(node, dept, 0, 'hand')).join('');
+    bk_selectedServices.forEach(sel => {
+        document.querySelectorAll(`[id="bk_cb_${sel.id}"]`).forEach(input => {
+            input.checked = true;
+            input.closest('.service-card')?.classList.add('selected');
+            let section = input.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
+            while (section) {
+                section.classList.add('open');
+                const head = section.querySelector(':scope > .thuraya-accordion-head');
+                if (head) head.setAttribute('aria-expanded', 'true');
+                section = section.parentElement?.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
+            }
+        });
+        document.querySelectorAll(`[id="bk_qty_${sel.id}"]`).forEach(qty => {
+            qty.value = sel.qty || 1;
+            let section = qty.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
+            while (section) {
+                section.classList.add('open');
+                const head = section.querySelector(':scope > .thuraya-accordion-head');
+                if (head) head.setAttribute('aria-expanded', 'true');
+                section = section.parentElement?.closest('.thuraya-accordion-section, .th-menu-submenu, .th-menu-system');
+            }
+        });
+    });
+    setTimeout(bk_finalSyncCTAs, 60);
+    updateBreakdown();
+}
+
+function renderMenuForDept(dept) {
+    if (dept === 'Hand') return renderThurayaReferenceMenuForDept(dept);
+    return renderMenuForDeptLegacy(dept);
+}
+
 // ── THURAYA SERVICE MENU ACCORDION — OPTION B ─────────────
 // Multiple sections can stay open. All sections start collapsed.
 window.bk_toggleMenuSection = function(btn) {
@@ -540,6 +746,10 @@ window.bk_toggleMenuSection = function(btn) {
 };
 // ── END THURAYA SERVICE MENU ACCORDION ────────────────────
 
+function bk_jsString(value) {
+    return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
 function _buildCard(s, dept) {
     const type     = s.inputType || 'radio';
     const name     = s.name      || 'Service';
@@ -547,7 +757,11 @@ function _buildCard(s, dept) {
     const price    = Number(s.price)    || 0;
     const descHtml = s.desc ? `<div class="service-card-desc">${s.desc}</div>` : '';
     const tagHtml  = (s.tag && s.tag !== 'None') ? `<span class="hl-tag">${s.tag}</span>` : '';
-    const priceTag = `<span class="service-price-pill">${dur > 0 ? dur + ' mins &nbsp;|&nbsp; ' : ''}${price} GHC</span>`;
+    const priceDisplay = s.priceLabel || `${price} GHC`;
+    const priceTag = `<span class="service-price-pill">${dur > 0 ? dur + ' mins &nbsp;|&nbsp; ' : ''}${priceDisplay}</span>`;
+    const safeName = bk_jsString(name);
+    const safeDept = bk_jsString(dept);
+    const safeId = bk_jsString(s.id);
 
     if (type === 'counter') {
         return `
@@ -557,10 +771,10 @@ function _buildCard(s, dept) {
                     ${descHtml}${priceTag}
                 </div>
                 <div class="counter-box">
-                    <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',-1,'${dept}')">−</button>
+                    <button class="counter-btn" onclick="bk_updateCounter('${safeId}',${price},${dur},'${safeName}',-1,'${safeDept}')">−</button>
                     <input type="number" id="bk_qty_${s.id}" value="0" min="0" readonly
                         style="width:44px;height:36px;text-align:center;padding:4px;font-weight:700;border:1px solid var(--border);border-radius:6px;">
-                    <button class="counter-btn" onclick="bk_updateCounter('${s.id}',${price},${dur},'${name}',1,'${dept}')">+</button>
+                    <button class="counter-btn" onclick="bk_updateCounter('${safeId}',${price},${dur},'${safeName}',1,'${safeDept}')">+</button>
                 </div>
             </div>`;
     }
@@ -573,7 +787,7 @@ function _buildCard(s, dept) {
                style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`;
 
     return `
-        <div class="service-card" onclick="bk_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${name}','${dept}')">
+        <div class="service-card" onclick="bk_toggleCard(event,this,'${safeId}','${type}','${groupName}',${price},${dur},'${safeName}','${safeDept}')">
             ${inputEl}
             <div class="service-card-body">
                 <div class="service-card-name">${name} ${tagHtml}</div>
@@ -705,9 +919,9 @@ function bk_finalEnsureTimeCTA() {
 
 function bk_finalSyncCTAs() {
     const stickyBar = document.getElementById('bk_stickyBar');
-    if (stickyBar) stickyBar.style.display = 'none';
+    if (stickyBar) stickyBar.classList.add('thuraya-option-a-sticky');
 
-    // SERVICE STEP: use existing button only. Do not create duplicate.
+    // SERVICE STEP: keep existing button in sync for accessibility; sticky bar is the primary visible control.
     const serviceBtn = document.getElementById('btnToTech');
     if (serviceBtn) {
         const active = bk_hasServiceSelectedUI();
@@ -739,11 +953,59 @@ function bk_finalSyncCTAs() {
 }
 // ── END THURAYA FINAL CTA PATCH ───────────────────────────
 
+function bk_updateStickyBarOptionA() {
+    const bar = document.getElementById('bk_stickyBar');
+    if (!bar) return;
+
+    const empty = document.getElementById('bk_stickyEmpty');
+    const full = document.getElementById('bk_stickyFull');
+    const list = document.getElementById('bk_breakdownList');
+    const tax = document.getElementById('bk_taxBreakdown');
+    const durEl = document.getElementById('bk_totalDuration');
+    const totalEl = document.getElementById('bk_totalCost');
+    const continueBtn = document.getElementById('btnToTech');
+
+    const selected = bk_selectedServices || [];
+    const hasSelection = selected.length > 0;
+    bar.style.display = 'block';
+
+    if (!hasSelection) {
+        if (empty) empty.style.display = 'block';
+        if (full) full.style.display = 'none';
+        if (continueBtn) continueBtn.disabled = true;
+        return;
+    }
+
+    const subtotal = selected.reduce((sum, item) => sum + (Number(item.price) || 0) * (item.qty || 1), 0);
+    const totalMins = selected.reduce((sum, item) => sum + (Number(item.dur) || 0) * (item.qty || 1), 0);
+    const taxes = applyTaxes(subtotal);
+
+    if (empty) empty.style.display = 'none';
+    if (full) full.style.display = 'block';
+    if (list) {
+        list.innerHTML = selected.map(item => `
+            <div class="sticky-line-item">
+                <span>${item.name}${item.qty > 1 ? ' × ' + item.qty : ''}</span>
+                <strong>${((Number(item.price) || 0) * (item.qty || 1)).toFixed(2)} GHC</strong>
+            </div>`).join('');
+    }
+    if (tax) tax.innerHTML = taxes.taxLines?.length ? taxes.taxLines.map(t => `
+        <div class="sticky-line-item tax"><span>${t.name} (${t.rate}%)</span><strong>${t.amount.toFixed(2)} GHC</strong></div>
+    `).join('') : '';
+    if (durEl) durEl.textContent = totalMins;
+    if (totalEl) totalEl.textContent = taxes.grandTotal.toFixed(2);
+    if (continueBtn) {
+        continueBtn.disabled = false;
+        continueBtn.textContent = 'Continue →';
+        continueBtn.onclick = function(){ goToStep('screen-technician'); };
+    }
+}
+
 function updateBreakdown() {
-    // Keep selection state logic in existing card/counter handlers.
-    // CTA activation is based on visible UI state to avoid missing-variable crashes.
+    bk_updateStickyBarOptionA();
     bk_finalSyncCTAs();
 }
+
 
 window.bk_clearAllSelections = function() {
     bk_selectedServices = [];

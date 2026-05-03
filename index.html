@@ -494,13 +494,6 @@
                     <div class="loading-pulse">Loading services...</div>
                 </div>
 
-                <!-- THURAYA SAFE FALLBACK CTA: keeps Continue visible even if sticky bar is hidden -->
-                <div class="thuraya-inline-continue" id="thurayaInlineContinueServices">
-                    <button class="btn-primary full" type="button" onclick="goToStep('screen-technician')">
-                        Continue →
-                    </button>
-                </div>
-
                 <div style="height:160px;"></div>
             </div>
         </div>
@@ -559,7 +552,7 @@
                 <div class="form-card">
                     <div class="form-group">
                         <label>Date <span class="req">*</span></label>
-                        <input type="date" id="bk_date" onchange="bk_generateSlots()">
+                        <input type="date" id="bk_date" min="" onchange="bk_generateSlots()">
                     </div>
                 </div>
                 <div id="bk_slotsContainer" class="slots-container" style="display:none;">

@@ -3202,3 +3202,73 @@ button:active,
   text-decoration:underline !important;
   text-underline-offset:4px !important;
 }
+
+
+/* =========================================================
+   THURAYA PRODUCTION MENU SYNC + OPTION A STICKY CTA
+   Reference-approved client menu hierarchy. Logic-safe UI layer.
+   ========================================================= */
+#bk_stickyBar.thuraya-option-a-sticky{
+  display:block !important;
+  position:fixed !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:calc(var(--thuraya-shell-gap, 14px) + 10px) !important;
+  transform:translateX(-50%) !important;
+  width:min(390px, calc(100vw - 24px)) !important;
+  max-width:390px !important;
+  border-radius:28px !important;
+  padding:10px !important;
+  background:rgba(255,253,248,.96) !important;
+  border:1px solid rgba(221,211,197,.92) !important;
+  box-shadow:0 24px 56px rgba(10,10,10,.24) !important;
+  backdrop-filter:blur(20px) !important;
+  -webkit-backdrop-filter:blur(20px) !important;
+  z-index:9997 !important;
+}
+#bk_stickyBar .sticky-empty{
+  display:block;
+  padding:12px 14px !important;
+  color:rgba(47,41,34,.68) !important;
+  font-size:.78rem !important;
+  line-height:1.35 !important;
+  text-align:center !important;
+}
+#bk_stickyBar .sticky-summary{max-height:132px !important;overflow:auto !important;padding:2px 4px 8px !important;}
+#bk_stickyBar .sticky-line-item{display:flex !important;align-items:flex-start !important;justify-content:space-between !important;gap:10px !important;padding:5px 2px !important;color:#2F2922 !important;font-size:.78rem !important;line-height:1.25 !important;}
+#bk_stickyBar .sticky-line-item strong{color:#0a0a0a !important;white-space:nowrap !important;font-weight:900 !important;}
+#bk_stickyBar .sticky-line-item.tax{opacity:.72 !important;font-size:.72rem !important;}
+#bk_stickyBar .sticky-footer{display:grid !important;grid-template-columns:1fr auto !important;gap:10px !important;align-items:center !important;padding:8px 2px 0 !important;}
+#bk_stickyBar .sticky-totals{display:flex !important;flex-direction:column !important;gap:3px !important;}
+#bk_stickyBar .sticky-total-line{display:flex !important;align-items:baseline !important;gap:4px !important;color:#0a0a0a !important;}
+#bk_stickyBar .sticky-total-label{font-size:.62rem !important;text-transform:uppercase !important;letter-spacing:.12em !important;color:rgba(47,41,34,.58) !important;font-weight:900 !important;}
+#bk_stickyBar .sticky-total-value{font-family:var(--font-serif, Georgia, serif) !important;font-size:1.06rem !important;font-weight:700 !important;}
+#bk_stickyBar .sticky-total-unit{font-size:.66rem !important;color:rgba(47,41,34,.62) !important;font-weight:800 !important;}
+#bk_stickyBar .sticky-actions{display:flex !important;gap:7px !important;align-items:center !important;}
+#bk_stickyBar .sticky-clear-btn{min-height:44px !important;border-radius:999px !important;border:1px solid rgba(221,211,197,.92) !important;background:#FFFDF8 !important;color:#0a0a0a !important;font-size:.68rem !important;font-weight:900 !important;letter-spacing:.12em !important;text-transform:uppercase !important;padding:0 12px !important;}
+#bk_stickyBar #btnToTech{min-height:46px !important;border-radius:999px !important;padding:0 15px !important;font-size:.72rem !important;letter-spacing:.14em !important;white-space:nowrap !important;}
+.th-menu-main{border-radius:24px !important;}
+.th-menu-submenu,
+.th-menu-system{
+  width:100% !important;
+  overflow:hidden !important;
+  border-radius:20px !important;
+  background:rgba(250,246,239,.78) !important;
+  border:1px solid rgba(221,211,197,.78) !important;
+  margin:10px 0 !important;
+}
+.th-menu-system{background:rgba(255,253,248,.92) !important;border-radius:18px !important;}
+.th-menu-submenu > .thuraya-accordion-head,
+.th-menu-system > .thuraya-accordion-head{min-height:66px !important;padding:15px !important;background:transparent !important;}
+.th-menu-submenu .thuraya-accordion-title{font-size:.82rem !important;letter-spacing:.10em !important;}
+.th-menu-system .thuraya-accordion-title{font-size:.88rem !important;letter-spacing:.04em !important;text-transform:none !important;}
+.th-menu-badge{display:inline-flex !important;width:max-content !important;margin-bottom:3px !important;padding:4px 9px !important;border-radius:999px !important;border:1px solid rgba(200,169,77,.35) !important;color:var(--gold-dark) !important;font-size:.58rem !important;font-weight:900 !important;letter-spacing:.12em !important;text-transform:uppercase !important;}
+.th-menu-level-0,.th-menu-level-1,.th-menu-level-2{gap:10px !important;}
+#screen-services{padding-bottom:180px !important;}
+#screen-services .thuraya-inline-continue{display:none !important;}
+@media(max-width:430px){
+  #bk_stickyBar.thuraya-option-a-sticky{width:calc(100vw - 20px) !important;bottom:10px !important;border-radius:24px !important;}
+  #bk_stickyBar .sticky-footer{grid-template-columns:1fr !important;}
+  #bk_stickyBar .sticky-actions{display:grid !important;grid-template-columns:.7fr 1.3fr !important;}
+}
+/* === END THURAYA PRODUCTION MENU SYNC + OPTION A STICKY CTA === */
