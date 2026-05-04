@@ -216,7 +216,7 @@
             }
         }
     </style>
-  <link rel="stylesheet" href="brand.css?v=group-confirm-fit-20260504">
+  <link rel="stylesheet" href="brand.css?v=mobile-date-realfix-20260504">
 <style id="thurayaInlineContinueFix">
         .thuraya-inline-continue {
             width: 100%;
@@ -416,7 +416,7 @@
                     </div>
                     <div class="form-group">
                         <label>Date of Birth <span class="req">*</span></label>
-                        <input type="date" id="prof_dob" autocomplete="bday">
+                        <div class="th-date-input-wrap"><input type="date" id="prof_dob" class="th-mobile-date-input" autocomplete="bday" aria-label="Date of Birth"></div>
                         <small class="field-hint">Used for birthday surprises and a more personal THURAYA experience.</small>
                     </div>
                     <div class="form-group">
@@ -552,7 +552,7 @@
                 <div class="form-card">
                     <div class="form-group">
                         <label>Date <span class="req">*</span></label>
-                        <input type="date" id="bk_date" min="" onchange="bk_generateSlots()">
+                        <div class="th-date-input-wrap"><input type="date" id="bk_date" class="th-mobile-date-input" min="" onchange="bk_generateSlots()" aria-label="Booking date"></div>
                     </div>
                 </div>
                 <div id="bk_slotsContainer" class="slots-container" style="display:none;">
@@ -869,7 +869,7 @@
                     </div>
                     <div class="form-group">
                         <label>Date of Birth <span class="req">*</span></label>
-                        <input type="date" id="acct_dob" autocomplete="bday">
+                        <div class="th-date-input-wrap"><input type="date" id="acct_dob" class="th-mobile-date-input" autocomplete="bday" aria-label="Date of Birth"></div>
                         <small class="field-hint">Used for birthday surprises and personalized client care.</small>
                     </div>
                     <div class="form-group">
@@ -1058,7 +1058,7 @@
                 <div class="form-card">
                     <div class="form-group" style="margin-bottom:0;">
                         <label>Date <span class="req">*</span></label>
-                        <input type="date" id="grp_date" min="" onchange="grp_generateSlots()">
+                        <div class="th-date-input-wrap"><input type="date" id="grp_date" class="th-mobile-date-input" min="" onchange="grp_generateSlots()" aria-label="Group booking date"></div>
                     </div>
                 </div>
                 <div id="grp_slotsContainer" class="slots-container" style="display:none;">
@@ -1198,7 +1198,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
-<script src="app.js?v=signout-inline-home-final-20260504"></script>
+<script src="app.js?v=mobile-date-field-final-20260504"></script>
     <script src="group-booking.js?v=group-pick-visible-hardfix-20260504"></script>
     <script src="availability.js?v=phase8-smart-booking-20260427"></script>
     <script src="phase-9a-soft-login-gate.js?v=phase9a-full-20260428"></script>

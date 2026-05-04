@@ -3205,3 +3205,106 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     if (action === 'directions') return window.bk_upcomingDirections?.();
     if (action === 'rebook') return window.bk_bookAgain?.();
 };
+
+
+// ============================================================
+// THURAYA MOBILE DATE FIELD ENHANCEMENT — 2026-05-04
+// Scope: native date inputs only (profile DOB, booking date, group date).
+// Purpose: Android/mobile-safe visible date display + calendar tap target.
+// Booking logic untouched: original input ids, values, onchange handlers remain.
+// ============================================================
+(function(){
+    function th_formatDateForDisplay(value){
+        if (!value) return 'Select date';
+        try {
+            const d = new Date(value + 'T00:00:00');
+            if (isNaN(d.getTime())) return value;
+            return d.toLocaleDateString('en-GB', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        } catch(e) {
+            return value;
+        }
+    }
+
+    function th_isMobileDateEnhancementNeeded(){
+        return window.matchMedia('(max-width: 779px), (pointer: coarse)').matches;
+    }
+
+    function th_openNativeDatePicker(input){
+        if (!input) return;
+        try {
+            input.focus({ preventScroll: true });
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+                return;
+            }
+        } catch(e) {}
+        try { input.click(); } catch(e) {}
+    }
+
+    function th_enhanceOneDateInput(input){
+        if (!input || input.dataset.thDateEnhanced === 'true') return;
+        if (!input.id) return;
+
+        const parent = input.parentElement;
+        if (!parent) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'th-date-field';
+        wrapper.dataset.forInput = input.id;
+
+        parent.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+
+        const display = document.createElement('button');
+        display.type = 'button';
+        display.className = 'th-date-display';
+        display.setAttribute('aria-label', 'Open calendar');
+        display.innerHTML = `
+            <span class="th-date-display-text">${th_formatDateForDisplay(input.value)}</span>
+            <span class="th-date-display-icon" aria-hidden="true">📅</span>
+        `;
+        wrapper.appendChild(display);
+
+        input.classList.add('th-date-native');
+        input.dataset.thDateEnhanced = 'true';
+
+        const sync = function(){
+            const text = display.querySelector('.th-date-display-text');
+            if (text) text.textContent = th_formatDateForDisplay(input.value);
+            display.classList.toggle('has-value', !!input.value);
+        };
+
+        display.addEventListener('click', function(e){
+            e.preventDefault();
+            th_openNativeDatePicker(input);
+        });
+
+        input.addEventListener('change', sync);
+        input.addEventListener('input', sync);
+        sync();
+    }
+
+    window.thurayaEnhanceMobileDateFields = function(){
+        if (!th_isMobileDateEnhancementNeeded()) return;
+        document.querySelectorAll('input[type="date"]').forEach(th_enhanceOneDateInput);
+    };
+
+    document.addEventListener('DOMContentLoaded', function(){
+        setTimeout(window.thurayaEnhanceMobileDateFields, 250);
+        setTimeout(window.thurayaEnhanceMobileDateFields, 900);
+    });
+
+    document.addEventListener('click', function(){
+        setTimeout(window.thurayaEnhanceMobileDateFields, 80);
+    });
+
+    window.addEventListener('resize', function(){
+        setTimeout(window.thurayaEnhanceMobileDateFields, 120);
+    });
+})();
+// === END THURAYA MOBILE DATE FIELD ENHANCEMENT ===
