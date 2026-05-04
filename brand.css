@@ -4351,296 +4351,663 @@ button:active,
 }
 /* === END THURAYA GROUP DATE/TIME PICK BUTTON VISIBILITY HARD FIX === */
 
+/* =========================================================
+   THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX — 2026-05-04
+   Scope: Welcome / sign-in screen only.
+   Purpose: remove gradient/texture glow and force premium pure black.
+   Logic untouched.
+   ========================================================= */
+html,
+body{
+  background:#000000 !important;
+}
+
+.bg-texture{
+  background:#000000 !important;
+  background-image:none !important;
+}
+
+#app:has(#screen-welcome.active){
+  background:#000000 !important;
+}
+
+#screen-welcome,
+#screen-welcome.active{
+  background:#000000 !important;
+  background-image:none !important;
+  color:#F8F7F3 !important;
+}
+
+#screen-welcome::before,
+#screen-welcome::after{
+  content:"" !important;
+  display:none !important;
+  background:none !important;
+  background-image:none !important;
+}
+
+#screen-welcome .welcome-inner,
+#screen-welcome .logo-block,
+#screen-welcome .welcome-actions{
+  background:transparent !important;
+  background-image:none !important;
+}
+
+#screen-welcome #btnGuestSignIn{
+  background:#000000 !important;
+}
+/* === END THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX === */
+
 
 /* =========================================================
-   THURAYA MOBILE DATE FIELD ENHANCEMENT — 2026-05-04
-   Scope: mobile/native date inputs only. Keeps original input values and onchange logic.
+   THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX v2 — HARD OVERRIDE
+   Scope: Welcome / sign-in screen only.
+   Purpose: remove all radial glow, gradients, texture and shell background bleed.
+   Logic untouched.
    ========================================================= */
-.th-date-field{
-  position:relative !important;
-  width:100% !important;
-  min-height:54px !important;
+html,
+body,
+.bg-texture{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
 }
 
-.th-date-field .th-date-native{
-  position:absolute !important;
-  inset:0 !important;
-  width:100% !important;
-  height:54px !important;
-  min-height:54px !important;
-  opacity:.01 !important;
-  z-index:3 !important;
-  cursor:pointer !important;
-  appearance:auto !important;
-  -webkit-appearance:auto !important;
-  padding:0 !important;
-  margin:0 !important;
+/* Keep the app shell black underneath the welcome screen; other screens paint their own background. */
+#app{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
 }
 
-.th-date-display{
-  width:100% !important;
-  min-height:54px !important;
-  display:grid !important;
-  grid-template-columns:minmax(0,1fr) 42px !important;
-  align-items:center !important;
-  gap:10px !important;
-  padding:0 7px 0 16px !important;
-  border-radius:18px !important;
-  border:1px solid rgba(221,211,197,.92) !important;
-  background:#FFFDF8 !important;
-  color:#0A0A0A !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.76), 0 10px 22px rgba(35,26,16,.045) !important;
-  font-family:var(--font-sans, system-ui, sans-serif) !important;
-  text-align:left !important;
-  cursor:pointer !important;
-  -webkit-tap-highlight-color:transparent !important;
+#screen-welcome,
+#screen-welcome.active,
+#screen-welcome .welcome-inner,
+#screen-welcome .logo-block,
+#screen-welcome .welcome-actions{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  box-shadow:none !important;
 }
 
-.th-date-display-text{
-  min-width:0 !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  white-space:nowrap !important;
-  color:rgba(10,10,10,.72) !important;
-  font-size:16px !important;
-  line-height:1 !important;
-  font-weight:750 !important;
-  letter-spacing:-.01em !important;
+#screen-welcome::before,
+#screen-welcome::after,
+#screen-welcome .welcome-inner::before,
+#screen-welcome .welcome-inner::after,
+#screen-welcome .logo-block::before{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  background-image:none !important;
+  box-shadow:none !important;
 }
 
-.th-date-display.has-value .th-date-display-text{
-  color:#0A0A0A !important;
+/* Remove inherited decorative glows on welcome only. */
+#screen-welcome *,
+#screen-welcome *::before,
+#screen-welcome *::after{
+  text-shadow:none !important;
 }
 
-.th-date-display-icon{
-  width:38px !important;
-  height:38px !important;
+#screen-welcome #btnGuestSignIn{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+/* === END THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX v2 === */
+
+
+/* =========================================================
+   THURAYA SIGN OUT CTA — FINAL NON-OVERLAP LOCK
+   Scope: floating Sign Out only. CSS-only; no app logic changed.
+   Purpose: prevent the CTA from overlapping the booking hero/title.
+   ========================================================= */
+.bk-floating-signout{
+  position:fixed !important;
+  top:calc(var(--thuraya-shell-gap, 0px) + 76px) !important;
+  left:auto !important;
+  right:calc((100vw - min(var(--thuraya-shell-w, 430px), 100vw)) / 2 + 18px) !important;
+  transform:none !important;
+  z-index:9999 !important;
+
+  width:auto !important;
+  max-width:86px !important;
+  min-height:30px !important;
+  padding:5px 11px !important;
+
   border-radius:999px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  background:#0A0A0A !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+  background:rgba(10,10,10,.78) !important;
   color:#FFFFFF !important;
-  font-size:1rem !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+
+  box-shadow:0 10px 24px rgba(0,0,0,.20) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.58rem !important;
   line-height:1 !important;
-  box-shadow:0 10px 20px rgba(10,10,10,.16) !important;
+  font-weight:900 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
 }
 
-.th-date-field:focus-within .th-date-display{
-  border-color:rgba(10,10,10,.42) !important;
-  box-shadow:0 0 0 3px rgba(10,10,10,.07), inset 0 1px 0 rgba(255,255,255,.76) !important;
+/* Give the booking landing hero enough right-side air if the Sign Out CTA is visible. */
+#screen-booking-mode .step-header{
+  position:relative !important;
+  padding-right:0 !important;
 }
 
-@media(min-width:780px) and (pointer:fine){
-  .th-date-field{
-    min-height:auto !important;
+@media(max-width:430px){
+  .bk-floating-signout{
+    top:72px !important;
+    right:14px !important;
+    max-width:82px !important;
+    min-height:30px !important;
+    padding:5px 10px !important;
+    font-size:.56rem !important;
   }
-  .th-date-field .th-date-native{
-    position:static !important;
-    opacity:1 !important;
-    z-index:auto !important;
-    height:auto !important;
-    min-height:46px !important;
-    padding:0 14px !important;
-  }
-  .th-date-display{
-    display:none !important;
+
+  #screen-booking-mode .step-header{
+    padding-right:0 !important;
   }
 }
-/* === END THURAYA MOBILE DATE FIELD ENHANCEMENT === */
+/* === END THURAYA SIGN OUT CTA FINAL NON-OVERLAP LOCK === */
 
 
 /* =========================================================
-   THURAYA MOBILE DATE FIELD — FINAL VISIBILITY + SYNC FIX
-   Scope: profile DOB, account DOB, individual booking date, group booking date.
-   Purpose: make the clean date field visible/tappable on Android and account/login flows.
+   THURAYA SIGN OUT INLINE HOME FIX — FINAL
+   Scope: booking-mode page only.
+   Purpose: place Sign Out adjacent to NEW BOOKING and override older floating rules.
    ========================================================= */
-.th-date-input-wrap{
-  position:relative !important;
+#screen-booking-mode .th-booking-action-row{
   width:100% !important;
-  display:block !important;
-  min-height:56px !important;
-  overflow:visible !important;
-}
-
-.th-date-field{
-  position:relative !important;
-  width:100% !important;
-  min-height:56px !important;
-  display:block !important;
-  overflow:visible !important;
-  z-index:5 !important;
-}
-
-.th-date-display{
-  position:relative !important;
-  z-index:2 !important;
-  width:100% !important;
-  min-height:56px !important;
-  display:grid !important;
-  grid-template-columns:minmax(0,1fr) 42px !important;
-  align-items:center !important;
-  gap:10px !important;
-  padding:0 8px 0 16px !important;
-  border-radius:18px !important;
-  border:1px solid rgba(221,211,197,.92) !important;
-  background:#FFFDF8 !important;
-  color:#0A0A0A !important;
-  -webkit-text-fill-color:#0A0A0A !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.76), 0 10px 22px rgba(35,26,16,.045) !important;
-  font-family:var(--font-sans, system-ui, sans-serif) !important;
-  text-align:left !important;
-  cursor:pointer !important;
-  opacity:1 !important;
-  visibility:visible !important;
-  pointer-events:auto !important;
-  -webkit-tap-highlight-color:transparent !important;
-}
-
-.th-date-display-text{
-  display:block !important;
-  min-width:0 !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  white-space:nowrap !important;
-  color:rgba(10,10,10,.70) !important;
-  -webkit-text-fill-color:rgba(10,10,10,.70) !important;
-  font-size:16px !important;
-  line-height:1 !important;
-  font-weight:850 !important;
-  letter-spacing:-.01em !important;
-}
-
-.th-date-display.has-value .th-date-display-text{
-  color:#0A0A0A !important;
-  -webkit-text-fill-color:#0A0A0A !important;
-}
-
-.th-date-display-icon{
-  width:38px !important;
-  height:38px !important;
-  border-radius:999px !important;
   display:flex !important;
   align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  margin:0 0 20px !important;
+}
+
+#screen-booking-mode .th-booking-action-row .step-badge{
+  margin:0 !important;
+  flex:0 0 auto !important;
+}
+
+#screen-booking-mode .bk-floating-signout.th-signout-inline{
+  position:static !important;
+  inset:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  left:auto !important;
+  transform:none !important;
+  z-index:2 !important;
+  display:inline-flex !important;
+  align-items:center !important;
   justify-content:center !important;
+  width:auto !important;
+  max-width:none !important;
+  min-height:32px !important;
+  padding:7px 13px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(10,10,10,.14) !important;
+  background:rgba(255,253,248,.92) !important;
+  color:#111 !important;
+  box-shadow:0 10px 24px rgba(35,26,16,.08) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.62rem !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+#screen-booking-mode .step-header{
+  margin-top:0 !important;
+}
+
+@media(max-width:430px){
+  #screen-booking-mode .th-booking-action-row{
+    gap:10px !important;
+    margin-bottom:18px !important;
+  }
+
+  #screen-booking-mode .bk-floating-signout.th-signout-inline{
+    min-height:31px !important;
+    padding:7px 12px !important;
+    font-size:.58rem !important;
+    letter-spacing:.12em !important;
+  }
+}
+/* === END THURAYA SIGN OUT INLINE HOME FIX === */
+
+/* =========================================================
+   THURAYA SIGN OUT INLINE VISIBILITY FIX — FINAL HARD LOCK
+   Scope: booking-mode Sign Out only.
+   Purpose: make Sign Out readable while staying adjacent to NEW BOOKING.
+   Logic untouched.
+   ========================================================= */
+#screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline,
+#screen-booking-mode #bkFloatingSignOut.bk-floating-signout.th-signout-inline{
+  position:static !important;
+  inset:auto !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex:0 0 auto !important;
+  min-height:32px !important;
+  padding:7px 14px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(10,10,10,.18) !important;
+  background:#0A0A0A !important;
+  background-color:#0A0A0A !important;
+  background-image:none !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  opacity:1 !important;
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:0 12px 26px rgba(10,10,10,.16) !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.62rem !important;
+  line-height:1 !important;
+  font-weight:950 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+#screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline:hover,
+#screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline:focus{
   background:#0A0A0A !important;
   color:#FFFFFF !important;
   -webkit-text-fill-color:#FFFFFF !important;
-  font-size:1rem !important;
-  line-height:1 !important;
-  box-shadow:0 10px 20px rgba(10,10,10,.16) !important;
 }
 
-.th-date-field .th-date-native,
-input.th-mobile-date-input.th-date-native{
-  position:absolute !important;
-  inset:0 !important;
-  z-index:3 !important;
+@media(max-width:430px){
+  #screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline,
+  #screen-booking-mode #bkFloatingSignOut.bk-floating-signout.th-signout-inline{
+    min-height:31px !important;
+    padding:7px 12px !important;
+    font-size:.58rem !important;
+    letter-spacing:.12em !important;
+  }
+}
+/* === END THURAYA SIGN OUT INLINE VISIBILITY FIX === */
+
+/* =========================================================
+   THURAYA GROUP CONFIRM CTA FIT FIX — 2026-05-04
+   Scope: Group booking confirmation screen only.
+   Purpose: return Confirm Group Booking to normal page flow so it no
+   longer floats over member cards or payment options.
+   Logic untouched.
+   ========================================================= */
+#screen-group-confirm,
+#screen-group-confirm .screen-inner{
+  padding-bottom:128px !important;
+}
+
+#screen-group-confirm .step-footer{
+  position:static !important;
+  inset:auto !important;
+  bottom:auto !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  z-index:auto !important;
   width:100% !important;
-  height:56px !important;
-  min-height:56px !important;
-  display:block !important;
-  visibility:visible !important;
-  opacity:.01 !important;
-  cursor:pointer !important;
-  border:0 !important;
+  margin:24px 0 34px !important;
   padding:0 !important;
-  margin:0 !important;
   background:transparent !important;
-  color:transparent !important;
-  -webkit-text-fill-color:transparent !important;
-  appearance:auto !important;
-  -webkit-appearance:auto !important;
-  pointer-events:auto !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
 }
 
-.th-date-field .th-date-native::-webkit-calendar-picker-indicator{
+#screen-group-confirm #p9GroupConfirmNudge{
+  position:static !important;
+  margin:18px 0 16px !important;
+  padding:14px 16px !important;
+  border-radius:18px !important;
+  background:#FFF8EF !important;
+  color:#6A4B2F !important;
+  border:1px solid rgba(140,98,57,.14) !important;
+  box-shadow:0 10px 24px rgba(35,26,16,.055) !important;
   opacity:1 !important;
-  cursor:pointer !important;
+}
+
+#screen-group-confirm #grp_btnConfirm{
+  position:static !important;
   width:100% !important;
-  height:100% !important;
+  min-height:60px !important;
+  border-radius:24px !important;
+  margin:0 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  z-index:auto !important;
 }
 
-.th-date-field:focus-within .th-date-display{
-  border-color:rgba(10,10,10,.42) !important;
-  box-shadow:0 0 0 3px rgba(10,10,10,.07), inset 0 1px 0 rgba(255,255,255,.76) !important;
+#screen-group-confirm .confirm-note{
+  position:static !important;
+  margin:14px 0 0 !important;
+  padding:0 !important;
+  text-align:center !important;
 }
 
-#screen-profile .th-date-field,
-#screen-account-profile-edit .th-date-field,
-#screen-datetime .th-date-field,
-#screen-group-datetime .th-date-field{
-  margin-top:6px !important;
-  margin-bottom:4px !important;
+#screen-group-confirm #grp_billingPanel{
+  margin-bottom:22px !important;
 }
-
-@media(min-width:780px) and (pointer:fine){
-  .th-date-input-wrap{
-    min-height:46px !important;
-  }
-  .th-date-field{
-    min-height:46px !important;
-  }
-  .th-date-field .th-date-native,
-  input.th-mobile-date-input.th-date-native{
-    position:static !important;
-    opacity:1 !important;
-    z-index:auto !important;
-    height:46px !important;
-    min-height:46px !important;
-    padding:0 14px !important;
-    border:1px solid rgba(221,211,197,.92) !important;
-    background:#FFFDF8 !important;
-    color:#0A0A0A !important;
-    -webkit-text-fill-color:#0A0A0A !important;
-  }
-  .th-date-display{
-    display:none !important;
-  }
-}
-/* === END THURAYA MOBILE DATE FIELD FINAL VISIBILITY + SYNC FIX === */
+/* === END THURAYA GROUP CONFIRM CTA FIT FIX === */
 
 
 /* =========================================================
-   THURAYA DATE FIELD DESKTOP SAFETY OVERRIDE — RECOVERY FIX
-   Mobile keeps custom display; desktop uses native input.
+   THURAYA FINAL CONVERSION POLISH — 2026-05-04
+   Scope: Review & Confirm pages only. UI/UX trust layer.
+   Safe: CSS + CTA copy only; no booking/Firebase/auth logic changed.
    ========================================================= */
-@media (pointer:fine){
-  .th-date-input-wrap{
-    position:relative !important;
-    min-height:46px !important;
-  }
-  .th-date-field{
-    position:relative !important;
-    min-height:46px !important;
-  }
-  .th-date-field .th-date-native,
-  input[type="date"].th-mobile-date-input,
-  input[type="date"].th-date-native{
-    position:relative !important;
-    inset:auto !important;
-    opacity:1 !important;
-    z-index:1 !important;
-    width:100% !important;
-    height:46px !important;
-    min-height:46px !important;
-    display:block !important;
-    visibility:visible !important;
-    pointer-events:auto !important;
-    cursor:pointer !important;
-    padding:0 14px !important;
-    border:1px solid rgba(221,211,197,.92) !important;
-    border-radius:14px !important;
-    background:#FFFDF8 !important;
-    color:#0A0A0A !important;
-    -webkit-text-fill-color:#0A0A0A !important;
-    appearance:auto !important;
-    -webkit-appearance:auto !important;
-  }
-  .th-date-display,
-  .date-display{
-    display:none !important;
-    pointer-events:none !important;
+#screen-confirm .step-header,
+#screen-group-confirm .step-header{
+  margin-bottom:18px !important;
+}
+
+#screen-confirm .step-header p,
+#screen-group-confirm .step-header p{
+  max-width:94% !important;
+  color:rgba(47,41,34,.78) !important;
+}
+
+#screen-confirm .confirm-card,
+#screen-group-confirm .confirm-card{
+  position:relative !important;
+  margin-bottom:16px !important;
+  border-radius:28px !important;
+  overflow:hidden !important;
+  box-shadow:0 24px 56px rgba(0,0,0,.22) !important;
+}
+
+#screen-confirm .confirm-card::before,
+#screen-group-confirm .confirm-card::before{
+  content:"Booking Summary" !important;
+  display:block !important;
+  margin:0 0 8px !important;
+  color:rgba(255,255,255,.58) !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.62rem !important;
+  font-weight:950 !important;
+  letter-spacing:.16em !important;
+  text-transform:uppercase !important;
+}
+
+#screen-confirm .confirm-row,
+#screen-group-confirm .confirm-card .confirm-row{
+  padding:13px 0 !important;
+}
+
+#screen-confirm .book-for-card,
+#screen-confirm .promo-block,
+#screen-group-confirm .grp-info-box{
+  margin-top:14px !important;
+  border-radius:22px !important;
+  box-shadow:0 12px 28px rgba(35,26,16,.055) !important;
+}
+
+#screen-group-confirm .grp-info-box{
+  padding:14px 16px !important;
+  background:#FFF8EF !important;
+  border:1px solid rgba(140,98,57,.12) !important;
+}
+
+#screen-group-confirm .grp-info-box p,
+#screen-confirm .confirm-note,
+#screen-group-confirm .confirm-note{
+  font-size:.78rem !important;
+  line-height:1.42 !important;
+}
+
+#screen-confirm .step-footer,
+#screen-group-confirm .step-footer{
+  margin-top:18px !important;
+}
+
+#screen-confirm #btnConfirmBooking,
+#screen-group-confirm #grp_btnConfirm{
+  position:relative !important;
+  min-height:64px !important;
+  border-radius:999px !important;
+  background:linear-gradient(180deg,#181818 0%,#000000 100%) !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  border:1px solid #000 !important;
+  box-shadow:0 22px 50px rgba(0,0,0,.26) !important;
+  font-size:.80rem !important;
+  font-weight:950 !important;
+  letter-spacing:.16em !important;
+  text-transform:uppercase !important;
+  overflow:hidden !important;
+}
+
+#screen-confirm #btnConfirmBooking::after,
+#screen-group-confirm #grp_btnConfirm::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  background:linear-gradient(120deg, transparent 0%, rgba(255,255,255,.16) 45%, transparent 72%) !important;
+  transform:translateX(-125%) !important;
+  transition:transform .72s cubic-bezier(.22,.8,.22,1) !important;
+  pointer-events:none !important;
+}
+
+@media(hover:hover){
+  #screen-confirm #btnConfirmBooking:hover::after,
+  #screen-group-confirm #grp_btnConfirm:hover::after{
+    transform:translateX(125%) !important;
   }
 }
-/* === END THURAYA DATE FIELD DESKTOP SAFETY OVERRIDE === */
+
+#screen-confirm #btnConfirmBooking:active,
+#screen-group-confirm #grp_btnConfirm:active{
+  transform:scale(.982) !important;
+  box-shadow:0 15px 34px rgba(0,0,0,.22) !important;
+}
+
+#screen-confirm .confirm-note,
+#screen-group-confirm .confirm-note{
+  margin-top:12px !important;
+  color:rgba(47,41,34,.68) !important;
+  font-weight:700 !important;
+}
+
+#screen-confirm .confirm-note::before,
+#screen-group-confirm .confirm-note::before{
+  content:"✓ " !important;
+  color:#0a0a0a !important;
+  font-weight:950 !important;
+}
+
+#screen-confirm .promo-block{
+  padding-top:16px !important;
+  border-top:1px solid rgba(35,26,16,.08) !important;
+}
+
+#screen-confirm .promo-toggle-btn{
+  min-height:48px !important;
+  border-radius:999px !important;
+  background:#FFFDF8 !important;
+  border:1px solid rgba(221,211,197,.92) !important;
+}
+
+#screen-group-confirm #grp_conf_members{
+  gap:12px !important;
+  margin-bottom:14px !important;
+}
+
+#screen-group-confirm .grp-member-card{
+  border-radius:24px !important;
+}
+
+#screen-group-confirm .group-billing-panel,
+#screen-group-confirm #grp_billingPanel{
+  margin-top:18px !important;
+  padding-top:18px !important;
+  border-top:1px solid rgba(35,26,16,.08) !important;
+}
+
+#screen-group-confirm .group-billing-panel h3,
+#screen-group-confirm #grp_billingPanel h3{
+  font-size:1.18rem !important;
+  line-height:1.18 !important;
+}
+
+@media(max-width:430px){
+  #screen-confirm #btnConfirmBooking,
+  #screen-group-confirm #grp_btnConfirm{
+    min-height:62px !important;
+    font-size:.76rem !important;
+    letter-spacing:.14em !important;
+  }
+
+  #screen-confirm .confirm-card,
+  #screen-group-confirm .confirm-card{
+    border-radius:26px !important;
+  }
+}
+/* === END THURAYA FINAL CONVERSION POLISH === */
+
+/* =========================================================
+   THURAYA MOBILE DATE FIELD FIX — 2026-05-04
+   Scope: Native date inputs only.
+   Purpose: fix mobile date text/icon spacing while preserving PC view.
+   Logic untouched.
+   ========================================================= */
+input[type="date"],
+#bk_date,
+#grp_date,
+#prof_dob,
+#account_dob,
+#edit_dob{
+  -webkit-appearance:none !important;
+  appearance:none !important;
+  position:relative !important;
+  width:100% !important;
+  min-height:52px !important;
+  height:52px !important;
+  padding:0 48px 0 16px !important;
+  border-radius:18px !important;
+  background:#FFFDF8 !important;
+  background-color:#FFFDF8 !important;
+  color:#0A0A0A !important;
+  -webkit-text-fill-color:#0A0A0A !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:16px !important;
+  font-weight:750 !important;
+  line-height:52px !important;
+  letter-spacing:0 !important;
+  text-align:left !important;
+  border:1px solid rgba(221,211,197,.92) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75) !important;
+  overflow:hidden !important;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+#bk_date::-webkit-datetime-edit,
+#grp_date::-webkit-datetime-edit,
+#prof_dob::-webkit-datetime-edit,
+#account_dob::-webkit-datetime-edit,
+#edit_dob::-webkit-datetime-edit{
+  display:flex !important;
+  align-items:center !important;
+  min-height:52px !important;
+  padding:0 !important;
+  color:#0A0A0A !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+#bk_date::-webkit-datetime-edit-fields-wrapper,
+#grp_date::-webkit-datetime-edit-fields-wrapper,
+#prof_dob::-webkit-datetime-edit-fields-wrapper,
+#account_dob::-webkit-datetime-edit-fields-wrapper,
+#edit_dob::-webkit-datetime-edit-fields-wrapper{
+  padding:0 !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+#bk_date::-webkit-calendar-picker-indicator,
+#grp_date::-webkit-calendar-picker-indicator,
+#prof_dob::-webkit-calendar-picker-indicator,
+#account_dob::-webkit-calendar-picker-indicator,
+#edit_dob::-webkit-calendar-picker-indicator{
+  position:absolute !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:22px !important;
+  height:22px !important;
+  margin:0 !important;
+  padding:0 !important;
+  opacity:.72 !important;
+  cursor:pointer !important;
+  filter:contrast(1.1) !important;
+}
+
+input[type="date"]::-webkit-clear-button,
+input[type="date"]::-webkit-inner-spin-button{
+  display:none !important;
+  -webkit-appearance:none !important;
+}
+
+input[type="date"]:focus,
+#bk_date:focus,
+#grp_date:focus,
+#prof_dob:focus,
+#account_dob:focus,
+#edit_dob:focus{
+  border-color:rgba(10,10,10,.46) !important;
+  box-shadow:0 0 0 3px rgba(10,10,10,.07), inset 0 1px 0 rgba(255,255,255,.75) !important;
+  outline:none !important;
+}
+
+@media(max-width:430px){
+  input[type="date"],
+  #bk_date,
+  #grp_date,
+  #prof_dob,
+  #account_dob,
+  #edit_dob{
+    min-height:54px !important;
+    height:54px !important;
+    line-height:54px !important;
+    padding-left:16px !important;
+    padding-right:50px !important;
+    font-size:16px !important;
+    border-radius:18px !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit,
+  #bk_date::-webkit-datetime-edit,
+  #grp_date::-webkit-datetime-edit,
+  #prof_dob::-webkit-datetime-edit,
+  #account_dob::-webkit-datetime-edit,
+  #edit_dob::-webkit-datetime-edit{
+    min-height:54px !important;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  #bk_date::-webkit-calendar-picker-indicator,
+  #grp_date::-webkit-calendar-picker-indicator,
+  #prof_dob::-webkit-calendar-picker-indicator,
+  #account_dob::-webkit-calendar-picker-indicator,
+  #edit_dob::-webkit-calendar-picker-indicator{
+    right:15px !important;
+    width:23px !important;
+    height:23px !important;
+  }
+}
+/* === END THURAYA MOBILE DATE FIELD FIX === */
