@@ -3230,3 +3230,41 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     if (action === 'directions') return window.bk_upcomingDirections?.();
     if (action === 'rebook') return window.bk_bookAgain?.();
 };
+
+// ── THURAYA ISSUE 02: DESKTOP DATE PICKER TAP/CLICK FIX ───────────────
+// UI interaction layer only. No booking, auth, Firebase, or slot logic changed.
+// Ensures desktop browsers open the native date picker when the visible date field is clicked.
+(function thurayaInstallDatePickerClickFix(){
+    function openNativeDatePicker(input){
+        if (!input || input.disabled) return;
+        try {
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+            }
+        } catch (e) {
+            // Browser may block showPicker outside a user gesture. Native click/focus still remains.
+        }
+    }
+
+    function enhanceDateInput(input){
+        if (!input || input.dataset.thurayaDatePickerFix === '1') return;
+        input.dataset.thurayaDatePickerFix = '1';
+        input.setAttribute('inputmode', 'none');
+        input.style.cursor = 'pointer';
+        input.style.pointerEvents = 'auto';
+        input.addEventListener('pointerdown', function(){ openNativeDatePicker(input); }, { passive: true });
+        input.addEventListener('click', function(){ openNativeDatePicker(input); });
+        input.addEventListener('focus', function(){ openNativeDatePicker(input); });
+    }
+
+    function install(){
+        ['bk_date', 'grp_date'].forEach(function(id){ enhanceDateInput(document.getElementById(id)); });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install);
+    } else {
+        install();
+    }
+})();
+// ── END THURAYA ISSUE 02 FIX ───────────────────────────────────────────
