@@ -3302,3 +3302,70 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     }
 })();
 // ── END THURAYA ISSUE 02C FIX ────────────────────────────────────────
+
+
+// ── THURAYA ISSUE 02E: CONSISTENT DATE PICKER POLISH ────────────────
+// UI-only. Applies the same visible date field behavior to:
+// profile completion DOB, account DOB, individual booking date, and group booking date.
+// Existing onchange handlers and booking/profile save logic are untouched.
+(function thurayaConsistentDatePickerPolish(){
+    var DATE_IDS = ['prof_dob', 'acct_dob', 'bk_date', 'grp_date'];
+
+    function isDesktopPointer(){
+        try {
+            return window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        } catch(e) { return false; }
+    }
+
+    function sync(input){
+        if (!input) return;
+        var wrap = input.closest ? input.closest('.thuraya-date-field') : null;
+        if (!wrap) return;
+        if (input.value) wrap.classList.add('has-value');
+        else wrap.classList.remove('has-value');
+    }
+
+    function openPicker(input){
+        if (!input || input.disabled) return;
+        try { input.focus({ preventScroll: true }); } catch(e) { try { input.focus(); } catch(_e){} }
+        if (isDesktopPointer()) {
+            try { if (typeof input.showPicker === 'function') input.showPicker(); } catch(e) {}
+        }
+    }
+
+    function enhance(input){
+        if (!input || input.dataset.thurayaConsistentDate === '1') { sync(input); return; }
+        input.dataset.thurayaConsistentDate = '1';
+        input.setAttribute('inputmode', 'none');
+        input.style.pointerEvents = 'auto';
+        input.style.cursor = 'pointer';
+
+        var wrap = input.closest ? input.closest('.thuraya-date-field') : null;
+        if (wrap && !wrap.dataset.thurayaConsistentDateWrap) {
+            wrap.dataset.thurayaConsistentDateWrap = '1';
+            wrap.addEventListener('click', function(e){
+                var targetInput = wrap.querySelector('input[type="date"]');
+                if (targetInput) openPicker(targetInput);
+            });
+        }
+
+        input.addEventListener('click', function(){ openPicker(input); });
+        input.addEventListener('input', function(){ sync(input); });
+        input.addEventListener('change', function(){ sync(input); });
+        input.addEventListener('blur', function(){ sync(input); });
+        sync(input);
+    }
+
+    function install(){
+        DATE_IDS.forEach(function(id){ enhance(document.getElementById(id)); });
+    }
+
+    window.thurayaSyncDateFields = install;
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+    else install();
+
+    document.addEventListener('visibilitychange', install);
+    document.addEventListener('click', function(){ setTimeout(install, 0); }, true);
+})();
+// ── END THURAYA ISSUE 02E ────────────────────────────────────────────
