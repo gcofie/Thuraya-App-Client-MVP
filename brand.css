@@ -3491,56 +3491,236 @@ button:active,
 
 
 /* =========================================================
-   THURAYA SIGN OUT CTA — SAME LEVEL AS NEW BOOKING
-   Scope: placement only. No booking/Firebase/auth/menu logic changed.
-   The button is moved by existing app.js into the active screen-inner;
-   this anchors it to the same visual row as the step badge.
+   THURAYA GROUP CONFIRM PAGE POLISH — FIX ONLY
+   Scope: Group booking review/confirm page payment + member cards.
+   No booking logic, Firebase, auth, or menu rendering changed.
    ========================================================= */
-.screen-inner{
-  position:relative !important;
+#screen-group-confirm .screen-inner{
+  padding-top:18px !important;
 }
 
-#bkFloatingSignOut.bk-floating-signout{
-  position:absolute !important;
-  top:18px !important;
-  right:0 !important;
-  left:auto !important;
-  transform:none !important;
-  z-index:6 !important;
-  width:auto !important;
-  max-width:none !important;
-  min-height:32px !important;
-  padding:7px 15px !important;
+#screen-group-confirm .grp-member-card{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:48px minmax(0,1fr) !important;
+  gap:16px !important;
+  align-items:flex-start !important;
+  padding:18px 18px !important;
+  margin:0 0 12px !important;
+  border-radius:22px !important;
+  background:rgba(255,253,248,.96) !important;
+  border:1px solid rgba(221,211,197,.88) !important;
+  box-shadow:0 14px 30px rgba(35,26,16,.07) !important;
+  overflow:hidden !important;
+}
+
+#screen-group-confirm .grp-member-index{
+  width:44px !important;
+  height:44px !important;
+  min-width:44px !important;
   border-radius:999px !important;
-  border:1px solid rgba(10,10,10,.12) !important;
-  background:rgba(255,253,248,.92) !important;
-  color:#111 !important;
-  box-shadow:0 10px 24px rgba(35,26,16,.10) !important;
-  backdrop-filter:blur(14px) !important;
-  -webkit-backdrop-filter:blur(14px) !important;
-  font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:.64rem !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#F1EEE8 !important;
+  color:#0a0a0a !important;
+  font-weight:950 !important;
+  font-size:1rem !important;
   line-height:1 !important;
-  font-weight:850 !important;
-  letter-spacing:.14em !important;
+}
+
+#screen-group-confirm .grp-member-info{
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:7px !important;
+}
+
+#screen-group-confirm .grp-member-info strong{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  gap:8px !important;
+  color:#0a0a0a !important;
+  font-size:1rem !important;
+  line-height:1.18 !important;
+  font-weight:950 !important;
+  letter-spacing:-.02em !important;
+}
+
+#screen-group-confirm .grp-lead-badge{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:max-content !important;
+  max-width:100% !important;
+  padding:4px 9px !important;
+  border-radius:999px !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-size:.58rem !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:.10em !important;
   text-transform:uppercase !important;
 }
 
-#screen-booking-mode .step-header{
-  padding-right:108px !important;
+#screen-group-confirm .grp-member-info > span{
+  display:block !important;
+  color:#1f1a16 !important;
+  font-size:.92rem !important;
+  line-height:1.32 !important;
+  font-weight:650 !important;
+  word-break:normal !important;
+}
+
+#screen-group-confirm .group-billing-panel{
+  margin-top:18px !important;
+  padding:22px 20px !important;
+  border-radius:26px !important;
+  background:rgba(255,253,248,.96) !important;
+  border:1px solid rgba(221,211,197,.88) !important;
+  box-shadow:0 18px 38px rgba(35,26,16,.08) !important;
+}
+
+#screen-group-confirm .group-billing-panel h3{
+  margin:0 0 12px !important;
+  color:#0a0a0a !important;
+  font-size:1.18rem !important;
+  line-height:1.2 !important;
+  font-weight:950 !important;
+  letter-spacing:-.02em !important;
+}
+
+#screen-group-confirm .group-billing-panel > p{
+  margin:0 0 18px !important;
+  color:#2F2922 !important;
+  font-size:.96rem !important;
+  line-height:1.42 !important;
+  opacity:.86 !important;
+}
+
+#screen-group-confirm .group-billing-card{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:24px minmax(0,1fr) !important;
+  gap:14px !important;
+  align-items:flex-start !important;
+  min-height:auto !important;
+  padding:16px 0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-top:1px solid rgba(35,26,16,.08) !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  cursor:pointer !important;
+}
+
+#screen-group-confirm .group-billing-card:first-of-type{
+  border-top:0 !important;
+}
+
+#screen-group-confirm .group-billing-card input[type="radio"]{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  min-height:22px !important;
+  margin:2px 0 0 !important;
+  padding:0 !important;
+  border-radius:999px !important;
+  border:2px solid rgba(10,10,10,.38) !important;
+  background:#FFFDF8 !important;
+  box-shadow:inset 0 0 0 4px #FFFDF8 !important;
+}
+
+#screen-group-confirm .group-billing-card input[type="radio"]:checked{
+  border-color:#0a0a0a !important;
+  background:#0a0a0a !important;
+}
+
+#screen-group-confirm .group-billing-card.selected{
+  border-color:rgba(35,26,16,.08) !important;
+}
+
+#screen-group-confirm .group-billing-card .group-option-body{
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:6px !important;
+}
+
+#screen-group-confirm .group-billing-card .group-option-body strong{
+  display:block !important;
+  color:#0a0a0a !important;
+  font-size:1rem !important;
+  line-height:1.18 !important;
+  font-weight:950 !important;
+  letter-spacing:-.02em !important;
+}
+
+#screen-group-confirm .group-billing-card .group-option-body > span:not(.amount-pill){
+  display:block !important;
+  color:#2F2922 !important;
+  font-size:.92rem !important;
+  line-height:1.34 !important;
+  font-weight:600 !important;
+  opacity:.84 !important;
+}
+
+#screen-group-confirm .amount-pill{
+  display:inline-flex !important;
+  width:max-content !important;
+  max-width:100% !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin-top:3px !important;
+  padding:6px 11px !important;
+  border-radius:999px !important;
+  background:#C8A94D !important;
+  color:#fff !important;
+  font-size:.76rem !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:.02em !important;
+  white-space:nowrap !important;
+}
+
+#screen-group-confirm .grp-info-box{
+  display:grid !important;
+  grid-template-columns:34px minmax(0,1fr) !important;
+  gap:14px !important;
+  align-items:flex-start !important;
+  padding:18px 20px !important;
+  margin-top:14px !important;
+  border-radius:24px !important;
+  background:rgba(255,253,248,.92) !important;
+  border:1px solid rgba(221,211,197,.82) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.065) !important;
+}
+
+#screen-group-confirm .grp-info-box p{
+  margin:0 !important;
+  color:#1F1A16 !important;
+  font-size:.94rem !important;
+  line-height:1.42 !important;
 }
 
 @media(max-width:430px){
-  #bkFloatingSignOut.bk-floating-signout{
-    top:16px !important;
-    right:0 !important;
-    min-height:32px !important;
-    padding:7px 13px !important;
-    font-size:.60rem !important;
+  #screen-group-confirm .grp-member-card{
+    grid-template-columns:44px minmax(0,1fr) !important;
+    gap:14px !important;
+    padding:16px !important;
   }
 
-  #screen-booking-mode .step-header{
-    padding-right:100px !important;
+  #screen-group-confirm .group-billing-panel{
+    padding:20px 18px !important;
+  }
+
+  #screen-group-confirm .group-billing-card{
+    grid-template-columns:22px minmax(0,1fr) !important;
+    gap:13px !important;
   }
 }
-/* === END THURAYA SIGN OUT CTA SAME LEVEL FIX === */
+/* === END THURAYA GROUP CONFIRM PAGE POLISH — FIX ONLY === */
