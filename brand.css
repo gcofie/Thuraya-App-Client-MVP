@@ -4709,256 +4709,174 @@ body,
 
 
 /* =========================================================
-   THURAYA GROUP REVIEW PAGE — FINAL PREMIUM POLISH v2
-   Scope: #screen-group-confirm only.
-   UI-only: no booking logic, Firebase, auth, menu rendering, or flow changed.
+   THURAYA FINAL CONVERSION POLISH — 2026-05-04
+   Scope: Review & Confirm pages only. UI/UX trust layer.
+   Safe: CSS + CTA copy only; no booking/Firebase/auth logic changed.
    ========================================================= */
-#screen-group-confirm{
-  padding-bottom:128px !important;
-}
-
-#screen-group-confirm .screen-inner{
-  padding-top:18px !important;
-  padding-bottom:118px !important;
-}
-
+#screen-confirm .step-header,
 #screen-group-confirm .step-header{
   margin-bottom:18px !important;
 }
 
+#screen-confirm .step-header p,
+#screen-group-confirm .step-header p{
+  max-width:94% !important;
+  color:rgba(47,41,34,.78) !important;
+}
+
+#screen-confirm .confirm-card,
 #screen-group-confirm .confirm-card{
-  margin-bottom:14px !important;
+  position:relative !important;
+  margin-bottom:16px !important;
   border-radius:28px !important;
-  padding:22px 22px 18px !important;
-  background:linear-gradient(180deg,#101010 0%,#050505 100%) !important;
-  border:1px solid rgba(255,255,255,.10) !important;
-  box-shadow:0 24px 54px rgba(0,0,0,.24) !important;
   overflow:hidden !important;
+  box-shadow:0 24px 56px rgba(0,0,0,.22) !important;
 }
 
-#screen-group-confirm .confirm-card .confirm-row{
-  padding:14px 0 !important;
-  border-bottom:1px solid rgba(255,255,255,.09) !important;
-  align-items:flex-start !important;
-}
-
-#screen-group-confirm .confirm-card .confirm-row:last-child{
-  border-bottom:0 !important;
-}
-
-#screen-group-confirm .confirm-card .confirm-label{
+#screen-confirm .confirm-card::before,
+#screen-group-confirm .confirm-card::before{
+  content:"Booking Summary" !important;
+  display:block !important;
+  margin:0 0 8px !important;
   color:rgba(255,255,255,.58) !important;
-  font-size:.66rem !important;
-  font-weight:900 !important;
-  letter-spacing:.15em !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.62rem !important;
+  font-weight:950 !important;
+  letter-spacing:.16em !important;
+  text-transform:uppercase !important;
 }
 
-#screen-group-confirm .confirm-card .confirm-value{
-  color:#fff !important;
-  font-size:.96rem !important;
-  line-height:1.34 !important;
-  font-weight:850 !important;
-  max-width:58% !important;
+#screen-confirm .confirm-row,
+#screen-group-confirm .confirm-card .confirm-row{
+  padding:13px 0 !important;
+}
+
+#screen-confirm .book-for-card,
+#screen-confirm .promo-block,
+#screen-group-confirm .grp-info-box{
+  margin-top:14px !important;
+  border-radius:22px !important;
+  box-shadow:0 12px 28px rgba(35,26,16,.055) !important;
 }
 
 #screen-group-confirm .grp-info-box{
-  margin:12px 0 14px !important;
   padding:14px 16px !important;
-  border-radius:20px !important;
-  background:rgba(255,253,248,.78) !important;
-  border:1px solid rgba(221,211,197,.80) !important;
-  box-shadow:0 12px 26px rgba(35,26,16,.045) !important;
+  background:#FFF8EF !important;
+  border:1px solid rgba(140,98,57,.12) !important;
 }
 
-#screen-group-confirm .grp-info-box p{
-  margin:0 !important;
-  color:rgba(47,41,34,.76) !important;
-  font-size:.84rem !important;
-  line-height:1.38 !important;
+#screen-group-confirm .grp-info-box p,
+#screen-confirm .confirm-note,
+#screen-group-confirm .confirm-note{
+  font-size:.78rem !important;
+  line-height:1.42 !important;
 }
 
+#screen-confirm .step-footer,
 #screen-group-confirm .step-footer{
-  position:relative !important;
-  bottom:auto !important;
-  z-index:1 !important;
-  margin:14px 0 18px !important;
-  padding:0 !important;
-  background:transparent !important;
-  box-shadow:none !important;
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
+  margin-top:18px !important;
 }
 
+#screen-confirm #btnConfirmBooking,
 #screen-group-confirm #grp_btnConfirm{
-  width:100% !important;
-  min-height:62px !important;
+  position:relative !important;
+  min-height:64px !important;
   border-radius:999px !important;
-  background:linear-gradient(180deg,#171717 0%,#050505 100%) !important;
-  color:#fff !important;
-  border:1px solid #050505 !important;
-  box-shadow:0 22px 50px rgba(0,0,0,.25) !important;
+  background:linear-gradient(180deg,#181818 0%,#000000 100%) !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  border:1px solid #000 !important;
+  box-shadow:0 22px 50px rgba(0,0,0,.26) !important;
   font-size:.80rem !important;
   font-weight:950 !important;
   letter-spacing:.16em !important;
   text-transform:uppercase !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  transition:transform .18s ease, box-shadow .18s ease !important;
+  overflow:hidden !important;
 }
 
-#screen-group-confirm #grp_btnConfirm:active{
-  transform:scale(.985) !important;
-  box-shadow:0 14px 32px rgba(0,0,0,.20) !important;
-}
-
-#screen-group-confirm .confirm-note{
-  margin:10px 0 0 !important;
-  color:rgba(47,41,34,.62) !important;
-  font-size:.76rem !important;
-  line-height:1.38 !important;
-  text-align:center !important;
-}
-
-#screen-group-confirm .group-billing-panel{
-  margin-top:16px !important;
-  padding:22px 20px !important;
-  border-radius:28px !important;
-  background:rgba(255,253,248,.97) !important;
-  border:1px solid rgba(221,211,197,.90) !important;
-  box-shadow:0 18px 40px rgba(35,26,16,.085) !important;
-}
-
-#screen-group-confirm .group-billing-panel h3{
-  margin:0 0 10px !important;
-  color:#0a0a0a !important;
-  font-size:1.18rem !important;
-  line-height:1.18 !important;
-  font-weight:950 !important;
-  letter-spacing:-.02em !important;
-}
-
-#screen-group-confirm .group-billing-panel > p{
-  margin:0 0 16px !important;
-  color:rgba(47,41,34,.78) !important;
-  font-size:.90rem !important;
-  line-height:1.38 !important;
-}
-
-#screen-group-confirm .group-billing-card{
-  position:relative !important;
-  display:block !important;
-  padding:15px 52px 15px 16px !important;
-  margin:10px 0 0 !important;
-  border:1px solid rgba(35,26,16,.08) !important;
-  border-radius:22px !important;
-  background:rgba(255,255,255,.58) !important;
-  box-shadow:0 10px 22px rgba(35,26,16,.035) !important;
-  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease !important;
-}
-
-#screen-group-confirm .group-billing-card:first-of-type{
-  margin-top:0 !important;
-}
-
-#screen-group-confirm .group-billing-card:active{
-  transform:scale(.985) !important;
-}
-
-#screen-group-confirm .group-billing-card input[type="radio"]{
-  position:absolute !important;
-  opacity:0 !important;
-  pointer-events:none !important;
-  width:1px !important;
-  height:1px !important;
-}
-
-#screen-group-confirm .group-billing-card::before{
+#screen-confirm #btnConfirmBooking::after,
+#screen-group-confirm #grp_btnConfirm::after{
   content:"" !important;
   position:absolute !important;
-  right:17px !important;
-  top:50% !important;
-  transform:translateY(-50%) !important;
-  width:23px !important;
-  height:23px !important;
-  border-radius:999px !important;
-  border:2px solid rgba(10,10,10,.32) !important;
-  background:#FFFDF8 !important;
-  box-shadow:inset 0 0 0 5px #FFFDF8 !important;
+  inset:0 !important;
+  background:linear-gradient(120deg, transparent 0%, rgba(255,255,255,.16) 45%, transparent 72%) !important;
+  transform:translateX(-125%) !important;
+  transition:transform .72s cubic-bezier(.22,.8,.22,1) !important;
+  pointer-events:none !important;
 }
 
-#screen-group-confirm .group-billing-card:has(input[type="radio"]:checked),
-#screen-group-confirm .group-billing-card.selected{
-  border-color:#0a0a0a !important;
-  background:#FFFFFF !important;
-  box-shadow:0 16px 34px rgba(10,10,10,.10) !important;
+@media(hover:hover){
+  #screen-confirm #btnConfirmBooking:hover::after,
+  #screen-group-confirm #grp_btnConfirm:hover::after{
+    transform:translateX(125%) !important;
+  }
 }
 
-#screen-group-confirm .group-billing-card:has(input[type="radio"]:checked)::before,
-#screen-group-confirm .group-billing-card.selected::before{
-  border-color:#0a0a0a !important;
-  background:#0a0a0a !important;
+#screen-confirm #btnConfirmBooking:active,
+#screen-group-confirm #grp_btnConfirm:active{
+  transform:scale(.982) !important;
+  box-shadow:0 15px 34px rgba(0,0,0,.22) !important;
 }
 
-#screen-group-confirm .group-billing-card .group-option-body strong{
-  display:block !important;
-  margin:0 !important;
+#screen-confirm .confirm-note,
+#screen-group-confirm .confirm-note{
+  margin-top:12px !important;
+  color:rgba(47,41,34,.68) !important;
+  font-weight:700 !important;
+}
+
+#screen-confirm .confirm-note::before,
+#screen-group-confirm .confirm-note::before{
+  content:"✓ " !important;
   color:#0a0a0a !important;
-  font-size:1rem !important;
-  line-height:1.18 !important;
   font-weight:950 !important;
-  letter-spacing:-.02em !important;
 }
 
-#screen-group-confirm .group-billing-card .group-option-body > span:not(.amount-pill){
-  display:block !important;
-  margin-top:6px !important;
-  color:rgba(47,41,34,.80) !important;
-  font-size:.88rem !important;
-  line-height:1.34 !important;
-  font-weight:600 !important;
+#screen-confirm .promo-block{
+  padding-top:16px !important;
+  border-top:1px solid rgba(35,26,16,.08) !important;
 }
 
-#screen-group-confirm .amount-pill{
-  display:inline-flex !important;
-  width:max-content !important;
-  max-width:100% !important;
-  margin-top:8px !important;
-  padding:6px 12px !important;
+#screen-confirm .promo-toggle-btn{
+  min-height:48px !important;
   border-radius:999px !important;
-  background:#E7D8A5 !important;
-  color:#55441B !important;
-  font-size:.76rem !important;
-  font-weight:900 !important;
-  line-height:1 !important;
-  white-space:nowrap !important;
+  background:#FFFDF8 !important;
+  border:1px solid rgba(221,211,197,.92) !important;
+}
+
+#screen-group-confirm #grp_conf_members{
+  gap:12px !important;
+  margin-bottom:14px !important;
+}
+
+#screen-group-confirm .grp-member-card{
+  border-radius:24px !important;
+}
+
+#screen-group-confirm .group-billing-panel,
+#screen-group-confirm #grp_billingPanel{
+  margin-top:18px !important;
+  padding-top:18px !important;
+  border-top:1px solid rgba(35,26,16,.08) !important;
+}
+
+#screen-group-confirm .group-billing-panel h3,
+#screen-group-confirm #grp_billingPanel h3{
+  font-size:1.18rem !important;
+  line-height:1.18 !important;
 }
 
 @media(max-width:430px){
-  #screen-group-confirm{
-    padding-bottom:118px !important;
+  #screen-confirm #btnConfirmBooking,
+  #screen-group-confirm #grp_btnConfirm{
+    min-height:62px !important;
+    font-size:.76rem !important;
+    letter-spacing:.14em !important;
   }
 
-  #screen-group-confirm .screen-inner{
-    padding-bottom:108px !important;
-  }
-
+  #screen-confirm .confirm-card,
   #screen-group-confirm .confirm-card{
-    padding:21px 20px 17px !important;
-  }
-
-  #screen-group-confirm .confirm-card .confirm-value{
-    max-width:60% !important;
-    font-size:.92rem !important;
-  }
-
-  #screen-group-confirm .group-billing-panel{
-    padding:20px 18px !important;
-  }
-
-  #screen-group-confirm .group-billing-card{
-    padding:15px 50px 15px 15px !important;
-    border-radius:21px !important;
+    border-radius:26px !important;
   }
 }
-/* === END THURAYA GROUP REVIEW PAGE FINAL PREMIUM POLISH v2 === */
+/* === END THURAYA FINAL CONVERSION POLISH === */
