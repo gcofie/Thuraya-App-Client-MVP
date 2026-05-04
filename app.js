@@ -3242,16 +3242,21 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
 
     function th_resetDesktopDateInput(input){
         if (!input) return;
+
         input.classList.remove('th-date-native');
         input.dataset.thDateEnhanced = 'desktop-native';
-        input.style.opacity = '';
-        input.style.position = '';
-        input.style.zIndex = '';
-        input.style.pointerEvents = '';
-        input.style.width = '';
-        input.style.height = '';
-        input.style.top = '';
-        input.style.left = '';
+
+        // Desktop must use the real native browser date field.
+        // Force full visibility in case mobile enhancement CSS was previously applied.
+        input.style.opacity = '1';
+        input.style.position = 'relative';
+        input.style.zIndex = '1';
+        input.style.pointerEvents = 'auto';
+        input.style.width = '100%';
+        input.style.height = 'auto';
+        input.style.top = 'auto';
+        input.style.left = 'auto';
+
         const field = input.closest('.th-date-field');
         if (field) {
             const display = field.querySelector('.th-date-display');
