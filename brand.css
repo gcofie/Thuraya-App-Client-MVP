@@ -3957,3 +3957,232 @@ button:active,
   }
 }
 /* === END THURAYA GROUP BOOKING FINAL CONFIRMATION POLISH === */
+
+
+/* =========================================================
+   THURAYA TECH SELECTION PAGE — FINAL PREMIUM POLISH
+   Scope: #screen-technician only. UI/CSS only; no booking logic changed.
+   ========================================================= */
+
+#screen-technician{
+  padding-bottom:128px !important;
+}
+
+#screen-technician .screen-inner{
+  padding-top:18px !important;
+}
+
+#screen-technician .back-btn{
+  margin:0 0 18px !important;
+  color:#8A7136 !important;
+  font-weight:900 !important;
+  letter-spacing:-.02em !important;
+}
+
+#screen-technician .step-header{
+  margin-bottom:22px !important;
+}
+
+#screen-technician .step-badge{
+  margin-bottom:18px !important;
+}
+
+#screen-technician .step-header h2{
+  font-size:clamp(2.05rem,7.5vw,2.75rem) !important;
+  line-height:1.02 !important;
+}
+
+#screen-technician .step-header p{
+  max-width:92% !important;
+  color:rgba(47,41,34,.82) !important;
+}
+
+#screen-technician .tech-option-cards{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:14px !important;
+  margin-top:4px !important;
+}
+
+#screen-technician .tech-option-card{
+  position:relative !important;
+  display:grid !important;
+  grid-template-columns:52px minmax(0,1fr) 32px !important;
+  align-items:center !important;
+  gap:16px !important;
+  min-height:108px !important;
+  padding:20px 18px !important;
+  border-radius:26px !important;
+  background:rgba(255,253,248,.94) !important;
+  border:1px solid rgba(221,211,197,.88) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.075) !important;
+  overflow:visible !important;
+}
+
+#screen-technician .tech-option-card.selected{
+  background:linear-gradient(180deg,#FFFDF8 0%,#F7F0E6 100%) !important;
+  border-color:#0a0a0a !important;
+  box-shadow:0 20px 46px rgba(10,10,10,.14), inset 0 0 0 1px rgba(200,169,77,.14) !important;
+  transform:translateY(-1px) !important;
+}
+
+#screen-technician #techCard_any{
+  border-color:rgba(10,10,10,.20) !important;
+}
+
+#screen-technician #techCard_any::after{
+  content:'Recommended' !important;
+  position:absolute !important;
+  top:-10px !important;
+  right:18px !important;
+  min-height:24px !important;
+  padding:6px 12px !important;
+  border-radius:999px !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-size:.58rem !important;
+  font-weight:950 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  line-height:1 !important;
+  box-shadow:0 10px 22px rgba(10,10,10,.20) !important;
+}
+
+#screen-technician .tech-option-icon{
+  width:48px !important;
+  height:48px !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#F2ECE3 !important;
+  color:#0a0a0a !important;
+  font-size:1.18rem !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+
+#screen-technician .tech-option-card strong{
+  display:block !important;
+  color:#0a0a0a !important;
+  font-size:1.06rem !important;
+  line-height:1.12 !important;
+  font-weight:950 !important;
+  letter-spacing:-.02em !important;
+  margin-bottom:6px !important;
+}
+
+#screen-technician .tech-option-card span{
+  display:block !important;
+  color:rgba(47,41,34,.76) !important;
+  font-size:.90rem !important;
+  line-height:1.36 !important;
+  font-weight:650 !important;
+}
+
+#screen-technician .tech-option-check{
+  width:30px !important;
+  height:30px !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  font-size:.78rem !important;
+  font-weight:950 !important;
+  box-shadow:0 10px 22px rgba(10,10,10,.20) !important;
+}
+
+#screen-technician #techSelectPanel{
+  margin-top:16px !important;
+  padding:18px !important;
+  border-radius:26px !important;
+  background:rgba(255,253,248,.72) !important;
+  border:1px solid rgba(221,211,197,.80) !important;
+  box-shadow:0 16px 34px rgba(35,26,16,.06) !important;
+}
+
+#screen-technician #bk_techList.tech-list{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+}
+
+#screen-technician .tech-item{
+  display:grid !important;
+  grid-template-columns:44px minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:12px !important;
+  min-height:66px !important;
+  padding:13px 14px !important;
+  border-radius:20px !important;
+  background:#FFFDF8 !important;
+  border:1px solid rgba(221,211,197,.86) !important;
+  box-shadow:0 10px 24px rgba(35,26,16,.055) !important;
+  color:#0a0a0a !important;
+  font-weight:850 !important;
+}
+
+#screen-technician .tech-item.selected{
+  border-color:#0a0a0a !important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#F7F0E6 100%) !important;
+  box-shadow:0 16px 34px rgba(10,10,10,.10) !important;
+}
+
+#screen-technician .tech-avatar{
+  width:40px !important;
+  height:40px !important;
+  border-radius:999px !important;
+  background:#0a0a0a !important;
+  color:#fff !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-weight:950 !important;
+  box-shadow:0 10px 22px rgba(10,10,10,.18) !important;
+}
+
+#screen-technician .step-footer{
+  margin-top:22px !important;
+}
+
+#screen-technician #btnToDateTime{
+  min-height:58px !important;
+  border-radius:22px !important;
+  background:linear-gradient(180deg,#17130F 0%,#050505 100%) !important;
+  border:1px solid #050505 !important;
+  color:#fff !important;
+  font-size:.78rem !important;
+  font-weight:950 !important;
+  letter-spacing:.15em !important;
+  text-transform:uppercase !important;
+  box-shadow:0 18px 40px rgba(10,10,10,.22) !important;
+}
+
+@media(max-width:430px){
+  #screen-technician .tech-option-card{
+    min-height:102px !important;
+    grid-template-columns:48px minmax(0,1fr) 30px !important;
+    gap:14px !important;
+    padding:18px 16px !important;
+    border-radius:24px !important;
+  }
+
+  #screen-technician .tech-option-icon{
+    width:44px !important;
+    height:44px !important;
+  }
+
+  #screen-technician .tech-option-card strong{
+    font-size:1rem !important;
+  }
+
+  #screen-technician .tech-option-card span{
+    font-size:.86rem !important;
+  }
+
+  #screen-technician #techSelectPanel{
+    padding:16px !important;
+  }
+}
+/* === END THURAYA TECH SELECTION PAGE FINAL PREMIUM POLISH === */
