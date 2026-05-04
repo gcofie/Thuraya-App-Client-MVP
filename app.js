@@ -2500,6 +2500,29 @@ function bk_placeFloatingSignOut(activeScreen) {
     const screen = activeScreen || document.querySelector('.screen.active');
     if (!btn || !screen || screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') return;
 
+    btn.classList.remove('th-signout-inline');
+
+    // Home / booking mode: place Sign Out on the same row as the NEW BOOKING badge.
+    // This is layout-only; auth and booking logic remain unchanged.
+    if (screen.id === 'screen-booking-mode') {
+        const header = screen.querySelector('.step-header');
+        const badge = header?.querySelector('.step-badge');
+        if (header && badge) {
+            let row = header.querySelector('.th-booking-action-row');
+            if (!row) {
+                row = document.createElement('div');
+                row.className = 'th-booking-action-row';
+                header.insertBefore(row, badge);
+            }
+            if (badge.parentElement !== row) row.appendChild(badge);
+            if (btn.parentElement !== row) row.appendChild(btn);
+            btn.classList.add('th-signout-inline');
+            btn.style.display = 'inline-flex';
+            return;
+        }
+    }
+
+    // Other signed-in screens: keep it near the top controls, never in the THURAYA wordmark.
     const inner = screen.querySelector('.screen-inner') || screen;
     const backBtn = inner.querySelector('.back-btn');
 
@@ -2508,7 +2531,9 @@ function bk_placeFloatingSignOut(activeScreen) {
     } else if (!backBtn && inner.firstChild !== btn) {
         inner.insertBefore(btn, inner.firstChild);
     }
+    btn.style.display = 'inline-flex';
 }
+
 
 function bk_moveStagingBannerToBottom() {
     ['#stagingBanner', '.staging-banner', '[data-staging-banner]', '.env-banner'].forEach(sel => {
