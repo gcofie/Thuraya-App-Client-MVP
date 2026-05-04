@@ -4880,3 +4880,57 @@ body,
   }
 }
 /* === END THURAYA FINAL CONVERSION POLISH === */
+
+/* =========================================================
+   THURAYA ISSUE 02B — MOBILE DATE FIELD VISIBILITY FIX
+   Scope: booking date inputs only. Native picker + booking logic untouched.
+   Fixes mobile WebView/Safari cases where the date field appears blank.
+   ========================================================= */
+#bk_date,
+#grp_date{
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background-color: #FFFDF8 !important;
+  color: #0A0A0A !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+  caret-color: transparent !important;
+  border: 1px solid rgba(221,211,197,.95) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75) !important;
+  color-scheme: light !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+#bk_date:focus,
+#grp_date:focus{
+  outline: none !important;
+  border-color: rgba(143,118,56,.62) !important;
+  box-shadow: 0 0 0 3px rgba(200,169,77,.12) !important;
+}
+
+#bk_date::-webkit-date-and-time-value,
+#grp_date::-webkit-date-and-time-value{
+  color: #0A0A0A !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+  text-align: left !important;
+  min-height: 24px !important;
+}
+
+#bk_date::-webkit-calendar-picker-indicator,
+#grp_date::-webkit-calendar-picker-indicator{
+  display: block !important;
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: pointer !important;
+}
+
+#bk_date::-webkit-clear-button,
+#grp_date::-webkit-clear-button{
+  display: none !important;
+}
+/* === END THURAYA ISSUE 02B === */
