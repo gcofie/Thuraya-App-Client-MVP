@@ -4518,53 +4518,71 @@ body,
 
 
 /* =========================================================
-   THURAYA SIGN OUT CTA — DOM ANCHOR FIX v3
-   Works with updated app.js: button stays as direct child of #app.
-   Scope: Sign Out CTA only. Booking/auth/menu logic untouched.
+   THURAYA SIGN OUT INLINE HOME FIX — FINAL
+   Scope: booking-mode page only.
+   Purpose: place Sign Out adjacent to NEW BOOKING and override older floating rules.
    ========================================================= */
-#app > #bkFloatingSignOut.bk-floating-signout{
-  position:absolute !important;
-  top:88px !important;
-  right:18px !important;
+#screen-booking-mode .th-booking-action-row{
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  margin:0 0 20px !important;
+}
+
+#screen-booking-mode .th-booking-action-row .step-badge{
+  margin:0 !important;
+  flex:0 0 auto !important;
+}
+
+#screen-booking-mode .bk-floating-signout.th-signout-inline{
+  position:static !important;
+  inset:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
   left:auto !important;
   transform:none !important;
-  z-index:9999 !important;
-
-  display:block;
+  z-index:2 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
   width:auto !important;
-  max-width:88px !important;
+  max-width:none !important;
   min-height:32px !important;
-  padding:6px 12px !important;
-
+  padding:7px 13px !important;
   border-radius:999px !important;
-  border:1px solid rgba(255,255,255,.18) !important;
-  background:rgba(10,10,10,.82) !important;
-  color:#fff !important;
-  -webkit-text-fill-color:#fff !important;
-  box-shadow:0 10px 24px rgba(0,0,0,.22) !important;
+  border:1px solid rgba(10,10,10,.14) !important;
+  background:rgba(255,253,248,.92) !important;
+  color:#111 !important;
+  box-shadow:0 10px 24px rgba(35,26,16,.08) !important;
   backdrop-filter:blur(14px) !important;
   -webkit-backdrop-filter:blur(14px) !important;
-
   font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:.58rem !important;
+  font-size:.62rem !important;
   line-height:1 !important;
   font-weight:900 !important;
-  letter-spacing:.12em !important;
+  letter-spacing:.13em !important;
   text-transform:uppercase !important;
+  white-space:nowrap !important;
 }
 
 #screen-booking-mode .step-header{
-  padding-right:0 !important;
+  margin-top:0 !important;
 }
 
 @media(max-width:430px){
-  #app > #bkFloatingSignOut.bk-floating-signout{
-    top:86px !important;
-    right:16px !important;
-    max-width:84px !important;
+  #screen-booking-mode .th-booking-action-row{
+    gap:10px !important;
+    margin-bottom:18px !important;
+  }
+
+  #screen-booking-mode .bk-floating-signout.th-signout-inline{
     min-height:31px !important;
-    padding:6px 11px !important;
-    font-size:.56rem !important;
+    padding:7px 12px !important;
+    font-size:.58rem !important;
+    letter-spacing:.12em !important;
   }
 }
-/* === END THURAYA SIGN OUT CTA DOM ANCHOR FIX v3 === */
+/* === END THURAYA SIGN OUT INLINE HOME FIX === */
