@@ -4586,3 +4586,57 @@ body,
   }
 }
 /* === END THURAYA SIGN OUT INLINE HOME FIX === */
+
+/* =========================================================
+   THURAYA SIGN OUT INLINE VISIBILITY FIX — FINAL HARD LOCK
+   Scope: booking-mode Sign Out only.
+   Purpose: make Sign Out readable while staying adjacent to NEW BOOKING.
+   Logic untouched.
+   ========================================================= */
+#screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline,
+#screen-booking-mode #bkFloatingSignOut.bk-floating-signout.th-signout-inline{
+  position:static !important;
+  inset:auto !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex:0 0 auto !important;
+  min-height:32px !important;
+  padding:7px 14px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(10,10,10,.18) !important;
+  background:#0A0A0A !important;
+  background-color:#0A0A0A !important;
+  background-image:none !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  opacity:1 !important;
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:0 12px 26px rgba(10,10,10,.16) !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.62rem !important;
+  line-height:1 !important;
+  font-weight:950 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+#screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline:hover,
+#screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline:focus{
+  background:#0A0A0A !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+}
+
+@media(max-width:430px){
+  #screen-booking-mode .th-booking-action-row #bkFloatingSignOut.bk-floating-signout.th-signout-inline,
+  #screen-booking-mode #bkFloatingSignOut.bk-floating-signout.th-signout-inline{
+    min-height:31px !important;
+    padding:7px 12px !important;
+    font-size:.58rem !important;
+    letter-spacing:.12em !important;
+  }
+}
+/* === END THURAYA SIGN OUT INLINE VISIBILITY FIX === */
