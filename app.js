@@ -2498,15 +2498,18 @@ function bk_showFloatingSignOut(show) {
 function bk_placeFloatingSignOut(activeScreen) {
     const btn = document.getElementById('bkFloatingSignOut');
     const screen = activeScreen || document.querySelector('.screen.active');
-    if (!btn || !screen || screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') return;
+    const appShell = document.getElementById('app');
+    if (!btn || !screen || !appShell) return;
 
-    const inner = screen.querySelector('.screen-inner') || screen;
-    const backBtn = inner.querySelector('.back-btn');
+    // Keep Sign Out outside screen content so it can never overlap headings/cards.
+    // The button remains a pure UI utility; auth/sign-out logic is unchanged.
+    if (screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') {
+        btn.style.display = 'none';
+        return;
+    }
 
-    if (backBtn && backBtn.nextSibling !== btn) {
-        backBtn.insertAdjacentElement('afterend', btn);
-    } else if (!backBtn && inner.firstChild !== btn) {
-        inner.insertBefore(btn, inner.firstChild);
+    if (btn.parentElement !== appShell) {
+        appShell.insertBefore(btn, appShell.firstChild);
     }
 }
 
