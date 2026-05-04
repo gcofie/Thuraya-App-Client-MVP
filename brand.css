@@ -4397,3 +4397,62 @@ body{
   background:#000000 !important;
 }
 /* === END THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX === */
+
+
+/* =========================================================
+   THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX v2 — HARD OVERRIDE
+   Scope: Welcome / sign-in screen only.
+   Purpose: remove all radial glow, gradients, texture and shell background bleed.
+   Logic untouched.
+   ========================================================= */
+html,
+body,
+.bg-texture{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+
+/* Keep the app shell black underneath the welcome screen; other screens paint their own background. */
+#app{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+
+#screen-welcome,
+#screen-welcome.active,
+#screen-welcome .welcome-inner,
+#screen-welcome .logo-block,
+#screen-welcome .welcome-actions{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+#screen-welcome::before,
+#screen-welcome::after,
+#screen-welcome .welcome-inner::before,
+#screen-welcome .welcome-inner::after,
+#screen-welcome .logo-block::before{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Remove inherited decorative glows on welcome only. */
+#screen-welcome *,
+#screen-welcome *::before,
+#screen-welcome *::after{
+  text-shadow:none !important;
+}
+
+#screen-welcome #btnGuestSignIn{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+/* === END THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX v2 === */
