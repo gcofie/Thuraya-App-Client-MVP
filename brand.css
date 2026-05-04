@@ -3309,32 +3309,33 @@ button:active,
 
 
 /* =========================================================
-   THURAYA SIGN OUT CTA — ADJACENT TO STEP BADGE
-   Purpose:
-   - Keep the full rollback UI intact.
-   - Move Sign Out away from the hero title.
-   - Visually align it with the small step badge / New Booking pill.
-   - CSS only. No JS / Firebase / booking logic touched.
+   THURAYA SIGN OUT CTA — FINAL POSITION FIX
+   Position: same visual row as NEW BOOKING / STEP badge.
+   CSS only. No JS / Firebase / booking logic touched.
    ========================================================= */
 
+#bkFloatingSignOut.bk-floating-signout,
 .bk-floating-signout{
   position: fixed !important;
-  z-index: 9999 !important;
+  z-index: 10000 !important;
 
-  /* Desktop centered shell alignment */
-  top: calc(var(--thuraya-shell-gap, 14px) + 146px) !important;
-  left: calc(50% + 94px) !important;
+  /* Desktop shell: 430px centered app. Right side, aligned with badge row. */
+  top: calc(var(--thuraya-shell-gap, 14px) + 104px) !important;
+  left: calc(50% + 92px) !important;
   right: auto !important;
+  bottom: auto !important;
   transform: none !important;
 
   width: auto !important;
   max-width: 104px !important;
+  min-width: 0 !important;
   min-height: 34px !important;
-  padding: 7px 13px !important;
+  height: auto !important;
 
+  padding: 7px 13px !important;
   border-radius: 999px !important;
   border: 1px solid rgba(10,10,10,.12) !important;
-  background: rgba(255,253,248,.92) !important;
+  background: rgba(255,253,248,.94) !important;
   color: #111 !important;
 
   box-shadow: 0 10px 24px rgba(35,26,16,.10) !important;
@@ -3349,28 +3350,28 @@ button:active,
   text-transform: uppercase !important;
 }
 
-/* On the booking landing page, align with NEW BOOKING */
-#screen-booking-mode.active ~ .bk-floating-signout,
-body:has(#screen-booking-mode.active) .bk-floating-signout{
-  top: calc(var(--thuraya-shell-gap, 14px) + 150px) !important;
+/* Booking landing: align with NEW BOOKING pill */
+body:has(#screen-booking-mode.active) #bkFloatingSignOut.bk-floating-signout{
+  top: calc(var(--thuraya-shell-gap, 14px) + 104px) !important;
 }
 
-/* On Step 1 and other flow screens, align with the step badge row */
-body:has(#screen-services.active) .bk-floating-signout,
-body:has(#screen-technician.active) .bk-floating-signout,
-body:has(#screen-datetime.active) .bk-floating-signout,
-body:has(#screen-confirm.active) .bk-floating-signout,
-body:has(#screen-group-size.active) .bk-floating-signout,
-body:has(#screen-group-services.active) .bk-floating-signout,
-body:has(#screen-group-datetime.active) .bk-floating-signout,
-body:has(#screen-group-confirm.active) .bk-floating-signout{
-  top: calc(var(--thuraya-shell-gap, 14px) + 150px) !important;
+/* Service/step screens: align with STEP badge row */
+body:has(#screen-services.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-technician.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-datetime.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-confirm.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-group-size.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-group-services.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-group-datetime.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-group-confirm.active) #bkFloatingSignOut.bk-floating-signout{
+  top: calc(var(--thuraya-shell-gap, 14px) + 124px) !important;
 }
 
-/* Mobile phone shell */
+/* Mobile shell */
 @media(max-width:430px){
+  #bkFloatingSignOut.bk-floating-signout,
   .bk-floating-signout{
-    top: 146px !important;
+    top: 104px !important;
     left: auto !important;
     right: 18px !important;
     max-width: 98px !important;
@@ -3378,9 +3379,21 @@ body:has(#screen-group-confirm.active) .bk-floating-signout{
     padding: 6px 12px !important;
     font-size: .58rem !important;
   }
+
+  body:has(#screen-services.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-technician.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-datetime.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-confirm.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-group-size.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-group-services.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-group-datetime.active) #bkFloatingSignOut.bk-floating-signout,
+  body:has(#screen-group-confirm.active) #bkFloatingSignOut.bk-floating-signout{
+    top: 124px !important;
+  }
 }
 
 @media(max-width:360px){
+  #bkFloatingSignOut.bk-floating-signout,
   .bk-floating-signout{
     right: 12px !important;
     font-size: .54rem !important;
@@ -3388,4 +3401,4 @@ body:has(#screen-group-confirm.active) .bk-floating-signout{
   }
 }
 
-/* === END THURAYA SIGN OUT CTA ADJACENT TO STEP BADGE === */
+/* === END THURAYA SIGN OUT CTA FINAL POSITION FIX === */
