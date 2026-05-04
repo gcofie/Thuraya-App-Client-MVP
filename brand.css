@@ -3488,3 +3488,59 @@ button:active,
   }
 }
 /* === END THURAYA FINAL MICRO POLISH === */
+
+
+/* =========================================================
+   THURAYA SIGN OUT CTA — SAME LEVEL AS NEW BOOKING
+   Scope: placement only. No booking/Firebase/auth/menu logic changed.
+   The button is moved by existing app.js into the active screen-inner;
+   this anchors it to the same visual row as the step badge.
+   ========================================================= */
+.screen-inner{
+  position:relative !important;
+}
+
+#bkFloatingSignOut.bk-floating-signout{
+  position:absolute !important;
+  top:18px !important;
+  right:0 !important;
+  left:auto !important;
+  transform:none !important;
+  z-index:6 !important;
+  width:auto !important;
+  max-width:none !important;
+  min-height:32px !important;
+  padding:7px 15px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(10,10,10,.12) !important;
+  background:rgba(255,253,248,.92) !important;
+  color:#111 !important;
+  box-shadow:0 10px 24px rgba(35,26,16,.10) !important;
+  backdrop-filter:blur(14px) !important;
+  -webkit-backdrop-filter:blur(14px) !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:.64rem !important;
+  line-height:1 !important;
+  font-weight:850 !important;
+  letter-spacing:.14em !important;
+  text-transform:uppercase !important;
+}
+
+#screen-booking-mode .step-header{
+  padding-right:108px !important;
+}
+
+@media(max-width:430px){
+  #bkFloatingSignOut.bk-floating-signout{
+    top:16px !important;
+    right:0 !important;
+    min-height:32px !important;
+    padding:7px 13px !important;
+    font-size:.60rem !important;
+  }
+
+  #screen-booking-mode .step-header{
+    padding-right:100px !important;
+  }
+}
+/* === END THURAYA SIGN OUT CTA SAME LEVEL FIX === */
