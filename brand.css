@@ -4880,3 +4880,159 @@ body,
   }
 }
 /* === END THURAYA FINAL CONVERSION POLISH === */
+
+/* =========================================================
+   THURAYA ISSUE 02B — MOBILE DATE FIELD VISIBILITY FIX
+   Scope: booking date inputs only. Native picker + booking logic untouched.
+   Fixes mobile WebView/Safari cases where the date field appears blank.
+   ========================================================= */
+#bk_date,
+#grp_date{
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background-color: #FFFDF8 !important;
+  color: #0A0A0A !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+  caret-color: transparent !important;
+  border: 1px solid rgba(221,211,197,.95) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75) !important;
+  color-scheme: light !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+#bk_date:focus,
+#grp_date:focus{
+  outline: none !important;
+  border-color: rgba(143,118,56,.62) !important;
+  box-shadow: 0 0 0 3px rgba(200,169,77,.12) !important;
+}
+
+#bk_date::-webkit-date-and-time-value,
+#grp_date::-webkit-date-and-time-value{
+  color: #0A0A0A !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+  text-align: left !important;
+  min-height: 24px !important;
+}
+
+#bk_date::-webkit-calendar-picker-indicator,
+#grp_date::-webkit-calendar-picker-indicator{
+  display: block !important;
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: pointer !important;
+}
+
+#bk_date::-webkit-clear-button,
+#grp_date::-webkit-clear-button{
+  display: none !important;
+}
+/* === END THURAYA ISSUE 02B === */
+
+
+/* =========================================================
+   THURAYA ISSUE 02C — DATE FIELD VISIBLE AFFORDANCE FIX
+   Scope: date field visual layer only. Native picker + onchange logic untouched.
+   Adds a visible "Select date" cue and calendar icon for mobile browsers
+   that render empty date inputs without an indicator.
+   ========================================================= */
+.thuraya-date-field{
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+.thuraya-date-field input[type="date"]{
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  min-height: 56px !important;
+  padding: 15px 54px 15px 16px !important;
+  border-radius: 18px !important;
+  background: #FFFDF8 !important;
+  border: 1px solid rgba(35,26,16,.18) !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  color-scheme: light !important;
+}
+
+.thuraya-date-field .thuraya-date-placeholder,
+.thuraya-date-field .thuraya-date-icon{
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.thuraya-date-field .thuraya-date-placeholder{
+  left: 16px !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  color: rgba(17,17,17,.72) !important;
+  letter-spacing: .01em !important;
+}
+
+.thuraya-date-field .thuraya-date-icon{
+  right: 18px !important;
+  font-size: 1.12rem !important;
+  line-height: 1 !important;
+  opacity: .88 !important;
+}
+
+.thuraya-date-field.has-value .thuraya-date-placeholder{
+  display: none !important;
+}
+
+.thuraya-date-field:focus-within input[type="date"]{
+  border-color: rgba(143,118,56,.62) !important;
+  box-shadow: 0 0 0 3px rgba(200,169,77,.12) !important;
+}
+/* === END THURAYA ISSUE 02C === */
+
+/* =========================================================
+   THURAYA ISSUE 02D — DATE PLACEHOLDER OVERLAP FIX
+   Scope: visual layer only. Keeps native date picker and onchange logic intact.
+   Fixes PC/mobile overlap where the browser's native empty date format
+   appears underneath the custom "Select date" cue.
+   ========================================================= */
+.thuraya-date-field:not(.has-value) input[type="date"]{
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}
+
+.thuraya-date-field.has-value input[type="date"]{
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+}
+
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-text,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-month-field,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-day-field,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-year-field{
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-text,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-month-field,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-day-field,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-year-field{
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+/* === END THURAYA ISSUE 02D === */

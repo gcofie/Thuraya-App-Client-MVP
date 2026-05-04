@@ -150,10 +150,35 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const doc = await db.collection('Client_Users').doc(user.email.toLowerCase()).get();
                 if (doc.exists) {
-                    bk_clientProfile = doc.data();
-                    // ── EDIT 1: send returning users to mode select, not straight to services ──
+                    bk_clientProfile = doc.data() || {};
+
+                    const cleanPhone = String(bk_clientProfile.phone || bk_clientProfile.Tel_Number || '').replace(/\D/g, '');
+                    const hasProfileName = !!String(bk_clientProfile.name || user.displayName || '').trim();
+                    const hasProfileDob = !!String(bk_clientProfile.dob || bk_clientProfile.Date_Of_Birth || '').trim();
+                    const profileComplete = hasProfileName && cleanPhone.length === 10 && hasProfileDob;
+
                     loadTechs();
                     bk_afterClientEntry();
+
+                    if (!profileComplete) {
+                        const nameEl = document.getElementById('prof_name');
+                        const phoneEl = document.getElementById('prof_phone');
+                        const emailEl = document.getElementById('prof_email');
+                        const genderEl = document.getElementById('prof_gender');
+                        const dobEl = document.getElementById('prof_dob');
+
+                        if (nameEl && !nameEl.value) nameEl.value = bk_clientProfile.name || user.displayName || '';
+                        if (phoneEl && !phoneEl.value) phoneEl.value = bk_clientProfile.phone || bk_clientProfile.Tel_Number || '';
+                        if (emailEl) emailEl.value = user.email || bk_clientProfile.email || '';
+                        if (genderEl && bk_clientProfile.gender && !genderEl.value) genderEl.value = bk_clientProfile.gender;
+                        if (dobEl && !dobEl.value) dobEl.value = bk_clientProfile.dob || bk_clientProfile.Date_Of_Birth || '';
+
+                        goToStep('screen-profile');
+                        toast('Please complete your profile before booking.', 'info');
+                        return;
+                    }
+
+                    // Returning users with complete profiles go to booking mode.
                     goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
@@ -2498,40 +2523,37 @@ function bk_showFloatingSignOut(show) {
 function bk_placeFloatingSignOut(activeScreen) {
     const btn = document.getElementById('bkFloatingSignOut');
     const screen = activeScreen || document.querySelector('.screen.active');
-    if (!btn || !screen || screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') return;
+    if (!btn || !screen) return;
 
     btn.classList.remove('th-signout-inline');
 
-    // Home / booking mode: place Sign Out on the same row as the NEW BOOKING badge.
-    // This is layout-only; auth and booking logic remain unchanged.
-    if (screen.id === 'screen-booking-mode') {
-        const header = screen.querySelector('.step-header');
-        const badge = header?.querySelector('.step-badge');
-        if (header && badge) {
-            let row = header.querySelector('.th-booking-action-row');
-            if (!row) {
-                row = document.createElement('div');
-                row.className = 'th-booking-action-row';
-                header.insertBefore(row, badge);
-            }
-            if (badge.parentElement !== row) row.appendChild(badge);
-            if (btn.parentElement !== row) row.appendChild(btn);
-            btn.classList.add('th-signout-inline');
-            btn.style.display = 'inline-flex';
-            return;
+    // Release polish: Sign Out must behave like the PC version everywhere.
+    // It appears ONLY on the home / New Booking screen and is hidden on all
+    // booking sub-pages, account/profile pages, document viewer, and welcome.
+    // This is UI placement only; auth and booking logic are untouched.
+    if (screen.id !== 'screen-booking-mode') {
+        btn.style.display = 'none';
+        return;
+    }
+
+    const header = screen.querySelector('.step-header');
+    const badge = header?.querySelector('.step-badge');
+
+    if (header && badge) {
+        let row = header.querySelector('.th-booking-action-row');
+        if (!row) {
+            row = document.createElement('div');
+            row.className = 'th-booking-action-row';
+            header.insertBefore(row, badge);
         }
+        if (badge.parentElement !== row) row.appendChild(badge);
+        if (btn.parentElement !== row) row.appendChild(btn);
+        btn.classList.add('th-signout-inline');
+        btn.style.display = 'inline-flex';
+        return;
     }
 
-    // Other signed-in screens: keep it near the top controls, never in the THURAYA wordmark.
-    const inner = screen.querySelector('.screen-inner') || screen;
-    const backBtn = inner.querySelector('.back-btn');
-
-    if (backBtn && backBtn.nextSibling !== btn) {
-        backBtn.insertAdjacentElement('afterend', btn);
-    } else if (!backBtn && inner.firstChild !== btn) {
-        inner.insertBefore(btn, inner.firstChild);
-    }
-    btn.style.display = 'inline-flex';
+    btn.style.display = 'none';
 }
 
 
@@ -3205,3 +3227,142 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     if (action === 'directions') return window.bk_upcomingDirections?.();
     if (action === 'rebook') return window.bk_bookAgain?.();
 };
+// ── THURAYA ISSUE 02A: MOBILE-SAFE DATE PICKER FIX ───────────────────
+// UI interaction layer only. No booking, auth, Firebase, or slot logic changed.
+// Desktop: nudges native date picker open on click. Mobile: preserves native touch behavior.
+(function thurayaInstallDatePickerMobileSafeFix(){
+    function isDesktopPointer(){
+        try {
+            return window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function openNativeDatePicker(input){
+        if (!input || input.disabled || !isDesktopPointer()) return;
+        try {
+            if (typeof input.showPicker === 'function') input.showPicker();
+        } catch (e) {
+            // Native click/focus remains available.
+        }
+    }
+
+    function enhanceDateInput(input){
+        if (!input || input.dataset.thurayaDatePickerFix === '2') return;
+        input.dataset.thurayaDatePickerFix = '2';
+        input.style.cursor = 'pointer';
+        input.style.pointerEvents = 'auto';
+        input.addEventListener('click', function(){ openNativeDatePicker(input); });
+    }
+
+    function install(){
+        ['bk_date', 'grp_date'].forEach(function(id){ enhanceDateInput(document.getElementById(id)); });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install);
+    } else {
+        install();
+    }
+})();
+// ── END THURAYA ISSUE 02A FIX ─────────────────────────────────────────
+
+
+// ── THURAYA ISSUE 02C: DATE FIELD VISIBLE AFFORDANCE FIX ─────────────
+// UI-only: keeps native date inputs and existing onchange booking functions intact.
+(function thurayaDateFieldAffordanceFix(){
+    function sync(input){
+        if (!input) return;
+        var wrap = input.closest ? input.closest('.thuraya-date-field') : null;
+        if (!wrap) return;
+        if (input.value) wrap.classList.add('has-value');
+        else wrap.classList.remove('has-value');
+    }
+
+    function install(){
+        ['bk_date', 'grp_date'].forEach(function(id){
+            var input = document.getElementById(id);
+            if (!input || input.dataset.thurayaAffordanceFix === '1') return;
+            input.dataset.thurayaAffordanceFix = '1';
+            sync(input);
+            input.addEventListener('input', function(){ sync(input); });
+            input.addEventListener('change', function(){ sync(input); });
+            input.addEventListener('blur', function(){ sync(input); });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install);
+    } else {
+        install();
+    }
+})();
+// ── END THURAYA ISSUE 02C FIX ────────────────────────────────────────
+
+
+// ── THURAYA ISSUE 02E: CONSISTENT DATE PICKER POLISH ────────────────
+// UI-only. Applies the same visible date field behavior to:
+// profile completion DOB, account DOB, individual booking date, and group booking date.
+// Existing onchange handlers and booking/profile save logic are untouched.
+(function thurayaConsistentDatePickerPolish(){
+    var DATE_IDS = ['prof_dob', 'acct_dob', 'bk_date', 'grp_date'];
+
+    function isDesktopPointer(){
+        try {
+            return window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        } catch(e) { return false; }
+    }
+
+    function sync(input){
+        if (!input) return;
+        var wrap = input.closest ? input.closest('.thuraya-date-field') : null;
+        if (!wrap) return;
+        if (input.value) wrap.classList.add('has-value');
+        else wrap.classList.remove('has-value');
+    }
+
+    function openPicker(input){
+        if (!input || input.disabled) return;
+        try { input.focus({ preventScroll: true }); } catch(e) { try { input.focus(); } catch(_e){} }
+        if (isDesktopPointer()) {
+            try { if (typeof input.showPicker === 'function') input.showPicker(); } catch(e) {}
+        }
+    }
+
+    function enhance(input){
+        if (!input || input.dataset.thurayaConsistentDate === '1') { sync(input); return; }
+        input.dataset.thurayaConsistentDate = '1';
+        input.setAttribute('inputmode', 'none');
+        input.style.pointerEvents = 'auto';
+        input.style.cursor = 'pointer';
+
+        var wrap = input.closest ? input.closest('.thuraya-date-field') : null;
+        if (wrap && !wrap.dataset.thurayaConsistentDateWrap) {
+            wrap.dataset.thurayaConsistentDateWrap = '1';
+            wrap.addEventListener('click', function(e){
+                var targetInput = wrap.querySelector('input[type="date"]');
+                if (targetInput) openPicker(targetInput);
+            });
+        }
+
+        input.addEventListener('click', function(){ openPicker(input); });
+        input.addEventListener('input', function(){ sync(input); });
+        input.addEventListener('change', function(){ sync(input); });
+        input.addEventListener('blur', function(){ sync(input); });
+        sync(input);
+    }
+
+    function install(){
+        DATE_IDS.forEach(function(id){ enhance(document.getElementById(id)); });
+    }
+
+    window.thurayaSyncDateFields = install;
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+    else install();
+
+    document.addEventListener('visibilitychange', install);
+    document.addEventListener('click', function(){ setTimeout(install, 0); }, true);
+})();
+// ── END THURAYA ISSUE 02E ────────────────────────────────────────────
