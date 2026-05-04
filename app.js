@@ -2523,40 +2523,37 @@ function bk_showFloatingSignOut(show) {
 function bk_placeFloatingSignOut(activeScreen) {
     const btn = document.getElementById('bkFloatingSignOut');
     const screen = activeScreen || document.querySelector('.screen.active');
-    if (!btn || !screen || screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') return;
+    if (!btn || !screen) return;
 
     btn.classList.remove('th-signout-inline');
 
-    // Home / booking mode: place Sign Out on the same row as the NEW BOOKING badge.
-    // This is layout-only; auth and booking logic remain unchanged.
-    if (screen.id === 'screen-booking-mode') {
-        const header = screen.querySelector('.step-header');
-        const badge = header?.querySelector('.step-badge');
-        if (header && badge) {
-            let row = header.querySelector('.th-booking-action-row');
-            if (!row) {
-                row = document.createElement('div');
-                row.className = 'th-booking-action-row';
-                header.insertBefore(row, badge);
-            }
-            if (badge.parentElement !== row) row.appendChild(badge);
-            if (btn.parentElement !== row) row.appendChild(btn);
-            btn.classList.add('th-signout-inline');
-            btn.style.display = 'inline-flex';
-            return;
+    // Release polish: Sign Out must behave like the PC version everywhere.
+    // It appears ONLY on the home / New Booking screen and is hidden on all
+    // booking sub-pages, account/profile pages, document viewer, and welcome.
+    // This is UI placement only; auth and booking logic are untouched.
+    if (screen.id !== 'screen-booking-mode') {
+        btn.style.display = 'none';
+        return;
+    }
+
+    const header = screen.querySelector('.step-header');
+    const badge = header?.querySelector('.step-badge');
+
+    if (header && badge) {
+        let row = header.querySelector('.th-booking-action-row');
+        if (!row) {
+            row = document.createElement('div');
+            row.className = 'th-booking-action-row';
+            header.insertBefore(row, badge);
         }
+        if (badge.parentElement !== row) row.appendChild(badge);
+        if (btn.parentElement !== row) row.appendChild(btn);
+        btn.classList.add('th-signout-inline');
+        btn.style.display = 'inline-flex';
+        return;
     }
 
-    // Other signed-in screens: keep it near the top controls, never in the THURAYA wordmark.
-    const inner = screen.querySelector('.screen-inner') || screen;
-    const backBtn = inner.querySelector('.back-btn');
-
-    if (backBtn && backBtn.nextSibling !== btn) {
-        backBtn.insertAdjacentElement('afterend', btn);
-    } else if (!backBtn && inner.firstChild !== btn) {
-        inner.insertBefore(btn, inner.firstChild);
-    }
-    btn.style.display = 'inline-flex';
+    btn.style.display = 'none';
 }
 
 
