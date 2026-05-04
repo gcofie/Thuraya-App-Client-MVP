@@ -150,10 +150,35 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const doc = await db.collection('Client_Users').doc(user.email.toLowerCase()).get();
                 if (doc.exists) {
-                    bk_clientProfile = doc.data();
-                    // ── EDIT 1: send returning users to mode select, not straight to services ──
+                    bk_clientProfile = doc.data() || {};
+
+                    const cleanPhone = String(bk_clientProfile.phone || bk_clientProfile.Tel_Number || '').replace(/\D/g, '');
+                    const hasProfileName = !!String(bk_clientProfile.name || user.displayName || '').trim();
+                    const hasProfileDob = !!String(bk_clientProfile.dob || bk_clientProfile.Date_Of_Birth || '').trim();
+                    const profileComplete = hasProfileName && cleanPhone.length === 10 && hasProfileDob;
+
                     loadTechs();
                     bk_afterClientEntry();
+
+                    if (!profileComplete) {
+                        const nameEl = document.getElementById('prof_name');
+                        const phoneEl = document.getElementById('prof_phone');
+                        const emailEl = document.getElementById('prof_email');
+                        const genderEl = document.getElementById('prof_gender');
+                        const dobEl = document.getElementById('prof_dob');
+
+                        if (nameEl && !nameEl.value) nameEl.value = bk_clientProfile.name || user.displayName || '';
+                        if (phoneEl && !phoneEl.value) phoneEl.value = bk_clientProfile.phone || bk_clientProfile.Tel_Number || '';
+                        if (emailEl) emailEl.value = user.email || bk_clientProfile.email || '';
+                        if (genderEl && bk_clientProfile.gender && !genderEl.value) genderEl.value = bk_clientProfile.gender;
+                        if (dobEl && !dobEl.value) dobEl.value = bk_clientProfile.dob || bk_clientProfile.Date_Of_Birth || '';
+
+                        goToStep('screen-profile');
+                        toast('Please complete your profile before booking.', 'info');
+                        return;
+                    }
+
+                    // Returning users with complete profiles go to booking mode.
                     goToStep('screen-booking-mode');
                     const bar = document.getElementById('bk_stickyBar');
                     if (bar) bar.style.display = 'none';
