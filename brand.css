@@ -4290,3 +4290,63 @@ button:active,
   transform:scale(.985) !important;
 }
 /* === END THURAYA GROUP BOOKING PICK TIME CTA VISIBILITY FINAL FIX === */
+
+
+/* =========================================================
+   THURAYA GROUP DATE/TIME — PICK BUTTON VISIBILITY HARD FIX
+   Scope: Group booking date/time screen only.
+   Purpose: Fixes the washed-out white "PICK" button inside the
+   Smart Booking recommendation card without changing group logic.
+   ========================================================= */
+#screen-group-datetime #grp_slots button:not(.slot-btn),
+#screen-group-datetime #grp_slots .btn-primary,
+#screen-group-datetime #grp_slots [class*="pick"],
+#screen-group-datetime #grp_slots [class*="Pick"],
+#screen-group-datetime #grp_slots [class*="cta"],
+#screen-group-datetime #grp_slots [class*="CTA"],
+#screen-group-datetime [class*="smart"] button,
+#screen-group-datetime [class*="Smart"] button,
+#screen-group-datetime [class*="recommend"] button,
+#screen-group-datetime [class*="Recommend"] button{
+  background:linear-gradient(180deg,#17130F 0%,#050505 100%) !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  border:1px solid #050505 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  text-shadow:none !important;
+  box-shadow:0 14px 30px rgba(10,10,10,.22) !important;
+  cursor:pointer !important;
+}
+
+#screen-group-datetime #grp_slots button:not(.slot-btn):disabled,
+#screen-group-datetime #grp_slots .btn-primary:disabled,
+#screen-group-datetime #grp_slots [class*="pick"]:disabled,
+#screen-group-datetime #grp_slots [class*="Pick"]:disabled,
+#screen-group-datetime #grp_slots [class*="cta"]:disabled,
+#screen-group-datetime #grp_slots [class*="CTA"]:disabled,
+#screen-group-datetime [class*="smart"] button:disabled,
+#screen-group-datetime [class*="Smart"] button:disabled,
+#screen-group-datetime [class*="recommend"] button:disabled,
+#screen-group-datetime [class*="Recommend"] button:disabled{
+  background:#0A0A0A !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  border-color:#0A0A0A !important;
+  opacity:1 !important;
+  cursor:pointer !important;
+}
+
+#screen-group-datetime #grp_slots button:not(.slot-btn)::before,
+#screen-group-datetime #grp_slots button:not(.slot-btn)::after,
+#screen-group-datetime #grp_slots .btn-primary::before,
+#screen-group-datetime #grp_slots .btn-primary::after,
+#screen-group-datetime [class*="smart"] button::before,
+#screen-group-datetime [class*="smart"] button::after,
+#screen-group-datetime [class*="recommend"] button::before,
+#screen-group-datetime [class*="recommend"] button::after{
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  opacity:1 !important;
+}
+/* === END THURAYA GROUP DATE/TIME PICK BUTTON VISIBILITY HARD FIX === */
