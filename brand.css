@@ -4998,3 +4998,41 @@ body,
   box-shadow: 0 0 0 3px rgba(200,169,77,.12) !important;
 }
 /* === END THURAYA ISSUE 02C === */
+
+/* =========================================================
+   THURAYA ISSUE 02D — DATE PLACEHOLDER OVERLAP FIX
+   Scope: visual layer only. Keeps native date picker and onchange logic intact.
+   Fixes PC/mobile overlap where the browser's native empty date format
+   appears underneath the custom "Select date" cue.
+   ========================================================= */
+.thuraya-date-field:not(.has-value) input[type="date"]{
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}
+
+.thuraya-date-field.has-value input[type="date"]{
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+}
+
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-text,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-month-field,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-day-field,
+.thuraya-date-field input[type="date"]::-webkit-datetime-edit-year-field{
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-text,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-month-field,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-day-field,
+.thuraya-date-field:not(.has-value) input[type="date"]::-webkit-datetime-edit-year-field{
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+/* === END THURAYA ISSUE 02D === */
