@@ -3208,12 +3208,14 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
 
 
 // ============================================================
-// THURAYA MOBILE DATE FIELD ENHANCEMENT — 2026-05-04
-// Scope: native date inputs only (profile DOB, booking date, group date).
-// Purpose: Android/mobile-safe visible date display + calendar tap target.
-// Booking logic untouched: original input ids, values, onchange handlers remain.
+// THURAYA MOBILE DATE FIELD ENHANCEMENT — FINAL RELIABLE FIX
+// Scope: profile DOB, account DOB, individual booking date, group booking date.
+// Purpose: always show a clean tappable date field on phone while preserving
+// original input IDs, values, min/max attributes and onchange handlers.
 // ============================================================
 (function(){
+    const DATE_INPUT_IDS = ['prof_dob', 'acct_dob', 'bk_date', 'grp_date'];
+
     function th_formatDateForDisplay(value){
         if (!value) return 'Select date';
         try {
@@ -3230,14 +3232,11 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
         }
     }
 
-    function th_isMobileDateEnhancementNeeded(){
-        return window.matchMedia('(max-width: 779px), (pointer: coarse)').matches;
-    }
-
     function th_openNativeDatePicker(input){
         if (!input) return;
+        try { input.removeAttribute('disabled'); } catch(e) {}
+        try { input.focus({ preventScroll: true }); } catch(e) { try { input.focus(); } catch(_) {} }
         try {
-            input.focus({ preventScroll: true });
             if (typeof input.showPicker === 'function') {
                 input.showPicker();
                 return;
@@ -3246,61 +3245,101 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
         try { input.click(); } catch(e) {}
     }
 
+    function th_syncDateDisplay(input){
+        if (!input) return;
+        const field = input.closest('.th-date-field');
+        const display = field?.querySelector('.th-date-display');
+        const text = display?.querySelector('.th-date-display-text');
+        if (text) text.textContent = th_formatDateForDisplay(input.value);
+        if (display) display.classList.toggle('has-value', !!input.value);
+    }
+
     function th_enhanceOneDateInput(input){
-        if (!input || input.dataset.thDateEnhanced === 'true') return;
-        if (!input.id) return;
+        if (!input || !input.id) return;
 
-        const parent = input.parentElement;
-        if (!parent) return;
+        // Keep launch/booking rules intact.
+        if ((input.id === 'bk_date' || input.id === 'grp_date') && !input.min) {
+            input.min = todayStr;
+        }
+        if ((input.id === 'prof_dob' || input.id === 'acct_dob') && !input.max) {
+            input.max = todayStr;
+        }
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'th-date-field';
-        wrapper.dataset.forInput = input.id;
+        let field = input.closest('.th-date-field');
+        if (!field) {
+            const parent = input.parentElement;
+            if (!parent) return;
+            field = document.createElement('div');
+            field.className = 'th-date-field';
+            field.dataset.forInput = input.id;
+            parent.insertBefore(field, input);
+            field.appendChild(input);
+        }
 
-        parent.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
-
-        const display = document.createElement('button');
-        display.type = 'button';
-        display.className = 'th-date-display';
-        display.setAttribute('aria-label', 'Open calendar');
-        display.innerHTML = `
-            <span class="th-date-display-text">${th_formatDateForDisplay(input.value)}</span>
-            <span class="th-date-display-icon" aria-hidden="true">📅</span>
-        `;
-        wrapper.appendChild(display);
+        let display = field.querySelector('.th-date-display');
+        if (!display) {
+            display = document.createElement('button');
+            display.type = 'button';
+            display.className = 'th-date-display';
+            display.setAttribute('aria-label', 'Open calendar');
+            display.innerHTML = '<span class="th-date-display-text">Select date</span><span class="th-date-display-icon" aria-hidden="true">📅</span>';
+            field.appendChild(display);
+        }
 
         input.classList.add('th-date-native');
+        input.classList.add('th-mobile-date-input');
         input.dataset.thDateEnhanced = 'true';
 
-        const sync = function(){
-            const text = display.querySelector('.th-date-display-text');
-            if (text) text.textContent = th_formatDateForDisplay(input.value);
-            display.classList.toggle('has-value', !!input.value);
-        };
+        if (!input.dataset.thDateEventsBound) {
+            const sync = function(){ th_syncDateDisplay(input); };
+            input.addEventListener('change', sync);
+            input.addEventListener('input', sync);
+            display.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                th_openNativeDatePicker(input);
+            });
+            field.addEventListener('click', function(e){
+                if (e.target === input) return;
+                th_openNativeDatePicker(input);
+            });
+            input.dataset.thDateEventsBound = 'true';
+        }
 
-        display.addEventListener('click', function(e){
-            e.preventDefault();
-            th_openNativeDatePicker(input);
-        });
-
-        input.addEventListener('change', sync);
-        input.addEventListener('input', sync);
-        sync();
+        th_syncDateDisplay(input);
     }
 
     window.thurayaEnhanceMobileDateFields = function(){
-        if (!th_isMobileDateEnhancementNeeded()) return;
-        document.querySelectorAll('input[type="date"]').forEach(th_enhanceOneDateInput);
+        DATE_INPUT_IDS.forEach(id => th_enhanceOneDateInput(document.getElementById(id)));
     };
 
+    // Ensure fields are enhanced after every screen transition, login/profile route,
+    // group-booking route and dynamic app paint.
+    const previousShowScreenForDate = window.showScreen;
+    if (typeof previousShowScreenForDate === 'function' && !window.__thurayaDateShowScreenWrapped) {
+        window.showScreen = function(id){
+            const result = previousShowScreenForDate.apply(this, arguments);
+            setTimeout(window.thurayaEnhanceMobileDateFields, 40);
+            setTimeout(window.thurayaEnhanceMobileDateFields, 240);
+            return result;
+        };
+        window.__thurayaDateShowScreenWrapped = true;
+    }
+
     document.addEventListener('DOMContentLoaded', function(){
-        setTimeout(window.thurayaEnhanceMobileDateFields, 250);
-        setTimeout(window.thurayaEnhanceMobileDateFields, 900);
+        setTimeout(window.thurayaEnhanceMobileDateFields, 80);
+        setTimeout(window.thurayaEnhanceMobileDateFields, 450);
+        setTimeout(window.thurayaEnhanceMobileDateFields, 1200);
     });
 
     document.addEventListener('click', function(){
-        setTimeout(window.thurayaEnhanceMobileDateFields, 80);
+        setTimeout(window.thurayaEnhanceMobileDateFields, 60);
+    });
+
+    document.addEventListener('change', function(e){
+        if (e.target && e.target.matches && e.target.matches('input[type="date"]')) {
+            th_syncDateDisplay(e.target);
+        }
     });
 
     window.addEventListener('resize', function(){

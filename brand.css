@@ -4449,146 +4449,153 @@ button:active,
 }
 /* === END THURAYA MOBILE DATE FIELD ENHANCEMENT === */
 
+
 /* =========================================================
-   THURAYA MOBILE DATE FIELD REAL FIX — 2026-05-04
-   Scope: native date inputs only. Keeps existing IDs and onchange logic.
-   Fixes Android/mobile visibility, tap area, calendar icon and overlay stacking.
+   THURAYA MOBILE DATE FIELD — FINAL VISIBILITY + SYNC FIX
+   Scope: profile DOB, account DOB, individual booking date, group booking date.
+   Purpose: make the clean date field visible/tappable on Android and account/login flows.
    ========================================================= */
 .th-date-input-wrap{
   position:relative !important;
   width:100% !important;
   display:block !important;
-  z-index:30 !important;
-  isolation:isolate !important;
+  min-height:56px !important;
+  overflow:visible !important;
 }
 
-.th-date-input-wrap::after{
-  content:"📅" !important;
-  position:absolute !important;
-  right:15px !important;
-  top:50% !important;
-  transform:translateY(-50%) !important;
-  width:28px !important;
-  height:28px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  border-radius:999px !important;
-  background:#F4EFE8 !important;
-  color:#0a0a0a !important;
-  font-size:14px !important;
-  line-height:1 !important;
-  pointer-events:none !important;
-  z-index:3 !important;
-}
-
-input[type="date"].th-mobile-date-input,
-#prof_dob.th-mobile-date-input,
-#bk_date.th-mobile-date-input,
-#acct_dob.th-mobile-date-input,
-#grp_date.th-mobile-date-input{
-  appearance:none !important;
-  -webkit-appearance:none !important;
+.th-date-field{
+  position:relative !important;
+  width:100% !important;
+  min-height:56px !important;
   display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
+  overflow:visible !important;
+  z-index:5 !important;
+}
+
+.th-date-display{
   position:relative !important;
   z-index:2 !important;
   width:100% !important;
-  min-width:0 !important;
-  height:54px !important;
-  min-height:54px !important;
-  padding:0 56px 0 16px !important;
-  margin:0 !important;
+  min-height:56px !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 42px !important;
+  align-items:center !important;
+  gap:10px !important;
+  padding:0 8px 0 16px !important;
   border-radius:18px !important;
-  border:1px solid rgba(221,211,197,.95) !important;
+  border:1px solid rgba(221,211,197,.92) !important;
   background:#FFFDF8 !important;
-  color:#0a0a0a !important;
+  color:#0A0A0A !important;
+  -webkit-text-fill-color:#0A0A0A !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.76), 0 10px 22px rgba(35,26,16,.045) !important;
   font-family:var(--font-sans, system-ui, sans-serif) !important;
-  font-size:16px !important;
-  font-weight:750 !important;
-  line-height:54px !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.75), 0 0 0 1px rgba(255,255,255,.22) !important;
-  -webkit-text-fill-color:#0a0a0a !important;
-}
-
-input[type="date"].th-mobile-date-input:focus{
-  outline:none !important;
-  border-color:rgba(10,10,10,.48) !important;
-  box-shadow:0 0 0 3px rgba(10,10,10,.08), inset 0 1px 0 rgba(255,255,255,.75) !important;
-}
-
-input[type="date"].th-mobile-date-input::-webkit-date-and-time-value{
   text-align:left !important;
-  color:#0a0a0a !important;
-}
-
-input[type="date"].th-mobile-date-input::-webkit-datetime-edit,
-input[type="date"].th-mobile-date-input::-webkit-datetime-edit-fields-wrapper,
-input[type="date"].th-mobile-date-input::-webkit-datetime-edit-text,
-input[type="date"].th-mobile-date-input::-webkit-datetime-edit-month-field,
-input[type="date"].th-mobile-date-input::-webkit-datetime-edit-day-field,
-input[type="date"].th-mobile-date-input::-webkit-datetime-edit-year-field{
-  color:#0a0a0a !important;
-  opacity:1 !important;
-}
-
-input[type="date"].th-mobile-date-input::-webkit-calendar-picker-indicator{
-  position:absolute !important;
-  right:0 !important;
-  top:0 !important;
-  width:54px !important;
-  height:54px !important;
-  margin:0 !important;
-  padding:0 !important;
-  opacity:0 !important;
-  display:block !important;
   cursor:pointer !important;
-  z-index:4 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  -webkit-tap-highlight-color:transparent !important;
 }
 
-#screen-profile .form-card,
-#screen-datetime .form-card,
-#screen-account-profile-edit .form-card,
-#screen-group-datetime .form-card{
-  overflow:visible !important;
+.th-date-display-text{
+  display:block !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  color:rgba(10,10,10,.70) !important;
+  -webkit-text-fill-color:rgba(10,10,10,.70) !important;
+  font-size:16px !important;
+  line-height:1 !important;
+  font-weight:850 !important;
+  letter-spacing:-.01em !important;
 }
 
-#screen-profile .form-group,
-#screen-datetime .form-group,
-#screen-account-profile-edit .form-group,
-#screen-group-datetime .form-group{
-  position:relative !important;
-  z-index:20 !important;
-  overflow:visible !important;
+.th-date-display.has-value .th-date-display-text{
+  color:#0A0A0A !important;
+  -webkit-text-fill-color:#0A0A0A !important;
 }
 
-#screen-datetime #bk_slotsContainer,
-#screen-group-datetime #grp_slotsContainer{
-  position:relative !important;
-  z-index:1 !important;
+.th-date-display-icon{
+  width:38px !important;
+  height:38px !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#0A0A0A !important;
+  color:#FFFFFF !important;
+  -webkit-text-fill-color:#FFFFFF !important;
+  font-size:1rem !important;
+  line-height:1 !important;
+  box-shadow:0 10px 20px rgba(10,10,10,.16) !important;
 }
 
-#screen-datetime .step-footer,
-#screen-group-datetime .step-footer{
-  position:relative !important;
-  z-index:1 !important;
+.th-date-field .th-date-native,
+input.th-mobile-date-input.th-date-native{
+  position:absolute !important;
+  inset:0 !important;
+  z-index:3 !important;
+  width:100% !important;
+  height:56px !important;
+  min-height:56px !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:.01 !important;
+  cursor:pointer !important;
+  border:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  color:transparent !important;
+  -webkit-text-fill-color:transparent !important;
+  appearance:auto !important;
+  -webkit-appearance:auto !important;
+  pointer-events:auto !important;
 }
 
-@media(max-width:430px){
-  .th-date-input-wrap::after{
-    right:14px !important;
+.th-date-field .th-date-native::-webkit-calendar-picker-indicator{
+  opacity:1 !important;
+  cursor:pointer !important;
+  width:100% !important;
+  height:100% !important;
+}
+
+.th-date-field:focus-within .th-date-display{
+  border-color:rgba(10,10,10,.42) !important;
+  box-shadow:0 0 0 3px rgba(10,10,10,.07), inset 0 1px 0 rgba(255,255,255,.76) !important;
+}
+
+#screen-profile .th-date-field,
+#screen-account-profile-edit .th-date-field,
+#screen-datetime .th-date-field,
+#screen-group-datetime .th-date-field{
+  margin-top:6px !important;
+  margin-bottom:4px !important;
+}
+
+@media(min-width:780px) and (pointer:fine){
+  .th-date-input-wrap{
+    min-height:46px !important;
   }
-  input[type="date"].th-mobile-date-input{
-    height:56px !important;
-    min-height:56px !important;
-    line-height:56px !important;
-    font-size:16px !important;
-    padding-right:58px !important;
+  .th-date-field{
+    min-height:46px !important;
   }
-  input[type="date"].th-mobile-date-input::-webkit-calendar-picker-indicator{
-    width:56px !important;
-    height:56px !important;
+  .th-date-field .th-date-native,
+  input.th-mobile-date-input.th-date-native{
+    position:static !important;
+    opacity:1 !important;
+    z-index:auto !important;
+    height:46px !important;
+    min-height:46px !important;
+    padding:0 14px !important;
+    border:1px solid rgba(221,211,197,.92) !important;
+    background:#FFFDF8 !important;
+    color:#0A0A0A !important;
+    -webkit-text-fill-color:#0A0A0A !important;
+  }
+  .th-date-display{
+    display:none !important;
   }
 }
-/* === END THURAYA MOBILE DATE FIELD REAL FIX === */
+/* === END THURAYA MOBILE DATE FIELD FINAL VISIBILITY + SYNC FIX === */
