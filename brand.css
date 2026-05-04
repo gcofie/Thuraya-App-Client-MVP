@@ -4880,3 +4880,134 @@ body,
   }
 }
 /* === END THURAYA FINAL CONVERSION POLISH === */
+
+/* =========================================================
+   THURAYA MOBILE DATE FIELD FIX — 2026-05-04
+   Scope: Native date inputs only.
+   Purpose: fix mobile date text/icon spacing while preserving PC view.
+   Logic untouched.
+   ========================================================= */
+input[type="date"],
+#bk_date,
+#grp_date,
+#prof_dob,
+#account_dob,
+#edit_dob{
+  -webkit-appearance:none !important;
+  appearance:none !important;
+  position:relative !important;
+  width:100% !important;
+  min-height:52px !important;
+  height:52px !important;
+  padding:0 48px 0 16px !important;
+  border-radius:18px !important;
+  background:#FFFDF8 !important;
+  background-color:#FFFDF8 !important;
+  color:#0A0A0A !important;
+  -webkit-text-fill-color:#0A0A0A !important;
+  font-family:var(--font-sans, system-ui, sans-serif) !important;
+  font-size:16px !important;
+  font-weight:750 !important;
+  line-height:52px !important;
+  letter-spacing:0 !important;
+  text-align:left !important;
+  border:1px solid rgba(221,211,197,.92) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75) !important;
+  overflow:hidden !important;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+#bk_date::-webkit-datetime-edit,
+#grp_date::-webkit-datetime-edit,
+#prof_dob::-webkit-datetime-edit,
+#account_dob::-webkit-datetime-edit,
+#edit_dob::-webkit-datetime-edit{
+  display:flex !important;
+  align-items:center !important;
+  min-height:52px !important;
+  padding:0 !important;
+  color:#0A0A0A !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+#bk_date::-webkit-datetime-edit-fields-wrapper,
+#grp_date::-webkit-datetime-edit-fields-wrapper,
+#prof_dob::-webkit-datetime-edit-fields-wrapper,
+#account_dob::-webkit-datetime-edit-fields-wrapper,
+#edit_dob::-webkit-datetime-edit-fields-wrapper{
+  padding:0 !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+#bk_date::-webkit-calendar-picker-indicator,
+#grp_date::-webkit-calendar-picker-indicator,
+#prof_dob::-webkit-calendar-picker-indicator,
+#account_dob::-webkit-calendar-picker-indicator,
+#edit_dob::-webkit-calendar-picker-indicator{
+  position:absolute !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:22px !important;
+  height:22px !important;
+  margin:0 !important;
+  padding:0 !important;
+  opacity:.72 !important;
+  cursor:pointer !important;
+  filter:contrast(1.1) !important;
+}
+
+input[type="date"]::-webkit-clear-button,
+input[type="date"]::-webkit-inner-spin-button{
+  display:none !important;
+  -webkit-appearance:none !important;
+}
+
+input[type="date"]:focus,
+#bk_date:focus,
+#grp_date:focus,
+#prof_dob:focus,
+#account_dob:focus,
+#edit_dob:focus{
+  border-color:rgba(10,10,10,.46) !important;
+  box-shadow:0 0 0 3px rgba(10,10,10,.07), inset 0 1px 0 rgba(255,255,255,.75) !important;
+  outline:none !important;
+}
+
+@media(max-width:430px){
+  input[type="date"],
+  #bk_date,
+  #grp_date,
+  #prof_dob,
+  #account_dob,
+  #edit_dob{
+    min-height:54px !important;
+    height:54px !important;
+    line-height:54px !important;
+    padding-left:16px !important;
+    padding-right:50px !important;
+    font-size:16px !important;
+    border-radius:18px !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit,
+  #bk_date::-webkit-datetime-edit,
+  #grp_date::-webkit-datetime-edit,
+  #prof_dob::-webkit-datetime-edit,
+  #account_dob::-webkit-datetime-edit,
+  #edit_dob::-webkit-datetime-edit{
+    min-height:54px !important;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  #bk_date::-webkit-calendar-picker-indicator,
+  #grp_date::-webkit-calendar-picker-indicator,
+  #prof_dob::-webkit-calendar-picker-indicator,
+  #account_dob::-webkit-calendar-picker-indicator,
+  #edit_dob::-webkit-calendar-picker-indicator{
+    right:15px !important;
+    width:23px !important;
+    height:23px !important;
+  }
+}
+/* === END THURAYA MOBILE DATE FIELD FIX === */
