@@ -4640,3 +4640,69 @@ body,
   }
 }
 /* === END THURAYA SIGN OUT INLINE VISIBILITY FIX === */
+
+/* =========================================================
+   THURAYA GROUP CONFIRM CTA FIT FIX — 2026-05-04
+   Scope: Group booking confirmation screen only.
+   Purpose: return Confirm Group Booking to normal page flow so it no
+   longer floats over member cards or payment options.
+   Logic untouched.
+   ========================================================= */
+#screen-group-confirm,
+#screen-group-confirm .screen-inner{
+  padding-bottom:128px !important;
+}
+
+#screen-group-confirm .step-footer{
+  position:static !important;
+  inset:auto !important;
+  bottom:auto !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  z-index:auto !important;
+  width:100% !important;
+  margin:24px 0 34px !important;
+  padding:0 !important;
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+#screen-group-confirm #p9GroupConfirmNudge{
+  position:static !important;
+  margin:18px 0 16px !important;
+  padding:14px 16px !important;
+  border-radius:18px !important;
+  background:#FFF8EF !important;
+  color:#6A4B2F !important;
+  border:1px solid rgba(140,98,57,.14) !important;
+  box-shadow:0 10px 24px rgba(35,26,16,.055) !important;
+  opacity:1 !important;
+}
+
+#screen-group-confirm #grp_btnConfirm{
+  position:static !important;
+  width:100% !important;
+  min-height:60px !important;
+  border-radius:24px !important;
+  margin:0 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  z-index:auto !important;
+}
+
+#screen-group-confirm .confirm-note{
+  position:static !important;
+  margin:14px 0 0 !important;
+  padding:0 !important;
+  text-align:center !important;
+}
+
+#screen-group-confirm #grp_billingPanel{
+  margin-bottom:22px !important;
+}
+/* === END THURAYA GROUP CONFIRM CTA FIT FIX === */
