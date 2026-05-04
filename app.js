@@ -2500,13 +2500,25 @@ function bk_placeFloatingSignOut(activeScreen) {
     if (!btn || !screen || screen.id === 'screen-welcome' || screen.id === 'screen-doc-viewer') return;
 
     const inner = screen.querySelector('.screen-inner') || screen;
-    const backBtn = inner.querySelector('.back-btn');
+    const stepHeader = inner.querySelector('.step-header');
 
+    // Premium placement: keep Sign Out on the same row as the NEW BOOKING / STEP badge.
+    // This avoids overlap with hero titles, appointment cards, and the THURAYA header.
+    if (stepHeader) {
+        if (!stepHeader.contains(btn)) {
+            stepHeader.appendChild(btn);
+        }
+        btn.classList.add('bk-signout-inline');
+        return;
+    }
+
+    const backBtn = inner.querySelector('.back-btn');
     if (backBtn && backBtn.nextSibling !== btn) {
         backBtn.insertAdjacentElement('afterend', btn);
     } else if (!backBtn && inner.firstChild !== btn) {
         inner.insertBefore(btn, inner.firstChild);
     }
+    btn.classList.add('bk-signout-inline');
 }
 
 function bk_moveStagingBannerToBottom() {
