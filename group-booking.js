@@ -1487,7 +1487,7 @@ window.grp_startSplitPlanner = function(dateStr, split) {
 
         const ready = grp_allMembersReady();
 
-        btn.textContent = 'Choose a Time →';
+        btn.textContent = 'Pick Time →';
         btn.disabled = !ready;
         grp_stylePrimaryCTA(btn, ready);
 
