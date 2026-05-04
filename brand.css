@@ -193,40 +193,29 @@ button {
 
 
 /* =========================================================
-   THURAYA SIGN OUT CTA — INLINE WITH NEW BOOKING / STEP BADGE
-   Requires app.js placement patch above.
-   CSS only for layout and polish.
+   THURAYA SAFE SIGN OUT FIX — CSS ONLY
+   Keeps app shell intact. No JavaScript changes.
    ========================================================= */
 
-.step-header{
-  position: relative !important;
-}
+#bkFloatingSignOut.bk-floating-signout {
+  position: fixed !important;
+  z-index: 9999 !important;
 
-/* Give the small badge row room for Sign Out without affecting the hero title. */
-.step-header .step-badge{
-  max-width: calc(100% - 118px) !important;
-}
-
-/* Button is now inside .step-header, visually adjacent to NEW BOOKING / STEP badge. */
-.step-header #bkFloatingSignOut.bk-floating-signout,
-.step-header .bk-floating-signout,
-#bkFloatingSignOut.bk-signout-inline{
-  position: absolute !important;
-  top: 0 !important;
-  right: 0 !important;
-  left: auto !important;
+  /* Inside 430px app shell, safely below THURAYA header */
+  top: calc(var(--thuraya-shell-gap, 14px) + 108px) !important;
+  left: calc(50% + 94px) !important;
+  right: auto !important;
   bottom: auto !important;
   transform: none !important;
-  z-index: 20 !important;
 
   width: auto !important;
-  max-width: 104px !important;
-  min-height: 34px !important;
-  padding: 7px 13px !important;
+  max-width: 96px !important;
+  min-height: 32px !important;
+  padding: 6px 12px !important;
 
   border-radius: 999px !important;
   border: 1px solid rgba(10,10,10,.12) !important;
-  background: rgba(255,253,248,.94) !important;
+  background: rgba(255,253,248,.92) !important;
   color: #111 !important;
 
   box-shadow: 0 10px 24px rgba(35,26,16,.10) !important;
@@ -234,62 +223,46 @@ button {
   -webkit-backdrop-filter: blur(14px) !important;
 
   font-family: var(--font-sans, system-ui, sans-serif) !important;
-  font-size: .62rem !important;
+  font-size: .58rem !important;
   line-height: 1 !important;
   font-weight: 900 !important;
-  letter-spacing: .14em !important;
+  letter-spacing: .13em !important;
   text-transform: uppercase !important;
 }
 
-/* Keep hero copy safely below the badge/signout row. */
-.step-header h2{
-  margin-top: 26px !important;
+/* On content-heavy library/account pages, keep Sign Out out of the way */
+body:has(#screen-client-care-library.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-my-account.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-account-profile.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-account-profile-edit.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-payment-methods.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-wallet.active) #bkFloatingSignOut.bk-floating-signout,
+body:has(#screen-notifications.active) #bkFloatingSignOut.bk-floating-signout {
+  display: none !important;
 }
 
-/* Remove the old bottom instant summary/info bar under the shortcut menu. */
+/* Mobile shell */
+@media(max-width:430px){
+  #bkFloatingSignOut.bk-floating-signout {
+    top: 104px !important;
+    left: auto !important;
+    right: 18px !important;
+    max-width: 92px !important;
+    min-height: 30px !important;
+    padding: 6px 10px !important;
+    font-size: .54rem !important;
+  }
+}
+
+/* Keep the old instant summary/info bar hidden */
 #bk_stickyBar,
 #bk_stickyEmpty,
 #bk_stickyFull,
 .sticky-bar,
-.sticky-empty{
+.sticky-empty {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
-/* Mobile tightening */
-@media(max-width:430px){
-  .step-header #bkFloatingSignOut.bk-floating-signout,
-  .step-header .bk-floating-signout,
-  #bkFloatingSignOut.bk-signout-inline{
-    max-width: 98px !important;
-    min-height: 32px !important;
-    padding: 6px 12px !important;
-    font-size: .58rem !important;
-  }
-
-  .step-header .step-badge{
-    max-width: calc(100% - 108px) !important;
-  }
-
-  .step-header h2{
-    margin-top: 24px !important;
-  }
-}
-
-@media(max-width:360px){
-  .step-header #bkFloatingSignOut.bk-floating-signout,
-  .step-header .bk-floating-signout,
-  #bkFloatingSignOut.bk-signout-inline{
-    max-width: 90px !important;
-    padding: 6px 10px !important;
-    font-size: .52rem !important;
-    letter-spacing: .12em !important;
-  }
-
-  .step-header .step-badge{
-    max-width: calc(100% - 96px) !important;
-  }
-}
-
-/* === END THURAYA SIGN OUT CTA INLINE FIX === */
+/* === END THURAYA SAFE SIGN OUT FIX === */
