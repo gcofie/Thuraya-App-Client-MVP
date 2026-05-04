@@ -3270,3 +3270,35 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     }
 })();
 // ── END THURAYA ISSUE 02A FIX ─────────────────────────────────────────
+
+
+// ── THURAYA ISSUE 02C: DATE FIELD VISIBLE AFFORDANCE FIX ─────────────
+// UI-only: keeps native date inputs and existing onchange booking functions intact.
+(function thurayaDateFieldAffordanceFix(){
+    function sync(input){
+        if (!input) return;
+        var wrap = input.closest ? input.closest('.thuraya-date-field') : null;
+        if (!wrap) return;
+        if (input.value) wrap.classList.add('has-value');
+        else wrap.classList.remove('has-value');
+    }
+
+    function install(){
+        ['bk_date', 'grp_date'].forEach(function(id){
+            var input = document.getElementById(id);
+            if (!input || input.dataset.thurayaAffordanceFix === '1') return;
+            input.dataset.thurayaAffordanceFix = '1';
+            sync(input);
+            input.addEventListener('input', function(){ sync(input); });
+            input.addEventListener('change', function(){ sync(input); });
+            input.addEventListener('blur', function(){ sync(input); });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install);
+    } else {
+        install();
+    }
+})();
+// ── END THURAYA ISSUE 02C FIX ────────────────────────────────────────
