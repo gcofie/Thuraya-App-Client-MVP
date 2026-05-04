@@ -3230,31 +3230,33 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     if (action === 'directions') return window.bk_upcomingDirections?.();
     if (action === 'rebook') return window.bk_bookAgain?.();
 };
-
-// ── THURAYA ISSUE 02: DESKTOP DATE PICKER TAP/CLICK FIX ───────────────
+// ── THURAYA ISSUE 02A: MOBILE-SAFE DATE PICKER FIX ───────────────────
 // UI interaction layer only. No booking, auth, Firebase, or slot logic changed.
-// Ensures desktop browsers open the native date picker when the visible date field is clicked.
-(function thurayaInstallDatePickerClickFix(){
-    function openNativeDatePicker(input){
-        if (!input || input.disabled) return;
+// Desktop: nudges native date picker open on click. Mobile: preserves native touch behavior.
+(function thurayaInstallDatePickerMobileSafeFix(){
+    function isDesktopPointer(){
         try {
-            if (typeof input.showPicker === 'function') {
-                input.showPicker();
-            }
+            return window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         } catch (e) {
-            // Browser may block showPicker outside a user gesture. Native click/focus still remains.
+            return false;
+        }
+    }
+
+    function openNativeDatePicker(input){
+        if (!input || input.disabled || !isDesktopPointer()) return;
+        try {
+            if (typeof input.showPicker === 'function') input.showPicker();
+        } catch (e) {
+            // Native click/focus remains available.
         }
     }
 
     function enhanceDateInput(input){
-        if (!input || input.dataset.thurayaDatePickerFix === '1') return;
-        input.dataset.thurayaDatePickerFix = '1';
-        input.setAttribute('inputmode', 'none');
+        if (!input || input.dataset.thurayaDatePickerFix === '2') return;
+        input.dataset.thurayaDatePickerFix = '2';
         input.style.cursor = 'pointer';
         input.style.pointerEvents = 'auto';
-        input.addEventListener('pointerdown', function(){ openNativeDatePicker(input); }, { passive: true });
         input.addEventListener('click', function(){ openNativeDatePicker(input); });
-        input.addEventListener('focus', function(){ openNativeDatePicker(input); });
     }
 
     function install(){
@@ -3267,4 +3269,4 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
         install();
     }
 })();
-// ── END THURAYA ISSUE 02 FIX ───────────────────────────────────────────
+// ── END THURAYA ISSUE 02A FIX ─────────────────────────────────────────
