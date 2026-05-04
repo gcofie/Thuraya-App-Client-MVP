@@ -4350,3 +4350,50 @@ button:active,
   opacity:1 !important;
 }
 /* === END THURAYA GROUP DATE/TIME PICK BUTTON VISIBILITY HARD FIX === */
+
+/* =========================================================
+   THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX — 2026-05-04
+   Scope: Welcome / sign-in screen only.
+   Purpose: remove gradient/texture glow and force premium pure black.
+   Logic untouched.
+   ========================================================= */
+html,
+body{
+  background:#000000 !important;
+}
+
+.bg-texture{
+  background:#000000 !important;
+  background-image:none !important;
+}
+
+#app:has(#screen-welcome.active){
+  background:#000000 !important;
+}
+
+#screen-welcome,
+#screen-welcome.active{
+  background:#000000 !important;
+  background-image:none !important;
+  color:#F8F7F3 !important;
+}
+
+#screen-welcome::before,
+#screen-welcome::after{
+  content:"" !important;
+  display:none !important;
+  background:none !important;
+  background-image:none !important;
+}
+
+#screen-welcome .welcome-inner,
+#screen-welcome .logo-block,
+#screen-welcome .welcome-actions{
+  background:transparent !important;
+  background-image:none !important;
+}
+
+#screen-welcome #btnGuestSignIn{
+  background:#000000 !important;
+}
+/* === END THURAYA SIGN-IN TRUE BLACK BACKGROUND FIX === */
