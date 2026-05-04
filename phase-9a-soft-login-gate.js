@@ -313,17 +313,8 @@
   function p9AddSoftNudges() {
     p9EnsureStyles();
 
-    const welcome = document.getElementById("screen-welcome");
-    if (welcome && !document.getElementById("p9WelcomeNudge")) {
-      const nudge = document.createElement("div");
-      nudge.id = "p9WelcomeNudge";
-      nudge.className = "p9-soft-nudge";
-      nudge.style.maxWidth = "380px";
-      nudge.style.margin = "14px auto 0";
-      nudge.innerHTML = "✨ Sign in to save your details, view bookings and enjoy faster future visits. Guest booking is still available.";
-      const anchor = document.getElementById("btnGoogleSignIn")?.parentElement || welcome.querySelector(".screen-inner") || welcome;
-      anchor.insertAdjacentElement("afterend", nudge);
-    }
+    // Welcome-page sign-in nudge intentionally disabled for final THURAYA luxury welcome UI.
+    // This removes the bottom beige message without touching booking/profile logic.
 
     const confirmBtn = document.getElementById("btnConfirmBooking");
     if (confirmBtn && !document.getElementById("p9ConfirmNudge")) {

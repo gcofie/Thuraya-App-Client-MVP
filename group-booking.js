@@ -303,17 +303,32 @@ window.grp_switchDept = function(dept, btn) {
 function grp_renderServiceList() {
     const container = document.getElementById('grp_serviceList');
     if (!container) return;
+
     const member = grp_members[grp_activeMember];
     const dept = member.dept || 'Hand';
     const sel = member.selectedServices || [];
 
-    const aliases = { 'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS' };
+    /*
+      Group Booking Accordion — Option B:
+      - all sections collapsed by default
+      - multiple sections can stay open
+      - member tabs and booking logic remain unchanged
+    */
+    const aliases = {
+        'I. HAND THERAPIES': 'I. HAND THERAPY RITUALS',
+        'I. HAND THERAPIES ': 'I. HAND THERAPY RITUALS',
+        'O FOOT THERAPY RITUALS': 'FOOT THERAPY RITUALS',
+        'O ADD ONS & UPGRADES': 'ADD ONS & UPGRADES',
+        'O HAND THERAPY & ENHANCEMENT RITUALS': 'HAND THERAPY & ENHANCEMENT RITUALS'
+    };
+
     const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
     const dbData = { Hand: {}, Foot: {} };
 
     (bk_menuServices || []).forEach(s => {
-        let cat = ((s.category || 'Uncategorized').trim().replace(/\s+/g, ' '));
+        let cat = ((s.category || s.subCategory || s.mainCategory || 'Uncategorized').trim().replace(/\s+/g, ' '));
         cat = aliases[cat] || aliases[cat.toUpperCase()] || cat;
+
         if (s.department === 'Both') {
             ['Hand','Foot'].forEach(d => {
                 if (!dbData[d][cat]) dbData[d][cat] = [];
@@ -327,14 +342,49 @@ function grp_renderServiceList() {
         }
     });
 
-    Object.values(dbData).forEach(dObj => Object.values(dObj).forEach(arr => arr.sort((a,b) => (typeOrder[a.inputType] ?? 1) - (typeOrder[b.inputType] ?? 1))));
-    const numRe = /^(\d+|I{1,3}|IV|V|VI|VII|VIII|IX|X)\./i;
+    Object.values(dbData).forEach(dObj => Object.values(dObj).forEach(arr => {
+        arr.sort((a,b) =>
+            (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+            (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+            (Number(a.order) || 999) - (Number(b.order) || 999) ||
+            (a.name || '').localeCompare(b.name || '', undefined, { numeric:true, sensitivity:'base' })
+        );
+    }));
+
+    const romanMap = { I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7, VIII:8, IX:9, X:10 };
+    function sectionRank(cat) {
+        const upper = String(cat || '').trim().toUpperCase();
+        const roman = upper.match(/^(I|II|III|IV|V|VI|VII|VIII|IX|X)\./);
+        if (roman) return romanMap[roman[1]] || 50;
+        const numeric = upper.match(/^(\d+)\./);
+        if (numeric) return Number(numeric[1]);
+        if (upper.includes('HAND THERAPY')) return 10;
+        if (upper.includes('PLEIADES')) return 20;
+        if (upper.includes('NAIL ARCHITECTURE')) return 30;
+        if (upper.includes('DESIGNER')) return 40;
+        if (upper.includes('EMBELLISH')) return 50;
+        if (upper.includes('ADD')) return 80;
+        if (upper.includes('FINISH')) return 85;
+        if (upper.includes('FOOT')) return 10;
+        return 99;
+    }
+
+    function helperText(cat, items) {
+        const upper = String(cat || '').toUpperCase();
+        const count = items.length;
+        if (upper.includes('ADD') || upper.includes('UPGRADE') || upper.includes('EMBELLISH') || upper.includes('DESIGNER')) {
+            return `Enhancements · optional · ${count} option${count === 1 ? '' : 's'}`;
+        }
+        if (items.some(s => (s.inputType || 'radio') !== 'radio')) {
+            return `Choose ritual · optional add-ons · ${count} option${count === 1 ? '' : 's'}`;
+        }
+        return `Core treatments · choose one · ${count} option${count === 1 ? '' : 's'}`;
+    }
+
     const sortedCats = Object.keys(dbData[dept] || {}).sort((a,b) => {
-        const aU = a.trim().toUpperCase(), bU = b.trim().toUpperCase();
-        const aNum = numRe.test(aU), bNum = numRe.test(bU);
-        if (aNum && !bNum) return -1;
-        if (!aNum && bNum) return 1;
-        return aU.localeCompare(bU, undefined, { numeric:true, sensitivity:'base' });
+        const ar = sectionRank(a), br = sectionRank(b);
+        if (ar !== br) return ar - br;
+        return a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' });
     });
 
     if (!sortedCats.length) {
@@ -343,23 +393,73 @@ function grp_renderServiceList() {
     }
 
     let html = '';
-    sortedCats.forEach(cat => {
-        const items = dbData[dept][cat];
+    sortedCats.forEach((cat, index) => {
+        const items = dbData[dept][cat] || [];
         const singles = items.filter(s => (s.inputType || 'radio') === 'radio');
         const multis = items.filter(s => (s.inputType || 'radio') !== 'radio');
-        html += `<div class="menu-section"><div class="menu-section-heading">${cat}</div>`;
+        const sectionId = `grp_menu_section_${grp_activeMember}_${dept}_${index}`;
+        const helper = helperText(cat, items);
+
+        html += `
+            <div class="thuraya-accordion-section grp-accordion-section" data-category="${cat}">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="grp_toggleMenuSection(this)">
+                    <span class="thuraya-accordion-title-wrap">
+                        <span class="thuraya-accordion-title">${cat}</span>
+                        <span class="thuraya-accordion-meta">${helper}</span>
+                    </span>
+                    <span class="thuraya-accordion-chevron">›</span>
+                </button>
+                <div class="thuraya-accordion-body" id="${sectionId}">
+                    <div class="thuraya-accordion-inner">`;
+
         if (singles.length && multis.length) {
-            html += `<div class="menu-subgroup-label">Choose your ritual <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select one</span></div>`;
+            html += `<div class="menu-subgroup-label">Choose your ritual <span>— select one</span></div>`;
             singles.forEach(s => html += grp_buildCard(s, dept, sel));
-            html += `<div class="menu-subgroup-divider"></div><div class="menu-subgroup-label">Enhancements &amp; Add-ons <span style="color:#bbb;font-size:0.68rem;text-transform:none;letter-spacing:0;">— select any</span></div>`;
+
+            html += `<div class="menu-subgroup-divider"></div>
+                     <div class="menu-subgroup-label">Enhancements &amp; Add-ons <span>— select any</span></div>`;
             multis.forEach(s => html += grp_buildCard(s, dept, sel));
         } else {
             items.forEach(s => html += grp_buildCard(s, dept, sel));
         }
-        html += '</div>';
+
+        html += `
+                    </div>
+                </div>
+            </div>`;
     });
+
     container.innerHTML = html;
+
+    // Auto-open sections containing selected services for current member.
+    sel.forEach(selected => {
+        const input = document.getElementById('grp_cb_' + selected.id);
+        const qty = document.getElementById('grp_qty_' + selected.id);
+        const anchor = input || qty;
+        const section = anchor?.closest('.thuraya-accordion-section');
+        if (section) {
+            section.classList.add('open');
+            const head = section.querySelector('.thuraya-accordion-head');
+            if (head) head.setAttribute('aria-expanded', 'true');
+        }
+    });
 }
+
+
+// ── THURAYA GROUP SERVICE MENU ACCORDION — OPTION B ───────
+// Multiple sections can stay open. All group service sections start collapsed.
+window.grp_toggleMenuSection = function(btn) {
+    const section = btn?.closest('.thuraya-accordion-section');
+    if (!section) return;
+
+    const isOpen = section.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+    setTimeout(() => {
+        if (typeof window.grp_polishAndWireCTAs === 'function') window.grp_polishAndWireCTAs();
+    }, 80);
+};
+// ── END THURAYA GROUP SERVICE MENU ACCORDION ──────────────
 
 function grp_escapeJs(str) {
     return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
@@ -1342,3 +1442,453 @@ window.grp_startSplitPlanner = function(dateStr, split) {
     grp_renderManualSplitPlanner(dateStr || grp_todayString(), split || [grp_members.length]);
 };
 
+
+
+// ============================================================
+// THURAYA GROUP BOOKING — CTA WIRING + POLISH PATCH
+// Safe layer. Does not change Firestore booking logic.
+// Fixes: "CHOOSE A TIME" CTA not moving to date/time step.
+// ============================================================
+(function () {
+    function grp_stylePrimaryCTA(btn, active) {
+        if (!btn) return;
+        btn.className = 'btn-primary full';
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.width = '100%';
+        btn.style.minHeight = '56px';
+        btn.style.borderRadius = '22px';
+        btn.style.fontWeight = '900';
+        btn.style.letterSpacing = '.14em';
+        btn.style.textTransform = 'uppercase';
+        btn.style.transition = 'transform .18s ease, box-shadow .18s ease, background .18s ease';
+        btn.style.border = active ? '1px solid #050505' : '1px solid #CEC8BE';
+        btn.style.background = active ? 'linear-gradient(180deg,#151515 0%,#050505 100%)' : '#CEC8BE';
+        btn.style.color = active ? '#fff' : '#756F66';
+        btn.style.boxShadow = active ? '0 18px 40px rgba(10,10,10,.24)' : 'none';
+        btn.style.cursor = active ? 'pointer' : 'not-allowed';
+        btn.style.opacity = '1';
+    }
+
+    function grp_allMembersReady() {
+        try {
+            return Array.isArray(grp_members)
+                && grp_members.length > 0
+                && grp_members.every(m => Array.isArray(m.selectedServices) && m.selectedServices.length > 0);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function grp_wireChooseTimeCTA() {
+        const btn = document.getElementById('grp_toDateTimeBtn');
+        if (!btn) return;
+
+        const ready = grp_allMembersReady();
+
+        btn.textContent = 'Pick Time →';
+        btn.disabled = !ready;
+        grp_stylePrimaryCTA(btn, ready);
+
+        btn.onclick = function (e) {
+            e.preventDefault();
+
+            if (!grp_allMembersReady()) {
+                if (typeof toast === 'function') {
+                    toast('Please select services for every group member first.', 'warning');
+                }
+                return;
+            }
+
+            btn.textContent = 'Loading…';
+
+            setTimeout(function () {
+                if (typeof grp_goToDateTime === 'function') {
+                    grp_goToDateTime();
+                } else if (typeof goToStep === 'function') {
+                    goToStep('screen-group-datetime');
+                }
+            }, 120);
+        };
+    }
+
+    function grp_wireGroupTimeCTA() {
+        const btn = document.getElementById('grp_toConfirmBtn');
+        if (!btn) return;
+
+        const hasTime = !!(document.getElementById('grp_time')?.value || '');
+        btn.textContent = 'Review Group Booking →';
+        btn.disabled = !hasTime;
+        grp_stylePrimaryCTA(btn, hasTime);
+
+        btn.onclick = function (e) {
+            e.preventDefault();
+
+            if (!document.getElementById('grp_time')?.value) {
+                if (typeof toast === 'function') {
+                    toast('Please choose a time for your group first.', 'warning');
+                }
+                return;
+            }
+
+            if (typeof goToStep === 'function') {
+                goToStep('screen-group-confirm');
+            }
+        };
+    }
+
+    function grp_polishProgressText() {
+        const progressEl = document.getElementById('grp_progressText');
+        if (!progressEl) return;
+
+        try {
+            const done = grp_members.filter(m => m.selectedServices && m.selectedServices.length > 0).length;
+            const total = grp_members.length || grp_groupSize || 0;
+            progressEl.textContent = total ? `${done} of ${total} people ready` : '';
+            progressEl.style.color = '#8A7136';
+            progressEl.style.fontWeight = '800';
+            progressEl.style.letterSpacing = '.06em';
+            progressEl.style.textTransform = 'uppercase';
+            progressEl.style.fontSize = '.76rem';
+        } catch (e) {}
+    }
+
+    window.grp_polishAndWireCTAs = function () {
+        grp_wireChooseTimeCTA();
+        grp_wireGroupTimeCTA();
+        grp_polishProgressText();
+    };
+
+    // Wrap existing progress updater if present, so CTA updates after each service selection.
+    if (typeof grp_updateProgress === 'function' && !grp_updateProgress.__thurayaPatched) {
+        const originalProgress = grp_updateProgress;
+        grp_updateProgress = function () {
+            originalProgress.apply(this, arguments);
+            setTimeout(window.grp_polishAndWireCTAs, 30);
+        };
+        grp_updateProgress.__thurayaPatched = true;
+    }
+
+    // Wrap group date/time route to keep CTA state clean.
+    if (typeof window.grp_goToDateTime === 'function' && !window.grp_goToDateTime.__thurayaPatched) {
+        const originalGoToDateTime = window.grp_goToDateTime;
+        window.grp_goToDateTime = function () {
+            originalGoToDateTime.apply(this, arguments);
+            setTimeout(window.grp_polishAndWireCTAs, 80);
+        };
+        window.grp_goToDateTime.__thurayaPatched = true;
+    }
+
+    // Sync on relevant clicks/changes.
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.closest && (
+            e.target.closest('#grp_serviceList') ||
+            e.target.closest('#grp_personTabs') ||
+            e.target.closest('#grp_slots') ||
+            e.target.closest('#grp_toDateTimeBtn') ||
+            e.target.closest('#grp_toConfirmBtn')
+        )) {
+            setTimeout(window.grp_polishAndWireCTAs, 60);
+        }
+    });
+
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.closest && (
+            e.target.closest('#grp_serviceList') ||
+            e.target.closest('#grp_date') ||
+            e.target.closest('#grp_slots')
+        )) {
+            setTimeout(window.grp_polishAndWireCTAs, 80);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(window.grp_polishAndWireCTAs, 600);
+    });
+})();
+// ============================================================
+// END THURAYA GROUP BOOKING — CTA WIRING + POLISH PATCH
+// ============================================================
+
+// ============================================================
+// THURAYA GROUP MENU MATCH INDIVIDUAL — HARD OVERRIDE
+// Purpose: render Group Booking service menu with the same curated
+// Individual Booking menu layout/order while preserving group state,
+// tabs, selections, CTA wiring, Firebase logic, and booking flow.
+// ============================================================
+(function () {
+    function grp_normText(value) {
+        return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function grp_slug(value) {
+        return String(value || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+    }
+
+    function grp_escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function grp_cleanFootCategory(value) {
+        return String(value || '')
+            .trim()
+            .replace(/\s+/g, ' ')
+            .replace(/^(?:[A-Z]|\d+)\.\s*/i, '')
+            .replace(/^O\s+/i, '')
+            .trim();
+    }
+
+    function grp_footCategoryKey(s) {
+        const raw = grp_cleanFootCategory(s.subCategory || s.category || s.mainCategory || '');
+        const upper = raw.toUpperCase();
+
+        if (!upper || upper === 'SERVICES' || upper === 'SERVICE') return '';
+        if (upper.includes('FOUNDATION')) return 'Foundation Rituals';
+        if (upper.includes('URBAN')) return 'Urban Express Rituals';
+        if (upper.includes('MEDI') || upper.includes('CLEANSE')) return 'Medi-Cleanse Series';
+        if (upper.includes('FINISHING') || upper.includes('INDULGENCE')) return 'The Finishing Indulgences';
+        if (upper.includes('POLISH') || upper.includes('FINISH')) return 'Polish & Finish';
+
+        return raw;
+    }
+
+    function grp_footMeta(cat, count, items) {
+        const lower = String(cat || '').toLowerCase();
+        const isOptional = lower.includes('finish') || lower.includes('polish') || lower.includes('cleanse') || (items || []).some(s => (s.inputType || 'radio') !== 'radio');
+        const action = isOptional ? 'Choose your ritual · optional add-ons available' : 'Core treatments · choose one';
+        return `${action} · ${count} option${count === 1 ? '' : 's'}`;
+    }
+
+    function grp_collectLeafServices(node, out) {
+        out = out || [];
+        if (!node) return out;
+        if (!Array.isArray(node.children) || !node.children.length) {
+            if (node.name || node.displayName) out.push(node);
+            return out;
+        }
+        node.children.forEach(child => grp_collectLeafServices(child, out));
+        return out;
+    }
+
+    function grp_findReferenceMatch(ref, placementKey, radioGroup) {
+        const wanted = [ref.name, ref.displayName].filter(Boolean).map(grp_normText);
+        const live = (bk_menuServices || []).find(s =>
+            wanted.includes(grp_normText(s.name)) ||
+            wanted.some(w => grp_normText(s.name).includes(w) || w.includes(grp_normText(s.name)))
+        );
+
+        const livePrice = live && live.price !== undefined && live.price !== null && live.price !== '' ? Number(live.price) : undefined;
+        const liveDuration = live && live.duration !== undefined && live.duration !== null && live.duration !== '' ? Number(live.duration) : undefined;
+        const liveDesc = live?.desc || live?.description || live?.serviceDescription;
+
+        const merged = {
+            ...ref,
+            ...(live || {}),
+            name: ref.displayName || ref.name || live?.name || 'Service',
+            price: Number.isFinite(livePrice) ? livePrice : (Number(ref.price) || 0),
+            duration: Number.isFinite(liveDuration) ? liveDuration : (Number(ref.duration) || 0),
+            desc: liveDesc || ref.desc || '',
+            inputType: live?.inputType || ref.inputType || 'radio',
+            tag: live?.tag || ref.tag || '',
+            priceLabel: live?.priceLabel || ref.priceLabel || ''
+        };
+
+        merged.id = `grp_ref_${placementKey}_${live?.id || grp_slug(ref.name || ref.displayName)}`;
+        merged.department = 'Hand';
+        merged.status = live?.status || ref.status || 'Active';
+        merged.radioGroup = radioGroup || `grp_ref_${placementKey}`;
+        return merged;
+    }
+
+    function grp_handMeta(title, count) {
+        const lower = String(title || '').toLowerCase();
+        if (lower.includes('add') || lower.includes('upgrade')) return `Choose your ritual • optional add-ons available • ${count} option${count === 1 ? '' : 's'}`;
+        if (lower.includes('pleiades')) return `Enhancements • structure, design and finish • ${count} option${count === 1 ? '' : 's'}`;
+        if (lower.includes('repair')) return `Maintenance • corrective services • ${count} option${count === 1 ? '' : 's'}`;
+        return `Core treatments • choose one • ${count} option${count === 1 ? '' : 's'}`;
+    }
+
+    function grp_renderGroupHandMenu(container, member, sel) {
+        const reference = (typeof THURAYA_HAND_MENU_REFERENCE !== 'undefined' && Array.isArray(THURAYA_HAND_MENU_REFERENCE))
+            ? THURAYA_HAND_MENU_REFERENCE
+            : [];
+
+        const order = [
+            'Hand Therapies & Rituals',
+            'Luxe Add Ons & Upgrades',
+            'Pleiades Studio',
+            'Repairs'
+        ];
+
+        const nodes = reference.map(node => ({
+            ...node,
+            cleanTitle: String(node.title || '').replace(/^\s*\d+\.\s*/, '').trim()
+        }));
+
+        const byTitle = {};
+        nodes.forEach(node => { byTitle[node.cleanTitle] = node; });
+
+        function sectionHtml(node, index) {
+            const cat = node.cleanTitle || node.title || 'Services';
+            const refs = grp_collectLeafServices(node, []);
+            const radioGroup = `grp_hand_${grp_activeMember}_${grp_slug(cat)}`;
+            const services = refs
+                .map((ref, serviceIndex) => grp_findReferenceMatch(ref, `hand_${grp_activeMember}_${grp_slug(cat)}_${serviceIndex}`, radioGroup))
+                .filter(s => !s.status || s.status === 'Active');
+
+            if (!services.length) return '';
+
+            const sectionId = `grp_hand_match_section_${grp_activeMember}_${index}`;
+            return `
+                <div class="thuraya-accordion-section grp-accordion-section" data-category="${grp_escapeHtml(cat)}">
+                    <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="grp_toggleMenuSection(this)">
+                        <span class="thuraya-accordion-title-wrap">
+                            <span class="thuraya-accordion-title">${grp_escapeHtml(cat)}</span>
+                            <span class="thuraya-accordion-meta">${grp_escapeHtml(grp_handMeta(cat, services.length))}</span>
+                        </span>
+                        <span class="thuraya-accordion-chevron">›</span>
+                    </button>
+                    <div class="thuraya-accordion-body" id="${sectionId}">
+                        <div class="thuraya-accordion-inner">
+                            ${services.map(s => grp_buildCard(s, 'Hand', sel)).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        let html = '';
+        order.forEach((title, index) => {
+            const node = byTitle[title];
+            if (node) html += sectionHtml(node, index);
+        });
+
+        if (!html) {
+            html = '<p style="text-align:center;color:var(--text-muted);padding:24px 0;">No hand therapy services available.</p>';
+        }
+        container.innerHTML = html;
+    }
+
+    function grp_renderGroupFootMenu(container, member, sel) {
+        const order = [
+            'Foundation Rituals',
+            'Urban Express Rituals',
+            'Medi-Cleanse Series',
+            'The Finishing Indulgences',
+            'Polish & Finish'
+        ];
+
+        const grouped = {};
+        (bk_menuServices || []).forEach(s => {
+            const serviceDept = String(s.department || 'Hand').toLowerCase();
+            const belongsToFoot = serviceDept === 'both' || serviceDept.includes('foot');
+            if (!belongsToFoot) return;
+            if (s.status && s.status !== 'Active') return;
+
+            const cat = grp_footCategoryKey(s);
+            if (!cat) return;
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(s);
+        });
+
+        const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
+        Object.values(grouped).forEach(items => {
+            items.sort((a, b) =>
+                (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+                (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+                (Number(a.order) || 999) - (Number(b.order) || 999) ||
+                (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
+            );
+        });
+
+        function sectionHtml(cat, items, index) {
+            const sectionId = `grp_foot_match_section_${grp_activeMember}_${index}`;
+            return `
+                <div class="thuraya-accordion-section grp-accordion-section" data-category="${grp_escapeHtml(cat)}">
+                    <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="grp_toggleMenuSection(this)">
+                        <span class="thuraya-accordion-title-wrap">
+                            <span class="thuraya-accordion-title">${grp_escapeHtml(cat)}</span>
+                            <span class="thuraya-accordion-meta">${grp_escapeHtml(grp_footMeta(cat, items.length, items))}</span>
+                        </span>
+                        <span class="thuraya-accordion-chevron">›</span>
+                    </button>
+                    <div class="thuraya-accordion-body" id="${sectionId}">
+                        <div class="thuraya-accordion-inner">
+                            ${items.map(s => grp_buildCard(s, 'Foot', sel)).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        let html = '';
+        const rendered = new Set();
+        order.forEach((cat, index) => {
+            const items = grouped[cat] || [];
+            if (!items.length) return;
+            rendered.add(cat);
+            html += sectionHtml(cat, items, index);
+        });
+
+        Object.keys(grouped)
+            .filter(cat => cat && !rendered.has(cat) && !/^services?$/i.test(cat.trim()))
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+            .forEach((cat, index) => {
+                const items = grouped[cat] || [];
+                if (items.length) html += sectionHtml(cat, items, `extra_${index}`);
+            });
+
+        container.innerHTML = html || '<p style="text-align:center;color:var(--text-muted);padding:24px 0;">No foot therapy services available.</p>';
+    }
+
+    function grp_openSelectedSections(container, sel) {
+        (sel || []).forEach(selected => {
+            const input = document.getElementById('grp_cb_' + selected.id);
+            const qty = document.getElementById('grp_qty_' + selected.id);
+            const anchor = input || qty;
+            const card = anchor?.closest('.service-card');
+            const section = anchor?.closest('.thuraya-accordion-section');
+            if (card) card.classList.add('selected');
+            if (input) input.checked = true;
+            if (section) {
+                section.classList.add('open');
+                const head = section.querySelector('.thuraya-accordion-head');
+                if (head) head.setAttribute('aria-expanded', 'true');
+            }
+        });
+    }
+
+    grp_renderServiceList = function () {
+        const container = document.getElementById('grp_serviceList');
+        if (!container) return;
+
+        const member = grp_members[grp_activeMember];
+        if (!member) return;
+
+        const dept = member.dept || 'Hand';
+        const sel = member.selectedServices || [];
+        container.classList.remove('th-ref-menu');
+
+        if (dept === 'Foot') {
+            grp_renderGroupFootMenu(container, member, sel);
+        } else {
+            grp_renderGroupHandMenu(container, member, sel);
+        }
+
+        grp_openSelectedSections(container, sel);
+
+        setTimeout(() => {
+            if (typeof bk_syncAllAccordionHeights === 'function') bk_syncAllAccordionHeights(container);
+            if (typeof window.grp_polishAndWireCTAs === 'function') window.grp_polishAndWireCTAs();
+        }, 60);
+    };
+
+    console.log('✅ THURAYA group menu now uses the Individual Booking menu layout/order.');
+})();
+// ============================================================
+// END THURAYA GROUP MENU MATCH INDIVIDUAL — HARD OVERRIDE
+// ============================================================
