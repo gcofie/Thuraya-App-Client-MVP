@@ -1245,7 +1245,10 @@ function renderHandMenuFootStyle(dept) {
 }
 
 function renderMenuForDept(dept) {
-    if (dept === 'Hand') return renderHandMenuFootStyle(dept);
+    // THURAYA MENU SYNC FIX — Client App must follow the exact Staff/simulator Hand structure.
+    // This keeps the existing booking-selection logic intact, but renders the approved nested order:
+    // 1. Hand Therapies & Rituals → 2. Luxe Add Ons & Upgrades → 3. Pleiades Studio → 4. Repairs.
+    if (dept === 'Hand') return renderThurayaReferenceMenuForDept(dept);
     if (dept === 'Foot') return renderFootMenuCustom(dept);
     return renderMenuForDeptLegacy(dept);
 }
