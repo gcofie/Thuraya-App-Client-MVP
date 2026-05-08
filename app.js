@@ -359,24 +359,133 @@ function _inferSubCategory(s, cat) {
     return cat;
 }
 
+function bk_normalizeMenuDept(value) {
+    const raw = String(value || 'Hand').trim();
+    const l = raw.toLowerCase();
+    if (l.includes('both')) return 'Both';
+    if (l.includes('foot')) return 'Foot';
+    return 'Hand';
+}
+
+function bk_menuNumber(value, fallback = 0) {
+    const n = Number(String(value ?? '').replace(/[^0-9.\-]/g, ''));
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function bk_menuIsActive(data = {}) {
+    if (data.isActive === false) return false;
+    const st = String(data.status || 'active').trim().toLowerCase();
+    return !['inactive', 'disabled', 'off', 'false', 'no', '0'].includes(st);
+}
+
+function bk_normalizeV2MenuDoc(doc) {
+    const d = doc.data() || {};
+    const serviceName = d.serviceName || d.name || d.displayName || 'Service';
+    const serviceDescription = d.serviceDescription || d.description || d.desc || '';
+    const dept = bk_normalizeMenuDept(d.department || d.appliesTo || d.dept);
+    const sortOrder = bk_menuNumber(d.sortOrder ?? d.priority ?? d.order, 999);
+    const price = bk_menuNumber(d.price ?? d.priceGHC ?? d.priceValue ?? d.unitPrice ?? d.amount, 0);
+    const duration = Math.max(0, parseInt(bk_menuNumber(d.duration ?? d.durationMins ?? d.minutes, 0), 10) || 0);
+    const inputTypeRaw = String(d.inputType || d.selection || d.serviceType || '').trim().toLowerCase();
+    const inputType = inputTypeRaw.includes('counter') || inputTypeRaw.includes('quantity') || inputTypeRaw.includes('per_nail') || inputTypeRaw.includes('per nail') || inputTypeRaw.includes('unit')
+        ? 'counter'
+        : (inputTypeRaw.includes('checkbox') || inputTypeRaw.includes('multi') || inputTypeRaw.includes('add') || inputTypeRaw.includes('upgrade') ? 'checkbox' : 'radio');
+
+    return {
+        ...d,
+        id: doc.id,
+        sourceCollection: 'Menu_Settings_V2',
+        name: serviceName,
+        displayName: d.displayName || serviceName,
+        desc: serviceDescription,
+        description: serviceDescription,
+        serviceDescription,
+        department: dept,
+        appliesTo: dept,
+        mainCategory: d.ritualGroup || d.mainCategory || d.mainMenu || '',
+        category: d.category || d.subCategory || d.subMenu || d.serviceType || 'General',
+        subCategory: d.category || d.subCategory || d.subMenu || '',
+        serviceType: d.serviceType || '',
+        categoryDescription: d.categoryDescription || d.subCategoryDescription || '',
+        mainCategoryDescription: d.ritualGroupDescription || d.mainCategoryDescription || '',
+        price,
+        priceGHC: price,
+        duration,
+        inputType,
+        sortOrder,
+        order: sortOrder,
+        status: 'Active',
+        isActive: true,
+        tag: d.tag || 'None'
+    };
+}
+
+function bk_normalizeLegacyMenuDoc(doc) {
+    const d = doc.data() || {};
+    return {
+        ...d,
+        id: doc.id,
+        sourceCollection: 'Menu_Services',
+        name: d.name || d.serviceName || 'Service',
+        desc: d.desc || d.description || d.serviceDescription || '',
+        department: bk_normalizeMenuDept(d.department || d.appliesTo),
+        price: bk_menuNumber(d.price ?? d.priceGHC ?? d.priceValue, 0),
+        duration: Math.max(0, parseInt(bk_menuNumber(d.duration, 0), 10) || 0),
+        sortOrder: bk_menuNumber(d.sortOrder ?? d.priority ?? d.order, 999),
+        inputType: d.inputType || 'radio',
+        status: bk_menuIsActive(d) ? 'Active' : 'Inactive',
+        isActive: bk_menuIsActive(d)
+    };
+}
+
+function bk_renderLoadedMenu(services) {
+    services.sort((a, b) =>
+        String(a.department || '').localeCompare(String(b.department || '')) ||
+        (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+        String(a.category || '').localeCompare(String(b.category || ''), undefined, { numeric: true, sensitivity: 'base' }) ||
+        String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' })
+    );
+    bk_menuServices = services.filter(bk_menuIsActive);
+    renderMenuForDept(bk_selectedDept);
+}
+
 function loadMenu() {
-    db.collection('Menu_Services').onSnapshot(snap => {
-        const container = document.getElementById('bk_serviceMenu');
-        if (snap.empty) {
-            if (container) container.innerHTML =
-                '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
+    const container = document.getElementById('bk_serviceMenu');
+
+    const startLegacyFallback = () => {
+        db.collection('Menu_Services').onSnapshot(snap => {
+            if (snap.empty) {
+                if (container) container.innerHTML =
+                    '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
+                return;
+            }
+            const services = [];
+            snap.forEach(doc => services.push(bk_normalizeLegacyMenuDoc(doc)));
+            bk_renderLoadedMenu(services);
+        }, err => {
+            const c = document.getElementById('bk_serviceMenu');
+            if (c) c.innerHTML =
+                `<p style="color:var(--error);text-align:center;padding:20px;">Could not load menu: ${err.message}</p>`;
+        });
+    };
+
+    db.collection('Menu_Settings_V2').onSnapshot(snap => {
+        const services = [];
+        snap.forEach(doc => {
+            const data = doc.data() || {};
+            if (bk_menuIsActive(data)) services.push(bk_normalizeV2MenuDoc(doc));
+        });
+
+        if (services.length) {
+            bk_renderLoadedMenu(services);
             return;
         }
-        let services = [];
-        snap.forEach(doc => services.push({ id: doc.id, ...doc.data() }));
-        services.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
-        services = services.filter(s => !s.status || s.status === 'Active');
-        bk_menuServices = services;
-        renderMenuForDept(bk_selectedDept);
+
+        // Safe fallback for older/staging environments while production completes V2 CSV import.
+        startLegacyFallback();
     }, err => {
-        const c = document.getElementById('bk_serviceMenu');
-        if (c) c.innerHTML =
-            `<p style="color:var(--error);text-align:center;padding:20px;">Could not load menu: ${err.message}</p>`;
+        console.warn('Menu_Settings_V2 unavailable, falling back to Menu_Services:', err);
+        startLegacyFallback();
     });
 }
 
@@ -1245,12 +1354,6 @@ function renderHandMenuFootStyle(dept) {
 }
 
 function renderMenuForDept(dept) {
-    // THURAYA CLIENT GO-LIVE MENU FIX:
-    // Hand Therapy now uses the same clean accordion/card renderer as Foot Therapy.
-    // This preserves the approved Hand reference order while avoiding the old nested
-    // reference-card layout that caused overlapping title/price/CTA on mobile.
-    // Booking selection, counters, Firebase data sync, availability, and confirmation
-    // logic remain unchanged.
     if (dept === 'Hand') return renderHandMenuFootStyle(dept);
     if (dept === 'Foot') return renderFootMenuCustom(dept);
     return renderMenuForDeptLegacy(dept);
