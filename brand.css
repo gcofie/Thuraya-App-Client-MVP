@@ -5036,3 +5036,238 @@ body,
   -webkit-text-fill-color: transparent !important;
 }
 /* === END THURAYA ISSUE 02D === */
+
+
+/* =========================================================
+   THURAYA CLIENT APP — STAFF MENU SYNC / SIMULATOR STRUCTURE
+   Scope: Client service menu only. Keeps booking logic unchanged.
+   ========================================================= */
+#bk_serviceMenu.th-ref-menu{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+#bk_serviceMenu.th-ref-menu .th-ref-details{
+  background:#fff;
+  border:1px solid var(--th-line, #DED8CF);
+  border-radius:22px;
+  box-shadow:0 12px 30px rgba(10,10,10,.055);
+  overflow:hidden;
+}
+#bk_serviceMenu.th-ref-menu .th-ref-details > summary{
+  list-style:none;
+  cursor:pointer;
+  padding:18px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+#bk_serviceMenu.th-ref-menu .th-ref-details > summary::-webkit-details-marker{display:none;}
+#bk_serviceMenu.th-ref-menu .title-block strong{
+  display:block;
+  font-size:16px;
+  line-height:1.25;
+  letter-spacing:.01em;
+  color:#111;
+}
+#bk_serviceMenu.th-ref-menu .title-block span{
+  display:block;
+  margin-top:6px;
+  color:var(--th-muted, #6f6a63);
+  font-size:12.5px;
+  line-height:1.45;
+}
+#bk_serviceMenu.th-ref-menu .chev{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1px solid var(--th-line, #DED8CF);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  transition:.2s ease;
+  color:#B59E4B;
+  font-weight:900;
+}
+#bk_serviceMenu.th-ref-menu .th-ref-details[open] > summary .chev{
+  transform:rotate(45deg);
+  background:#111;
+  color:#fff;
+  border-color:#111;
+}
+#bk_serviceMenu.th-ref-menu .content{padding:0 14px 16px;}
+#bk_serviceMenu.th-ref-menu .menu-card{
+  border-top:1px solid rgba(0,0,0,.06);
+  padding:16px 4px 4px;
+}
+#bk_serviceMenu.th-ref-menu .badge{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid rgba(181,158,75,.35);
+  color:#B59E4B;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-weight:900;
+  margin-bottom:10px;
+}
+#bk_serviceMenu.th-ref-menu .submenu{
+  background:#FAF8F4;
+  border:1px solid rgba(181,158,75,.24);
+  border-radius:20px;
+  padding:16px;
+  margin:14px 0;
+}
+#bk_serviceMenu.th-ref-menu .submenu h3{
+  margin:0 0 5px;
+  font-size:15px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#111;
+  font-family:var(--th-font-sans, Inter, system-ui, sans-serif);
+}
+#bk_serviceMenu.th-ref-menu .desc{
+  margin:0 0 14px;
+  color:var(--th-muted, #6f6a63);
+  font-size:13px;
+  line-height:1.55;
+}
+#bk_serviceMenu.th-ref-menu .system{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:15px;
+  margin-top:13px;
+}
+#bk_serviceMenu.th-ref-menu .system-head{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin-bottom:12px;
+}
+#bk_serviceMenu.th-ref-menu .system-icon{
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  background:#111;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  flex:0 0 auto;
+  font-weight:900;
+}
+#bk_serviceMenu.th-ref-menu .system h4{
+  margin:0 0 4px;
+  font-size:15px;
+  color:#111;
+}
+#bk_serviceMenu.th-ref-menu .system p{
+  margin:0;
+  color:var(--th-muted, #6f6a63);
+  font-size:12.5px;
+  line-height:1.45;
+}
+#bk_serviceMenu.th-ref-menu .simple-service,
+#bk_serviceMenu.th-ref-menu .service{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:16px;
+  padding:14px;
+  margin-top:10px;
+  display:block;
+  cursor:pointer;
+  position:relative;
+  transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+#bk_serviceMenu.th-ref-menu .system .service{
+  border-width:0;
+  border-top:1px solid rgba(0,0,0,.07);
+  border-radius:0;
+  margin-top:0;
+  padding:12px 0;
+}
+#bk_serviceMenu.th-ref-menu .system .service:first-of-type{border-top:0;}
+#bk_serviceMenu.th-ref-menu .service-row{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+}
+#bk_serviceMenu.th-ref-menu .service-name{
+  font-weight:800;
+  font-size:14px;
+  line-height:1.3;
+  color:#111;
+}
+#bk_serviceMenu.th-ref-menu .price{
+  font-weight:900;
+  color:#B59E4B;
+  white-space:nowrap;
+  font-size:13px;
+  text-align:right;
+}
+#bk_serviceMenu.th-ref-menu .service-desc{
+  margin-top:5px;
+  color:var(--th-muted, #6f6a63);
+  font-size:12.5px;
+  line-height:1.45;
+}
+#bk_serviceMenu.th-ref-menu .cta{
+  margin-top:10px;
+  width:100%;
+  min-height:44px;
+  border-radius:999px;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:900;
+  font-size:11px;
+  pointer-events:none;
+}
+#bk_serviceMenu.th-ref-menu .service-card.selected,
+#bk_serviceMenu.th-ref-menu .simple-service.selected,
+#bk_serviceMenu.th-ref-menu .service.selected,
+#bk_serviceMenu.th-ref-menu .th-ref-counter-service.selected{
+  border-color:#111 !important;
+  background:#fff !important;
+  box-shadow:0 12px 26px rgba(10,10,10,.10) !important;
+  transform:translateY(-1px);
+}
+#bk_serviceMenu.th-ref-menu .th-ref-counter-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:12px;
+}
+#bk_serviceMenu.th-ref-menu .counter-btn{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:1px solid #111;
+  background:#fff;
+  color:#111;
+  font-weight:900;
+}
+#bk_serviceMenu.th-ref-menu .th-ref-counter-row input{
+  width:46px !important;
+  min-height:36px !important;
+  text-align:center;
+  border-radius:10px !important;
+}
+@media(max-width:430px){
+  #bk_serviceMenu.th-ref-menu .th-ref-details > summary{padding:16px;}
+  #bk_serviceMenu.th-ref-menu .content{padding:0 10px 14px;}
+  #bk_serviceMenu.th-ref-menu .submenu{padding:14px;}
+  #bk_serviceMenu.th-ref-menu .price{font-size:12px;}
+  #bk_serviceMenu.th-ref-menu .service-row{gap:10px;}
+}
+/* === END THURAYA CLIENT APP — STAFF MENU SYNC / SIMULATOR STRUCTURE === */
