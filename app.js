@@ -3602,3 +3602,127 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     document.addEventListener('click', function(){ setTimeout(install, 0); }, true);
 })();
 // ── END THURAYA ISSUE 02E ────────────────────────────────────────────
+
+
+// ============================================================
+// THURAYA CLIENT APP — HF19 Lunch Break Availability Alignment
+// Reads Staff App Attendance lunch state and blocks lunch intervals before
+// slots are displayed. This removes false availability while a tech is on lunch.
+// ============================================================
+(function thurayaClientHF19LunchAvailability(){
+    if (window.__thurayaClientHF19LunchAvailability) return;
+    window.__thurayaClientHF19LunchAvailability = true;
+
+    function hf19_norm(value){ return String(value || '').trim().toLowerCase(); }
+    function hf19_today(){
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    }
+    function hf19_toDate(v){
+        if (!v) return null;
+        if (v.toDate) return v.toDate();
+        if (v.seconds) return new Date(v.seconds * 1000);
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function hf19_minsFromDate(d){ return d ? (d.getHours() * 60 + d.getMinutes()) : null; }
+    function hf19_keysForAttendance(a){
+        const keys = new Set();
+        [a.email, a.staffEmail, a.userEmail, a.name, a.staffName, a.displayName].forEach(v => {
+            const k = hf19_norm(v);
+            if (k) keys.add(k);
+        });
+        (bk_techs || []).forEach(t => {
+            const tEmail = hf19_norm(t.email);
+            const tName = hf19_norm(t.name);
+            if ((tEmail && keys.has(tEmail)) || (tName && keys.has(tName))) {
+                if (tEmail) keys.add(tEmail);
+                if (tName) keys.add(tName);
+                if (t.id) keys.add(hf19_norm(t.id));
+                if (t.uid) keys.add(hf19_norm(t.uid));
+            }
+        });
+        return Array.from(keys);
+    }
+    function hf19_isLunchActive(a){
+        return a && (a.lunchActive === true || String(a.availabilityStatus || '').toLowerCase() === 'lunch' || String(a.status || '').toLowerCase() === 'on lunch');
+    }
+    function hf19_isClockedOut(a){
+        return !!(a && a.clockOut);
+    }
+    function hf19_addInterval(busyByKey, keys, start, end, source){
+        if (typeof bk_addBusyInterval === 'function') return bk_addBusyInterval(busyByKey, keys, start, end, source);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+        (keys || []).forEach(k => {
+            const key = hf19_norm(k);
+            if (!key) return;
+            if (!busyByKey[key]) busyByKey[key] = [];
+            busyByKey[key].push({ start, end, source: source || 'Attendance' });
+        });
+    }
+
+    async function hf19_addAttendanceBlocks(date, busyByKey){
+        if (!date || !busyByKey) return busyByKey;
+        const closeTime = 20 * 60;
+        const openTime = 8 * 60;
+
+        async function readByField(field){
+            try { return await db.collection('Attendance').where(field, '==', date).get(); }
+            catch(e) { return null; }
+        }
+
+        const snaps = [];
+        const s1 = await readByField('date'); if (s1) snaps.push(s1);
+        const s2 = await readByField('dateString'); if (s2) snaps.push(s2);
+
+        const seen = new Set();
+        snaps.forEach(snap => snap.forEach(doc => {
+            if (seen.has(doc.id)) return;
+            seen.add(doc.id);
+            const a = { id: doc.id, ...(doc.data() || {}) };
+            const keys = hf19_keysForAttendance(a);
+            if (!keys.length) return;
+
+            // Clock-out hides any future same-day slots after the clock-out time.
+            if (date === hf19_today() && hf19_isClockedOut(a)) {
+                const out = hf19_toDate(a.clockOut);
+                const start = hf19_minsFromDate(out);
+                if (Number.isFinite(start)) hf19_addInterval(busyByKey, keys, start, closeTime, 'Attendance Clock-Out');
+            }
+
+            // Active lunch blocks from lunch start until lunch ends. If still active,
+            // block to close of day so clients cannot book into an unavailable tech.
+            if (hf19_isLunchActive(a)) {
+                const st = hf19_toDate(a.lunchStart || a.lastLunchStart || a.updatedAt);
+                let start = hf19_minsFromDate(st);
+                if (!Number.isFinite(start)) start = openTime;
+                hf19_addInterval(busyByKey, keys, start, closeTime, 'Attendance Lunch');
+                return;
+            }
+
+            // Completed lunch history blocks only the lunch interval. This mainly protects
+            // same-day staff/client views if lunch ended moments ago and a stale slot cache exists.
+            const lunchStart = hf19_toDate(a.lunchStart || a.lastLunchStart);
+            const lunchEnd = hf19_toDate(a.lunchEnd || a.lastLunchEnd);
+            if (lunchStart && lunchEnd) {
+                hf19_addInterval(busyByKey, keys, hf19_minsFromDate(lunchStart), hf19_minsFromDate(lunchEnd), 'Attendance Lunch History');
+            }
+        }));
+
+        return busyByKey;
+    }
+
+    if (typeof window.bk_buildBusyByTechForDate === 'function' && !window.__hf19BusyBuilderWrapped) {
+        const previousBusyBuilder = window.bk_buildBusyByTechForDate;
+        window.bk_buildBusyByTechForDate = async function(date){
+            const busyByKey = await previousBusyBuilder.apply(this, arguments);
+            try { await hf19_addAttendanceBlocks(date, busyByKey); }
+            catch(e) { console.warn('HF19 Attendance lunch availability skipped:', e); }
+            return busyByKey;
+        };
+        window.__hf19BusyBuilderWrapped = true;
+    }
+})();
+// ============================================================
+// END HF19 Lunch Break Availability Alignment
+// ============================================================
