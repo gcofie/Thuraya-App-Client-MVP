@@ -3726,3 +3726,110 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
 // ============================================================
 // END HF19 Lunch Break Availability Alignment
 // ============================================================
+
+
+// ── THURAYA HF20: MOBILE BACK NAVIGATION PROTECTION — CLIENT APP ────────────
+// Prevents Android/browser Back from closing the app during booking flows.
+// First Back: uses THURAYA in-app history. On home/welcome: press again to exit.
+(function thurayaClientMobileBackGuardHF20(){
+    if (window.__thurayaClientBackGuardHF20) return;
+    window.__thurayaClientBackGuardHF20 = true;
+
+    var lastExitPress = 0;
+    var EXIT_WINDOW_MS = 2200;
+    var guardArmed = false;
+
+    var HOME_SCREENS = new Set(['screen-welcome', 'screen-booking-mode']);
+    var PROTECTED_SCREENS = new Set([
+        'screen-services','screen-technician','screen-datetime','screen-confirm',
+        'screen-group-size','screen-group-services','screen-group-datetime','screen-group-confirm',
+        'screen-mybookings','screen-my-account','screen-account-profile','screen-account-profile-edit',
+        'screen-payment-methods','screen-wallet','screen-notifications','screen-client-care-library','screen-doc-viewer'
+    ]);
+
+    function activeScreenId(){
+        var active = document.querySelector('.screen.active');
+        return active ? active.id : '';
+    }
+
+    function toastMsg(message){
+        try { if (typeof toast === 'function') { toast(message, 'info'); return; } } catch(e) {}
+        var id = 'thurayaBackGuardToastClient';
+        var el = document.getElementById(id);
+        if (!el) {
+            el = document.createElement('div');
+            el.id = id;
+            el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:999999;background:#111;color:#fff;padding:12px 16px;border-radius:999px;font:700 13px system-ui;box-shadow:0 12px 30px rgba(0,0,0,.22);max-width:90%;text-align:center;opacity:0;transition:opacity .18s ease;';
+            document.body.appendChild(el);
+        }
+        el.textContent = message;
+        el.style.opacity = '1';
+        clearTimeout(el._thTimer);
+        el._thTimer = setTimeout(function(){ el.style.opacity = '0'; }, 1900);
+    }
+
+    function arm(){
+        try {
+            if (!guardArmed) {
+                history.replaceState(Object.assign({}, history.state || {}, { thurayaRoot:true }), document.title, location.href);
+                history.pushState({ thurayaBackGuardHF20:true }, document.title, location.href);
+                guardArmed = true;
+            }
+        } catch(e) {}
+    }
+
+    function closeDocViewerIfOpen(){
+        if (activeScreenId() === 'screen-doc-viewer' && typeof bk_closeDocumentViewer === 'function') {
+            bk_closeDocumentViewer();
+            return true;
+        }
+        return false;
+    }
+
+    function goSafePrevious(){
+        if (closeDocViewerIfOpen()) return true;
+
+        var id = activeScreenId();
+        if (!id || HOME_SCREENS.has(id)) return false;
+
+        if (typeof window.goBack === 'function') {
+            try {
+                window.goBack();
+                return true;
+            } catch(e) {}
+        }
+
+        // Fallback routing when internal history is unavailable.
+        if (PROTECTED_SCREENS.has(id)) {
+            if (typeof showScreen === 'function') {
+                showScreen('screen-booking-mode');
+                return true;
+            }
+        }
+        return false;
+    }
+
+    window.addEventListener('popstate', function(evt){
+        if (!guardArmed) { arm(); return; }
+
+        if (goSafePrevious()) {
+            lastExitPress = 0;
+            arm();
+            return;
+        }
+
+        var now = Date.now();
+        if (now - lastExitPress < EXIT_WINDOW_MS) {
+            guardArmed = false;
+            history.back();
+            return;
+        }
+        lastExitPress = now;
+        toastMsg('Press back again to exit THURAYA.');
+        arm();
+    });
+
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(arm, 350); });
+    if (document.readyState !== 'loading') setTimeout(arm, 350);
+})();
+// ── END THURAYA HF20 CLIENT BACK GUARD ───────────────────────────────
