@@ -1877,6 +1877,154 @@ window.selectSpecificTech = function(email, name) {
 };
 
 // ── Date & Time Slots ─────────────────────────────────────
+// HF18: Unified occupied-slot availability for Client App.
+// The slot list now uses the same live appointment state that blocks confirmation,
+// so already-booked technician windows are hidden before the client reaches review.
+
+function bk_normAvailKey(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function bk_getTechIdentityKeys(tech) {
+    const keys = new Set();
+    if (!tech) return keys;
+    [tech.email, tech.name, tech.id, tech.uid].forEach(v => {
+        const k = bk_normAvailKey(v);
+        if (k) keys.add(k);
+    });
+    return keys;
+}
+
+function bk_keysForTechEmail(email) {
+    const tech = (bk_techs || []).find(t => bk_normAvailKey(t.email) === bk_normAvailKey(email));
+    const keys = bk_getTechIdentityKeys(tech);
+    const raw = bk_normAvailKey(email);
+    if (raw) keys.add(raw);
+    return Array.from(keys);
+}
+
+function bk_keysForAppointmentTech(a = {}) {
+    const keys = new Set();
+    [
+        a.assignedTechEmail,
+        a.techEmail,
+        a.technicianEmail,
+        a.staffEmail,
+        a.assignedTo,
+        a.assignedTechName,
+        a.techName,
+        a.technicianName,
+        a.staffName
+    ].forEach(v => {
+        const k = bk_normAvailKey(v);
+        if (k) keys.add(k);
+    });
+
+    // If the appointment only stored a display name, connect it to the live tech email.
+    (bk_techs || []).forEach(t => {
+        const tName = bk_normAvailKey(t.name);
+        const tEmail = bk_normAvailKey(t.email);
+        if ((tName && keys.has(tName)) || (tEmail && keys.has(tEmail))) {
+            bk_getTechIdentityKeys(t).forEach(k => keys.add(k));
+        }
+    });
+
+    return Array.from(keys);
+}
+
+function bk_isBlockingAvailabilityStatus(status) {
+    const s = String(status || 'Scheduled').trim().toLowerCase();
+    if (!s) return true;
+
+    // These states must not hold client-facing availability.
+    const released = new Set([
+        'cancelled', 'canceled', 'no show', 'no-show', 'noshow',
+        'closed', 'completed', 'complete', 'paid', 'checked out',
+        'checkout complete', 'ready for payment', 'void', 'deleted', 'archived'
+    ]);
+    if (released.has(s)) return false;
+
+    // Everything operationally active still blocks the slot.
+    return true;
+}
+
+function bk_getAppointmentStartMins(a = {}) {
+    const raw = a.timeString || a.startTime || a.start || a.appointmentTime || '';
+    if (typeof raw === 'number') return raw;
+    return timeToMins(String(raw || '').slice(0, 5));
+}
+
+function bk_getAppointmentDurationMins(a = {}) {
+    const candidates = [a.bookedDuration, a.duration, a.durationMins, a.totalDuration, a.serviceDuration];
+    for (const v of candidates) {
+        const n = parseInt(v, 10);
+        if (Number.isFinite(n) && n > 0) return n;
+    }
+    return 30;
+}
+
+function bk_addBusyInterval(busyByKey, keys, start, end, source) {
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+    (keys || []).forEach(k => {
+        const key = bk_normAvailKey(k);
+        if (!key) return;
+        if (!busyByKey[key]) busyByKey[key] = [];
+        busyByKey[key].push({ start, end, source: source || 'appointment' });
+    });
+}
+
+function bk_intervalFreeForTech(busyByKey, techEmail, start, end) {
+    const keys = bk_keysForTechEmail(techEmail);
+    const intervals = [];
+    keys.forEach(k => (busyByKey[bk_normAvailKey(k)] || []).forEach(i => intervals.push(i)));
+    return intervals.every(b => end <= b.start || start >= b.end);
+}
+
+async function bk_buildBusyByTechForDate(date) {
+    const busyByKey = {};
+    if (!date) return busyByKey;
+
+    // Appointments are the source of truth for future client-facing bookings.
+    const snap = await db.collection('Appointments')
+        .where('dateString', '==', date)
+        .get();
+
+    snap.forEach(doc => {
+        const a = { id: doc.id, ...(doc.data() || {}) };
+        if (!bk_isBlockingAvailabilityStatus(a.status)) return;
+
+        const keys = bk_keysForAppointmentTech(a);
+        if (!keys.length) return;
+
+        const start = bk_getAppointmentStartMins(a);
+        const duration = bk_getAppointmentDurationMins(a);
+        bk_addBusyInterval(busyByKey, keys, start, start + duration, 'Appointments');
+    });
+
+    // Active_Jobs can hold live occupied time after check-in. If client rules block access,
+    // this safely falls back to Appointments only.
+    try {
+        const activeSnap = await db.collection('Active_Jobs')
+            .where('dateString', '==', date)
+            .get();
+
+        activeSnap.forEach(doc => {
+            const j = { id: doc.id, ...(doc.data() || {}) };
+            if (!bk_isBlockingAvailabilityStatus(j.status || j.jobStatus || 'In Progress')) return;
+
+            const keys = bk_keysForAppointmentTech(j);
+            if (!keys.length) return;
+
+            const start = bk_getAppointmentStartMins(j);
+            const duration = bk_getAppointmentDurationMins(j);
+            bk_addBusyInterval(busyByKey, keys, start, start + duration, 'Active_Jobs');
+        });
+    } catch (e) {
+        console.warn('Active_Jobs availability read skipped:', e);
+    }
+
+    return busyByKey;
+}
 
 window.bk_generateSlots = async function() {
     const date    = document.getElementById('bk_date').value;
@@ -1885,17 +2033,17 @@ window.bk_generateSlots = async function() {
     const container = document.getElementById('bk_slotsContainer');
     const nextBtn = document.getElementById('btnToConfirm');
 
-    timeEl.value = '';
-    nextBtn.disabled = true;
+    if (timeEl) timeEl.value = '';
+    if (nextBtn) nextBtn.disabled = true;
 
-    if (!date) { container.style.display = 'none'; return; }
+    if (!date) { if (container) container.style.display = 'none'; return; }
     if (date < todayStr) {
         container.style.display = 'block';
         slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;">Cannot book in the past.</p>';
         return;
     }
 
-    const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
+    const totalMins = bk_selectedServices.reduce((s, x) => s + (Number(x.dur || 0) * (x.qty || 1)), 0);
     if (totalMins === 0) {
         container.style.display = 'none';
         toast('Select at least one service first.', 'warning');
@@ -1906,7 +2054,7 @@ window.bk_generateSlots = async function() {
     const specificEmail = document.getElementById('bk_techEmail').value;
     const eligibleTechs = bk_getEligibleTechsForSelectedServices();
     const techsToCheck = mode === 'specific' && specificEmail
-        ? (eligibleTechs.some(t => t.email === specificEmail) ? [specificEmail] : [])
+        ? (eligibleTechs.some(t => bk_normAvailKey(t.email) === bk_normAvailKey(specificEmail)) ? [specificEmail] : [])
         : eligibleTechs.map(t => t.email);
 
     if (!techsToCheck.length) {
@@ -1916,23 +2064,10 @@ window.bk_generateSlots = async function() {
     }
 
     container.style.display = 'block';
-    slotsEl.innerHTML = '<div class="loading-pulse">Checking availability...</div>';
+    slotsEl.innerHTML = '<div class="loading-pulse">Checking live availability...</div>';
 
     try {
-        const snap = await db.collection('Appointments')
-            .where('dateString', '==', date)
-            .where('status', 'in', ['Scheduled', 'Arrived'])
-            .get();
-
-        const busyByTech = {};
-        snap.forEach(doc => {
-            const a = doc.data();
-            if (!busyByTech[a.assignedTechEmail]) busyByTech[a.assignedTechEmail] = [];
-            busyByTech[a.assignedTechEmail].push({
-                start: timeToMins(a.timeString),
-                end:   timeToMins(a.timeString) + parseInt(a.bookedDuration || 0)
-            });
-        });
+        const busyByKey = await bk_buildBusyByTechForDate(date);
 
         const openTime = 8 * 60, closeTime = 20 * 60, interval = 30;
         const now = new Date();
@@ -1944,9 +2079,7 @@ window.bk_generateSlots = async function() {
             if (isToday && t <= curMins) continue;
             const slotEnd = t + totalMins;
             techsToCheck.forEach(email => {
-                const busy = busyByTech[email] || [];
-                const free = busy.every(b => slotEnd <= b.start || t >= b.end);
-                if (free) {
+                if (bk_intervalFreeForTech(busyByKey, email, t, slotEnd)) {
                     if (!slotMap[t]) slotMap[t] = [];
                     slotMap[t].push(email);
                 }
@@ -1977,8 +2110,10 @@ window.bk_generateSlots = async function() {
 
 function timeToMins(str) {
     if (!str) return 0;
-    const [h, m] = str.split(':').map(Number);
-    return h * 60 + (m || 0);
+    const parts = String(str).split(':').map(Number);
+    const h = Number(parts[0]) || 0;
+    const m = Number(parts[1]) || 0;
+    return h * 60 + m;
 }
 
 window.bk_selectSlot = function(time, btn) {
@@ -1992,7 +2127,7 @@ window.bk_selectSlot = function(time, btn) {
             const available = JSON.parse(btn.getAttribute('data-techs') || '[]');
             if (available.length) {
                 const assignedEmail = available[0];
-                const tech = bk_techs.find(t => t.email === assignedEmail);
+                const tech = bk_techs.find(t => bk_normAvailKey(t.email) === bk_normAvailKey(assignedEmail));
                 document.getElementById('bk_techEmail').value = assignedEmail;
                 document.getElementById('bk_techName').value  = tech?.name || assignedEmail;
             }
@@ -2222,39 +2357,31 @@ async function bk_hasSlotConflict(techEmail, date, time) {
     // If technician is not assigned, do not block; staff can assign later.
     if (!techEmail || techEmail === 'any' || techEmail === 'ANY') return false;
 
-    const activeStatuses = ['Scheduled', 'Confirmed', 'Arrived', 'In Progress'];
+    const totalMins = bk_selectedServices.reduce((s, x) => s + (Number(x.dur || 0) * (x.qty || 1)), 0) || 30;
+    const start = timeToMins(time);
+    const end = start + totalMins;
 
     try {
-        const snap = await db.collection('Appointments')
-            .where('assignedTechEmail', '==', techEmail)
-            .where('dateString', '==', date)
-            .where('timeString', '==', time)
-            .where('status', 'in', activeStatuses)
-            .limit(1)
-            .get();
-
-        return !snap.empty;
+        const busyByKey = await bk_buildBusyByTechForDate(date);
+        return !bk_intervalFreeForTech(busyByKey, techEmail, start, end);
     } catch (e) {
-        console.warn('Phase 9C conflict check failed:', e);
+        console.warn('Phase 9C interval conflict check failed:', e);
 
-        // Firestore may require a composite index. If the indexed query fails,
-        // fall back to a safer date/time check and filter locally.
+        // Conservative fallback: exact-time conflict only, with all blocking statuses filtered locally.
         try {
             const fallback = await db.collection('Appointments')
                 .where('dateString', '==', date)
                 .where('timeString', '==', time)
-                .limit(20)
+                .limit(50)
                 .get();
 
             let conflict = false;
             fallback.forEach(doc => {
-                const a = doc.data() || {};
-                if (
-                    String(a.assignedTechEmail || '').toLowerCase() === String(techEmail || '').toLowerCase() &&
-                    activeStatuses.includes(a.status || '')
-                ) {
-                    conflict = true;
-                }
+                const a = { id: doc.id, ...(doc.data() || {}) };
+                if (!bk_isBlockingAvailabilityStatus(a.status)) return;
+                const apptKeys = bk_keysForAppointmentTech(a).map(bk_normAvailKey);
+                const techKeys = bk_keysForTechEmail(techEmail).map(bk_normAvailKey);
+                if (techKeys.some(k => apptKeys.includes(k))) conflict = true;
             });
 
             return conflict;
