@@ -1877,6 +1877,154 @@ window.selectSpecificTech = function(email, name) {
 };
 
 // ── Date & Time Slots ─────────────────────────────────────
+// HF18: Unified occupied-slot availability for Client App.
+// The slot list now uses the same live appointment state that blocks confirmation,
+// so already-booked technician windows are hidden before the client reaches review.
+
+function bk_normAvailKey(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function bk_getTechIdentityKeys(tech) {
+    const keys = new Set();
+    if (!tech) return keys;
+    [tech.email, tech.name, tech.id, tech.uid].forEach(v => {
+        const k = bk_normAvailKey(v);
+        if (k) keys.add(k);
+    });
+    return keys;
+}
+
+function bk_keysForTechEmail(email) {
+    const tech = (bk_techs || []).find(t => bk_normAvailKey(t.email) === bk_normAvailKey(email));
+    const keys = bk_getTechIdentityKeys(tech);
+    const raw = bk_normAvailKey(email);
+    if (raw) keys.add(raw);
+    return Array.from(keys);
+}
+
+function bk_keysForAppointmentTech(a = {}) {
+    const keys = new Set();
+    [
+        a.assignedTechEmail,
+        a.techEmail,
+        a.technicianEmail,
+        a.staffEmail,
+        a.assignedTo,
+        a.assignedTechName,
+        a.techName,
+        a.technicianName,
+        a.staffName
+    ].forEach(v => {
+        const k = bk_normAvailKey(v);
+        if (k) keys.add(k);
+    });
+
+    // If the appointment only stored a display name, connect it to the live tech email.
+    (bk_techs || []).forEach(t => {
+        const tName = bk_normAvailKey(t.name);
+        const tEmail = bk_normAvailKey(t.email);
+        if ((tName && keys.has(tName)) || (tEmail && keys.has(tEmail))) {
+            bk_getTechIdentityKeys(t).forEach(k => keys.add(k));
+        }
+    });
+
+    return Array.from(keys);
+}
+
+function bk_isBlockingAvailabilityStatus(status) {
+    const s = String(status || 'Scheduled').trim().toLowerCase();
+    if (!s) return true;
+
+    // These states must not hold client-facing availability.
+    const released = new Set([
+        'cancelled', 'canceled', 'no show', 'no-show', 'noshow',
+        'closed', 'completed', 'complete', 'paid', 'checked out',
+        'checkout complete', 'ready for payment', 'void', 'deleted', 'archived'
+    ]);
+    if (released.has(s)) return false;
+
+    // Everything operationally active still blocks the slot.
+    return true;
+}
+
+function bk_getAppointmentStartMins(a = {}) {
+    const raw = a.timeString || a.startTime || a.start || a.appointmentTime || '';
+    if (typeof raw === 'number') return raw;
+    return timeToMins(String(raw || '').slice(0, 5));
+}
+
+function bk_getAppointmentDurationMins(a = {}) {
+    const candidates = [a.bookedDuration, a.duration, a.durationMins, a.totalDuration, a.serviceDuration];
+    for (const v of candidates) {
+        const n = parseInt(v, 10);
+        if (Number.isFinite(n) && n > 0) return n;
+    }
+    return 30;
+}
+
+function bk_addBusyInterval(busyByKey, keys, start, end, source) {
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+    (keys || []).forEach(k => {
+        const key = bk_normAvailKey(k);
+        if (!key) return;
+        if (!busyByKey[key]) busyByKey[key] = [];
+        busyByKey[key].push({ start, end, source: source || 'appointment' });
+    });
+}
+
+function bk_intervalFreeForTech(busyByKey, techEmail, start, end) {
+    const keys = bk_keysForTechEmail(techEmail);
+    const intervals = [];
+    keys.forEach(k => (busyByKey[bk_normAvailKey(k)] || []).forEach(i => intervals.push(i)));
+    return intervals.every(b => end <= b.start || start >= b.end);
+}
+
+async function bk_buildBusyByTechForDate(date) {
+    const busyByKey = {};
+    if (!date) return busyByKey;
+
+    // Appointments are the source of truth for future client-facing bookings.
+    const snap = await db.collection('Appointments')
+        .where('dateString', '==', date)
+        .get();
+
+    snap.forEach(doc => {
+        const a = { id: doc.id, ...(doc.data() || {}) };
+        if (!bk_isBlockingAvailabilityStatus(a.status)) return;
+
+        const keys = bk_keysForAppointmentTech(a);
+        if (!keys.length) return;
+
+        const start = bk_getAppointmentStartMins(a);
+        const duration = bk_getAppointmentDurationMins(a);
+        bk_addBusyInterval(busyByKey, keys, start, start + duration, 'Appointments');
+    });
+
+    // Active_Jobs can hold live occupied time after check-in. If client rules block access,
+    // this safely falls back to Appointments only.
+    try {
+        const activeSnap = await db.collection('Active_Jobs')
+            .where('dateString', '==', date)
+            .get();
+
+        activeSnap.forEach(doc => {
+            const j = { id: doc.id, ...(doc.data() || {}) };
+            if (!bk_isBlockingAvailabilityStatus(j.status || j.jobStatus || 'In Progress')) return;
+
+            const keys = bk_keysForAppointmentTech(j);
+            if (!keys.length) return;
+
+            const start = bk_getAppointmentStartMins(j);
+            const duration = bk_getAppointmentDurationMins(j);
+            bk_addBusyInterval(busyByKey, keys, start, start + duration, 'Active_Jobs');
+        });
+    } catch (e) {
+        console.warn('Active_Jobs availability read skipped:', e);
+    }
+
+    return busyByKey;
+}
 
 window.bk_generateSlots = async function() {
     const date    = document.getElementById('bk_date').value;
@@ -1885,17 +2033,17 @@ window.bk_generateSlots = async function() {
     const container = document.getElementById('bk_slotsContainer');
     const nextBtn = document.getElementById('btnToConfirm');
 
-    timeEl.value = '';
-    nextBtn.disabled = true;
+    if (timeEl) timeEl.value = '';
+    if (nextBtn) nextBtn.disabled = true;
 
-    if (!date) { container.style.display = 'none'; return; }
+    if (!date) { if (container) container.style.display = 'none'; return; }
     if (date < todayStr) {
         container.style.display = 'block';
         slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;">Cannot book in the past.</p>';
         return;
     }
 
-    const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
+    const totalMins = bk_selectedServices.reduce((s, x) => s + (Number(x.dur || 0) * (x.qty || 1)), 0);
     if (totalMins === 0) {
         container.style.display = 'none';
         toast('Select at least one service first.', 'warning');
@@ -1906,7 +2054,7 @@ window.bk_generateSlots = async function() {
     const specificEmail = document.getElementById('bk_techEmail').value;
     const eligibleTechs = bk_getEligibleTechsForSelectedServices();
     const techsToCheck = mode === 'specific' && specificEmail
-        ? (eligibleTechs.some(t => t.email === specificEmail) ? [specificEmail] : [])
+        ? (eligibleTechs.some(t => bk_normAvailKey(t.email) === bk_normAvailKey(specificEmail)) ? [specificEmail] : [])
         : eligibleTechs.map(t => t.email);
 
     if (!techsToCheck.length) {
@@ -1916,23 +2064,10 @@ window.bk_generateSlots = async function() {
     }
 
     container.style.display = 'block';
-    slotsEl.innerHTML = '<div class="loading-pulse">Checking availability...</div>';
+    slotsEl.innerHTML = '<div class="loading-pulse">Checking live availability...</div>';
 
     try {
-        const snap = await db.collection('Appointments')
-            .where('dateString', '==', date)
-            .where('status', 'in', ['Scheduled', 'Arrived'])
-            .get();
-
-        const busyByTech = {};
-        snap.forEach(doc => {
-            const a = doc.data();
-            if (!busyByTech[a.assignedTechEmail]) busyByTech[a.assignedTechEmail] = [];
-            busyByTech[a.assignedTechEmail].push({
-                start: timeToMins(a.timeString),
-                end:   timeToMins(a.timeString) + parseInt(a.bookedDuration || 0)
-            });
-        });
+        const busyByKey = await bk_buildBusyByTechForDate(date);
 
         const openTime = 8 * 60, closeTime = 20 * 60, interval = 30;
         const now = new Date();
@@ -1944,9 +2079,7 @@ window.bk_generateSlots = async function() {
             if (isToday && t <= curMins) continue;
             const slotEnd = t + totalMins;
             techsToCheck.forEach(email => {
-                const busy = busyByTech[email] || [];
-                const free = busy.every(b => slotEnd <= b.start || t >= b.end);
-                if (free) {
+                if (bk_intervalFreeForTech(busyByKey, email, t, slotEnd)) {
                     if (!slotMap[t]) slotMap[t] = [];
                     slotMap[t].push(email);
                 }
@@ -1977,8 +2110,10 @@ window.bk_generateSlots = async function() {
 
 function timeToMins(str) {
     if (!str) return 0;
-    const [h, m] = str.split(':').map(Number);
-    return h * 60 + (m || 0);
+    const parts = String(str).split(':').map(Number);
+    const h = Number(parts[0]) || 0;
+    const m = Number(parts[1]) || 0;
+    return h * 60 + m;
 }
 
 window.bk_selectSlot = function(time, btn) {
@@ -1992,7 +2127,7 @@ window.bk_selectSlot = function(time, btn) {
             const available = JSON.parse(btn.getAttribute('data-techs') || '[]');
             if (available.length) {
                 const assignedEmail = available[0];
-                const tech = bk_techs.find(t => t.email === assignedEmail);
+                const tech = bk_techs.find(t => bk_normAvailKey(t.email) === bk_normAvailKey(assignedEmail));
                 document.getElementById('bk_techEmail').value = assignedEmail;
                 document.getElementById('bk_techName').value  = tech?.name || assignedEmail;
             }
@@ -2222,39 +2357,31 @@ async function bk_hasSlotConflict(techEmail, date, time) {
     // If technician is not assigned, do not block; staff can assign later.
     if (!techEmail || techEmail === 'any' || techEmail === 'ANY') return false;
 
-    const activeStatuses = ['Scheduled', 'Confirmed', 'Arrived', 'In Progress'];
+    const totalMins = bk_selectedServices.reduce((s, x) => s + (Number(x.dur || 0) * (x.qty || 1)), 0) || 30;
+    const start = timeToMins(time);
+    const end = start + totalMins;
 
     try {
-        const snap = await db.collection('Appointments')
-            .where('assignedTechEmail', '==', techEmail)
-            .where('dateString', '==', date)
-            .where('timeString', '==', time)
-            .where('status', 'in', activeStatuses)
-            .limit(1)
-            .get();
-
-        return !snap.empty;
+        const busyByKey = await bk_buildBusyByTechForDate(date);
+        return !bk_intervalFreeForTech(busyByKey, techEmail, start, end);
     } catch (e) {
-        console.warn('Phase 9C conflict check failed:', e);
+        console.warn('Phase 9C interval conflict check failed:', e);
 
-        // Firestore may require a composite index. If the indexed query fails,
-        // fall back to a safer date/time check and filter locally.
+        // Conservative fallback: exact-time conflict only, with all blocking statuses filtered locally.
         try {
             const fallback = await db.collection('Appointments')
                 .where('dateString', '==', date)
                 .where('timeString', '==', time)
-                .limit(20)
+                .limit(50)
                 .get();
 
             let conflict = false;
             fallback.forEach(doc => {
-                const a = doc.data() || {};
-                if (
-                    String(a.assignedTechEmail || '').toLowerCase() === String(techEmail || '').toLowerCase() &&
-                    activeStatuses.includes(a.status || '')
-                ) {
-                    conflict = true;
-                }
+                const a = { id: doc.id, ...(doc.data() || {}) };
+                if (!bk_isBlockingAvailabilityStatus(a.status)) return;
+                const apptKeys = bk_keysForAppointmentTech(a).map(bk_normAvailKey);
+                const techKeys = bk_keysForTechEmail(techEmail).map(bk_normAvailKey);
+                if (techKeys.some(k => apptKeys.includes(k))) conflict = true;
             });
 
             return conflict;
@@ -3475,3 +3602,408 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     document.addEventListener('click', function(){ setTimeout(install, 0); }, true);
 })();
 // ── END THURAYA ISSUE 02E ────────────────────────────────────────────
+
+
+// ============================================================
+// THURAYA CLIENT APP — HF19 Lunch Break Availability Alignment
+// Reads Staff App Attendance lunch state and blocks lunch intervals before
+// slots are displayed. This removes false availability while a tech is on lunch.
+// ============================================================
+(function thurayaClientHF19LunchAvailability(){
+    if (window.__thurayaClientHF19LunchAvailability) return;
+    window.__thurayaClientHF19LunchAvailability = true;
+
+    function hf19_norm(value){ return String(value || '').trim().toLowerCase(); }
+    function hf19_today(){
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    }
+    function hf19_toDate(v){
+        if (!v) return null;
+        if (v.toDate) return v.toDate();
+        if (v.seconds) return new Date(v.seconds * 1000);
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function hf19_minsFromDate(d){ return d ? (d.getHours() * 60 + d.getMinutes()) : null; }
+    function hf19_keysForAttendance(a){
+        const keys = new Set();
+        [a.email, a.staffEmail, a.userEmail, a.name, a.staffName, a.displayName].forEach(v => {
+            const k = hf19_norm(v);
+            if (k) keys.add(k);
+        });
+        (bk_techs || []).forEach(t => {
+            const tEmail = hf19_norm(t.email);
+            const tName = hf19_norm(t.name);
+            if ((tEmail && keys.has(tEmail)) || (tName && keys.has(tName))) {
+                if (tEmail) keys.add(tEmail);
+                if (tName) keys.add(tName);
+                if (t.id) keys.add(hf19_norm(t.id));
+                if (t.uid) keys.add(hf19_norm(t.uid));
+            }
+        });
+        return Array.from(keys);
+    }
+    function hf19_isLunchActive(a){
+        return a && (a.lunchActive === true || String(a.availabilityStatus || '').toLowerCase() === 'lunch' || String(a.status || '').toLowerCase() === 'on lunch');
+    }
+    function hf19_isClockedOut(a){
+        return !!(a && a.clockOut);
+    }
+    function hf19_addInterval(busyByKey, keys, start, end, source){
+        if (typeof bk_addBusyInterval === 'function') return bk_addBusyInterval(busyByKey, keys, start, end, source);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+        (keys || []).forEach(k => {
+            const key = hf19_norm(k);
+            if (!key) return;
+            if (!busyByKey[key]) busyByKey[key] = [];
+            busyByKey[key].push({ start, end, source: source || 'Attendance' });
+        });
+    }
+
+    async function hf19_addAttendanceBlocks(date, busyByKey){
+        if (!date || !busyByKey) return busyByKey;
+        const closeTime = 20 * 60;
+        const openTime = 8 * 60;
+
+        async function readByField(field){
+            try { return await db.collection('Attendance').where(field, '==', date).get(); }
+            catch(e) { return null; }
+        }
+
+        const snaps = [];
+        const s1 = await readByField('date'); if (s1) snaps.push(s1);
+        const s2 = await readByField('dateString'); if (s2) snaps.push(s2);
+
+        const seen = new Set();
+        snaps.forEach(snap => snap.forEach(doc => {
+            if (seen.has(doc.id)) return;
+            seen.add(doc.id);
+            const a = { id: doc.id, ...(doc.data() || {}) };
+            const keys = hf19_keysForAttendance(a);
+            if (!keys.length) return;
+
+            // Clock-out hides any future same-day slots after the clock-out time.
+            if (date === hf19_today() && hf19_isClockedOut(a)) {
+                const out = hf19_toDate(a.clockOut);
+                const start = hf19_minsFromDate(out);
+                if (Number.isFinite(start)) hf19_addInterval(busyByKey, keys, start, closeTime, 'Attendance Clock-Out');
+            }
+
+            // Active lunch blocks from lunch start until lunch ends. If still active,
+            // block to close of day so clients cannot book into an unavailable tech.
+            if (hf19_isLunchActive(a)) {
+                const st = hf19_toDate(a.lunchStart || a.lastLunchStart || a.updatedAt);
+                let start = hf19_minsFromDate(st);
+                if (!Number.isFinite(start)) start = openTime;
+                hf19_addInterval(busyByKey, keys, start, closeTime, 'Attendance Lunch');
+                return;
+            }
+
+            // Completed lunch history blocks only the lunch interval. This mainly protects
+            // same-day staff/client views if lunch ended moments ago and a stale slot cache exists.
+            const lunchStart = hf19_toDate(a.lunchStart || a.lastLunchStart);
+            const lunchEnd = hf19_toDate(a.lunchEnd || a.lastLunchEnd);
+            if (lunchStart && lunchEnd) {
+                hf19_addInterval(busyByKey, keys, hf19_minsFromDate(lunchStart), hf19_minsFromDate(lunchEnd), 'Attendance Lunch History');
+            }
+        }));
+
+        return busyByKey;
+    }
+
+    if (typeof window.bk_buildBusyByTechForDate === 'function' && !window.__hf19BusyBuilderWrapped) {
+        const previousBusyBuilder = window.bk_buildBusyByTechForDate;
+        window.bk_buildBusyByTechForDate = async function(date){
+            const busyByKey = await previousBusyBuilder.apply(this, arguments);
+            try { await hf19_addAttendanceBlocks(date, busyByKey); }
+            catch(e) { console.warn('HF19 Attendance lunch availability skipped:', e); }
+            return busyByKey;
+        };
+        window.__hf19BusyBuilderWrapped = true;
+    }
+})();
+// ============================================================
+// END HF19 Lunch Break Availability Alignment
+// ============================================================
+
+
+// ── THURAYA HF20: MOBILE BACK NAVIGATION PROTECTION — CLIENT APP ────────────
+// Prevents Android/browser Back from closing the app during booking flows.
+// First Back: uses THURAYA in-app history. On home/welcome: press again to exit.
+(function thurayaClientMobileBackGuardHF20(){
+    if (window.__thurayaClientBackGuardHF20) return;
+    window.__thurayaClientBackGuardHF20 = true;
+
+    var lastExitPress = 0;
+    var EXIT_WINDOW_MS = 2200;
+    var guardArmed = false;
+
+    var HOME_SCREENS = new Set(['screen-welcome', 'screen-booking-mode']);
+    var PROTECTED_SCREENS = new Set([
+        'screen-services','screen-technician','screen-datetime','screen-confirm',
+        'screen-group-size','screen-group-services','screen-group-datetime','screen-group-confirm',
+        'screen-mybookings','screen-my-account','screen-account-profile','screen-account-profile-edit',
+        'screen-payment-methods','screen-wallet','screen-notifications','screen-client-care-library','screen-doc-viewer'
+    ]);
+
+    function activeScreenId(){
+        var active = document.querySelector('.screen.active');
+        return active ? active.id : '';
+    }
+
+    function toastMsg(message){
+        try { if (typeof toast === 'function') { toast(message, 'info'); return; } } catch(e) {}
+        var id = 'thurayaBackGuardToastClient';
+        var el = document.getElementById(id);
+        if (!el) {
+            el = document.createElement('div');
+            el.id = id;
+            el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:999999;background:#111;color:#fff;padding:12px 16px;border-radius:999px;font:700 13px system-ui;box-shadow:0 12px 30px rgba(0,0,0,.22);max-width:90%;text-align:center;opacity:0;transition:opacity .18s ease;';
+            document.body.appendChild(el);
+        }
+        el.textContent = message;
+        el.style.opacity = '1';
+        clearTimeout(el._thTimer);
+        el._thTimer = setTimeout(function(){ el.style.opacity = '0'; }, 1900);
+    }
+
+    function arm(){
+        try {
+            if (!guardArmed) {
+                history.replaceState(Object.assign({}, history.state || {}, { thurayaRoot:true }), document.title, location.href);
+                history.pushState({ thurayaBackGuardHF20:true }, document.title, location.href);
+                guardArmed = true;
+            }
+        } catch(e) {}
+    }
+
+    function closeDocViewerIfOpen(){
+        if (activeScreenId() === 'screen-doc-viewer' && typeof bk_closeDocumentViewer === 'function') {
+            bk_closeDocumentViewer();
+            return true;
+        }
+        return false;
+    }
+
+    function goSafePrevious(){
+        if (closeDocViewerIfOpen()) return true;
+
+        var id = activeScreenId();
+        if (!id || HOME_SCREENS.has(id)) return false;
+
+        if (typeof window.goBack === 'function') {
+            try {
+                window.goBack();
+                return true;
+            } catch(e) {}
+        }
+
+        // Fallback routing when internal history is unavailable.
+        if (PROTECTED_SCREENS.has(id)) {
+            if (typeof showScreen === 'function') {
+                showScreen('screen-booking-mode');
+                return true;
+            }
+        }
+        return false;
+    }
+
+    window.addEventListener('popstate', function(evt){
+        if (!guardArmed) { arm(); return; }
+
+        if (goSafePrevious()) {
+            lastExitPress = 0;
+            arm();
+            return;
+        }
+
+        var now = Date.now();
+        if (now - lastExitPress < EXIT_WINDOW_MS) {
+            guardArmed = false;
+            history.back();
+            return;
+        }
+        lastExitPress = now;
+        toastMsg('Press back again to exit THURAYA.');
+        arm();
+    });
+
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(arm, 350); });
+    if (document.readyState !== 'loading') setTimeout(arm, 350);
+})();
+// ── END THURAYA HF20 CLIENT BACK GUARD ───────────────────────────────
+
+
+// ============================================================
+// THURAYA HF21: GROUP BOOKING STATE RESET / NO CARRY-OVER
+// Client App only. Prevents a completed group booking from leaking
+// subgroup/member technician and time selections into the next booking.
+// This is a defensive runtime layer because group-booking.js is loaded
+// after app.js and owns some of the group state.
+// ============================================================
+(function thurayaGroupBookingStateResetHF21(){
+    if (window.__thurayaGroupStateResetHF21) return;
+    window.__thurayaGroupStateResetHF21 = true;
+
+    function clearField(id, value){
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.value = value == null ? '' : value;
+        try { el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e) {}
+    }
+
+    function clearSelectedButtons(selector){
+        document.querySelectorAll(selector).forEach(function(el){
+            el.classList.remove('selected','active','is-selected');
+            if (el.tagName === 'INPUT') el.checked = false;
+        });
+    }
+
+    function clearIndividualBookingRuntime(){
+        try { window.bk_selectedServices = []; } catch(e) {}
+        try { bk_selectedServices = []; } catch(e) {}
+        try { window.bk_activePromo = null; } catch(e) {}
+        try { bk_activePromo = null; } catch(e) {}
+        try { window.bk_confirmedAppt = null; } catch(e) {}
+        try { bk_confirmedAppt = null; } catch(e) {}
+
+        clearField('bk_techEmail');
+        clearField('bk_techName');
+        clearField('bk_techMode', 'any');
+        clearField('bk_time');
+        clearField('bk_date');
+        clearField('bk_promoCode');
+        clearField('bk_promoId');
+        clearField('bk_promoCodeVal');
+        clearField('bk_discountAmount', '0');
+
+        var slots = document.getElementById('bk_slots');
+        if (slots) slots.innerHTML = '';
+        var slotWrap = document.getElementById('bk_slotsContainer');
+        if (slotWrap) slotWrap.style.display = 'none';
+        var nextBtn = document.getElementById('btnToConfirm');
+        if (nextBtn) nextBtn.disabled = true;
+
+        clearSelectedButtons('#bk_serviceMenu .service-card, #bk_serviceMenu .slot-btn, #bk_slots .slot-btn, #bk_slots button');
+        document.querySelectorAll('#bk_serviceMenu input[type="radio"], #bk_serviceMenu input[type="checkbox"]').forEach(function(el){ el.checked = false; });
+        document.querySelectorAll('#bk_serviceMenu input[type="number"]').forEach(function(el){ el.value = 0; });
+
+        try { if (typeof selectTechOption === 'function') selectTechOption('any'); } catch(e) {}
+        try { if (typeof updateBreakdown === 'function') updateBreakdown(); } catch(e) {}
+    }
+
+    function clearGroupBookingRuntime(){
+        clearField('grp_time');
+        clearField('grp_date');
+        var gSlots = document.getElementById('grp_slots');
+        if (gSlots) gSlots.innerHTML = '';
+        var gSlotWrap = document.getElementById('grp_slotsContainer');
+        if (gSlotWrap) gSlotWrap.style.display = 'none';
+        var gNext = document.getElementById('grp_toConfirmBtn');
+        if (gNext) gNext.disabled = true;
+
+        clearSelectedButtons('#grp_serviceList .service-card, #grp_slots .slot-btn, #grp_slots button, .grp-tech-card, .grp-member-tech, .grp-person-tab');
+        document.querySelectorAll('#grp_serviceList input[type="radio"], #grp_serviceList input[type="checkbox"]').forEach(function(el){ el.checked = false; });
+        document.querySelectorAll('#grp_serviceList input[type="number"]').forEach(function(el){ el.value = 0; });
+
+        // Known/likely globals used by group-booking.js across earlier builds.
+        [
+            'grp_members','grp_selectedMembers','grp_selectedServices','grp_assignments','grp_memberAssignments',
+            'grp_slotMap','grp_availableSlotMap','grp_availableTechMap','grp_selectedSlotTechs','grp_selectedTechs',
+            'grp_cachedAvailability','grp_lastAvailability','grp_groupBookingDraft','grp_confirmedGroup',
+            'groupMembers','groupSelections','groupAssignments','groupSlotMap','groupSelectedTechs'
+        ].forEach(function(k){
+            try {
+                if (Array.isArray(window[k])) window[k] = [];
+                else if (window[k] && typeof window[k] === 'object') window[k] = {};
+                else window[k] = null;
+            } catch(e) {}
+        });
+
+        // Do not erase profile/client identity. Only booking-draft state is cleared.
+        try { if (typeof grp_renderTabs === 'function') grp_renderTabs(); } catch(e) {}
+        try { if (typeof grp_updateProgress === 'function') grp_updateProgress(); } catch(e) {}
+    }
+
+    window.thurayaClearBookingDraftsHF21 = function(options){
+        options = options || {};
+        if (options.group !== false) clearGroupBookingRuntime();
+        if (options.individual !== false) clearIndividualBookingRuntime();
+    };
+
+    function wrapWhenAvailable(name, wrapperFactory){
+        var attempts = 0;
+        var timer = setInterval(function(){
+            attempts += 1;
+            if (typeof window[name] === 'function' && !window[name].__thurayaHF21Wrapped) {
+                var original = window[name];
+                var wrapped = wrapperFactory(original);
+                wrapped.__thurayaHF21Wrapped = true;
+                window[name] = wrapped;
+                clearInterval(timer);
+            }
+            if (attempts > 80) clearInterval(timer);
+        }, 100);
+    }
+
+    // After successful group booking, clear all booking draft state so the next
+    // individual/group booking starts fresh with no previous member tech/time.
+    wrapWhenAvailable('grp_confirmBooking', function(original){
+        return async function(){
+            var result = original.apply(this, arguments);
+            try { if (result && typeof result.then === 'function') await result; } catch(e) { throw e; }
+            setTimeout(function(){ window.thurayaClearBookingDraftsHF21({ group:true, individual:true }); }, 350);
+            return result;
+        };
+    });
+
+    // Starting a new group or individual booking must never inherit the previous
+    // group slot/tech map.
+    wrapWhenAvailable('grp_bookAgain', function(original){
+        return function(){
+            window.thurayaClearBookingDraftsHF21({ group:true, individual:true });
+            return original.apply(this, arguments);
+        };
+    });
+
+    wrapWhenAvailable('grp_soloMode', function(original){
+        return function(){
+            window.thurayaClearBookingDraftsHF21({ group:true, individual:true });
+            return original.apply(this, arguments);
+        };
+    });
+
+    wrapWhenAvailable('bk_bookAgain', function(original){
+        return function(){
+            window.thurayaClearBookingDraftsHF21({ group:true, individual:true });
+            return original.apply(this, arguments);
+        };
+    });
+
+    // If user returns to the booking mode after success, reset draft state once.
+    var lastScreen = '';
+    var previousShowScreen = window.showScreen;
+    if (typeof previousShowScreen === 'function' && !previousShowScreen.__thurayaHF21ScreenWrapped) {
+        window.showScreen = function(id){
+            var result = previousShowScreen.apply(this, arguments);
+            if (id === 'screen-booking-mode' && (lastScreen === 'screen-group-success' || lastScreen === 'screen-success')) {
+                setTimeout(function(){ window.thurayaClearBookingDraftsHF21({ group:true, individual:true }); }, 120);
+            }
+            lastScreen = id || lastScreen;
+            return result;
+        };
+        window.showScreen.__thurayaHF21ScreenWrapped = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        // Keep initial load clean without affecting logged-in profile state.
+        setTimeout(function(){
+            clearField('grp_time');
+            clearField('bk_time');
+        }, 800);
+    });
+})();
+// ============================================================
+// END HF21 Group Booking State Reset
+// ============================================================
