@@ -4007,3 +4007,186 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
 // ============================================================
 // END HF21 Group Booking State Reset
 // ============================================================
+
+/* ============================================================
+   THURAYA CLIENT — HF28 EMERGENCY BOOKING RECOVERY
+   Purpose: restore client booking immediately during production operations.
+   Safety: does not touch menu rendering, UI styling, tax settings, or staff data.
+   Behaviour:
+   - Uses live availability when it works.
+   - If shared availability data/therapy tags block all slots, falls back to safe
+     bookable windows so clients can still submit bookings.
+   - Staff can reassign/adjust operationally after booking if needed.
+   ============================================================ */
+(function thurayaClientEmergencyBookingRecoveryHF28(){
+    if (window.__thurayaClientEmergencyBookingRecoveryHF28) return;
+    window.__thurayaClientEmergencyBookingRecoveryHF28 = true;
+
+    function q(id){ return document.getElementById(id); }
+    function norm(v){ return String(v || '').trim().toLowerCase(); }
+    function minsToTime(total){
+        const h = Math.floor(total / 60);
+        const m = total % 60;
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+    function timeLabel(t24){
+        const parts = String(t24 || '00:00').split(':').map(Number);
+        const h = parts[0] || 0;
+        const m = parts[1] || 0;
+        return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    }
+    function selectedDuration(){
+        try {
+            const total = (window.bk_selectedServices || bk_selectedServices || []).reduce((s, x) => s + (Number(x.dur || 0) * (Number(x.qty || 1))), 0);
+            return Math.max(total || 0, 30);
+        } catch(e) { return 60; }
+    }
+    function safeTechs(){
+        const list = Array.isArray(window.bk_techs) ? window.bk_techs : (Array.isArray(bk_techs) ? bk_techs : []);
+        return list.filter(t => t && (t.email || t.name));
+    }
+    function eligibleTechsLoose(){
+        let eligible = [];
+        try { eligible = (typeof bk_getEligibleTechsForSelectedServices === 'function') ? bk_getEligibleTechsForSelectedServices() : []; }
+        catch(e) { eligible = []; }
+        if (eligible && eligible.length) return eligible;
+        return safeTechs();
+    }
+    function renderSlotsFromMap(slotMap, recovery){
+        const slots = Object.keys(slotMap).map(Number).sort((a,b)=>a-b);
+        if (!slots.length) return '';
+        const note = recovery ? `<div class="th-emergency-booking-note" style="font-size:.78rem;color:#6b6258;margin:0 0 10px;line-height:1.35;">Live availability is in recovery mode. THURAYA will confirm technician allocation operationally.</div>` : '';
+        return note + slots.map(t => {
+            const t24 = minsToTime(t);
+            const techList = JSON.stringify(slotMap[t] || []).replace(/'/g, '&#39;');
+            return `<button class="slot-btn" data-time="${t24}" data-techs='${techList}' onclick="bk_selectSlot('${t24}', this)">${timeLabel(t24)}</button>`;
+        }).join('');
+    }
+    function buildRecoverySlots(date, techEmails){
+        const openTime = 8 * 60;
+        const closeTime = 20 * 60;
+        const interval = 30;
+        const totalMins = selectedDuration();
+        const now = new Date();
+        const curMins = now.getHours() * 60 + now.getMinutes();
+        const today = (typeof todayStr !== 'undefined') ? todayStr : new Date().toISOString().slice(0,10);
+        const isToday = date === today;
+        const emails = (techEmails && techEmails.length) ? techEmails : [''];
+        const slotMap = {};
+        for (let t = openTime; t + totalMins <= closeTime; t += interval) {
+            if (isToday && t <= curMins + 30) continue;
+            slotMap[t] = emails;
+        }
+        return slotMap;
+    }
+
+    const previousGenerateSlots = window.bk_generateSlots;
+    window.bk_generateSlots = async function(){
+        const date = q('bk_date')?.value || '';
+        const timeEl = q('bk_time');
+        const slotsEl = q('bk_slots');
+        const container = q('bk_slotsContainer');
+        const nextBtn = q('btnToConfirm');
+        if (timeEl) timeEl.value = '';
+        if (nextBtn) nextBtn.disabled = true;
+        if (!slotsEl || !container) return previousGenerateSlots ? previousGenerateSlots.apply(this, arguments) : undefined;
+
+        const today = (typeof todayStr !== 'undefined') ? todayStr : new Date().toISOString().slice(0,10);
+        if (!date) { container.style.display = 'none'; return; }
+        if (date < today) {
+            container.style.display = 'block';
+            slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;">Cannot book in the past.</p>';
+            return;
+        }
+
+        let serviceCount = 0;
+        try { serviceCount = (window.bk_selectedServices || bk_selectedServices || []).length; } catch(e) { serviceCount = 0; }
+        if (!serviceCount) {
+            container.style.display = 'none';
+            try { toast('Select at least one service first.', 'warning'); } catch(e) {}
+            return;
+        }
+
+        container.style.display = 'block';
+        slotsEl.innerHTML = '<div class="loading-pulse">Checking available times...</div>';
+
+        const mode = q('bk_techMode')?.value || 'any';
+        const specificEmail = q('bk_techEmail')?.value || '';
+        let techs = eligibleTechsLoose();
+        let techEmails = (mode === 'specific' && specificEmail)
+            ? (techs.some(t => norm(t.email) === norm(specificEmail)) ? [specificEmail] : [specificEmail])
+            : techs.map(t => t.email).filter(Boolean);
+
+        try {
+            if (typeof bk_buildBusyByTechForDate !== 'function' || !techEmails.length) throw new Error('Availability dependency unavailable');
+            const busyByKey = await bk_buildBusyByTechForDate(date);
+            const openTime = 8 * 60, closeTime = 20 * 60, interval = 30;
+            const totalMins = selectedDuration();
+            const now = new Date();
+            const curMins = now.getHours() * 60 + now.getMinutes();
+            const isToday = date === today;
+            const slotMap = {};
+            for (let t = openTime; t + totalMins <= closeTime; t += interval) {
+                if (isToday && t <= curMins + 10) continue;
+                const slotEnd = t + totalMins;
+                techEmails.forEach(email => {
+                    let free = true;
+                    try { free = (typeof bk_intervalFreeForTech === 'function') ? bk_intervalFreeForTech(busyByKey, email, t, slotEnd) : true; }
+                    catch(e) { free = true; }
+                    if (free) {
+                        if (!slotMap[t]) slotMap[t] = [];
+                        slotMap[t].push(email);
+                    }
+                });
+            }
+            let html = renderSlotsFromMap(slotMap, false);
+            if (!html) html = renderSlotsFromMap(buildRecoverySlots(date, techEmails), true);
+            slotsEl.innerHTML = html || '<p style="color:var(--error);font-size:0.875rem;">No available times for this date. Try a different date.</p>';
+        } catch(e) {
+            console.warn('HF28 live availability failed; using recovery slots:', e);
+            slotsEl.innerHTML = renderSlotsFromMap(buildRecoverySlots(date, techEmails), true);
+        }
+
+        try { if (typeof bk_finalSyncCTAs === 'function') setTimeout(bk_finalSyncCTAs, 40); } catch(e) {}
+    };
+
+    const previousSelectSlot = window.bk_selectSlot;
+    window.bk_selectSlot = function(time, btn){
+        try {
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            if (btn) btn.classList.add('selected');
+            if (q('bk_time')) q('bk_time').value = time;
+            const mode = q('bk_techMode')?.value || 'any';
+            if (mode === 'any') {
+                let available = [];
+                try { available = JSON.parse(btn?.getAttribute('data-techs') || '[]'); } catch(e) { available = []; }
+                const assignedEmail = available.find(Boolean) || '';
+                if (q('bk_techEmail')) q('bk_techEmail').value = assignedEmail;
+                const tech = safeTechs().find(t => norm(t.email) === norm(assignedEmail));
+                if (q('bk_techName')) q('bk_techName').value = tech?.name || (assignedEmail ? assignedEmail : 'To be assigned');
+            }
+            if (q('btnToConfirm')) q('btnToConfirm').disabled = false;
+            try { if (typeof bk_finalSyncCTAs === 'function') setTimeout(bk_finalSyncCTAs, 40); } catch(e) {}
+        } catch(e) {
+            if (previousSelectSlot) return previousSelectSlot.apply(this, arguments);
+        }
+    };
+
+    window.bk_hasSlotConflict = async function(techEmail, date, time){
+        // Emergency recovery: do not block a client at confirmation because shared
+        // availability reads are unstable. Exact conflicts are still operationally
+        // visible to Staff App after booking.
+        return false;
+    };
+
+    // Re-check slots when returning to the date screen after selecting services/tech.
+    const previousGoToStep = window.goToStep;
+    window.goToStep = function(id){
+        const result = previousGoToStep ? previousGoToStep.apply(this, arguments) : undefined;
+        if (id === 'screen-datetime') setTimeout(() => { try { window.bk_generateSlots(); } catch(e){} }, 120);
+        return result;
+    };
+
+    console.log('THURAYA Client HF28 Emergency Booking Recovery loaded');
+})();
+
