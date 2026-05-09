@@ -3833,3 +3833,177 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     if (document.readyState !== 'loading') setTimeout(arm, 350);
 })();
 // ── END THURAYA HF20 CLIENT BACK GUARD ───────────────────────────────
+
+
+// ============================================================
+// THURAYA HF21: GROUP BOOKING STATE RESET / NO CARRY-OVER
+// Client App only. Prevents a completed group booking from leaking
+// subgroup/member technician and time selections into the next booking.
+// This is a defensive runtime layer because group-booking.js is loaded
+// after app.js and owns some of the group state.
+// ============================================================
+(function thurayaGroupBookingStateResetHF21(){
+    if (window.__thurayaGroupStateResetHF21) return;
+    window.__thurayaGroupStateResetHF21 = true;
+
+    function clearField(id, value){
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.value = value == null ? '' : value;
+        try { el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e) {}
+    }
+
+    function clearSelectedButtons(selector){
+        document.querySelectorAll(selector).forEach(function(el){
+            el.classList.remove('selected','active','is-selected');
+            if (el.tagName === 'INPUT') el.checked = false;
+        });
+    }
+
+    function clearIndividualBookingRuntime(){
+        try { window.bk_selectedServices = []; } catch(e) {}
+        try { bk_selectedServices = []; } catch(e) {}
+        try { window.bk_activePromo = null; } catch(e) {}
+        try { bk_activePromo = null; } catch(e) {}
+        try { window.bk_confirmedAppt = null; } catch(e) {}
+        try { bk_confirmedAppt = null; } catch(e) {}
+
+        clearField('bk_techEmail');
+        clearField('bk_techName');
+        clearField('bk_techMode', 'any');
+        clearField('bk_time');
+        clearField('bk_date');
+        clearField('bk_promoCode');
+        clearField('bk_promoId');
+        clearField('bk_promoCodeVal');
+        clearField('bk_discountAmount', '0');
+
+        var slots = document.getElementById('bk_slots');
+        if (slots) slots.innerHTML = '';
+        var slotWrap = document.getElementById('bk_slotsContainer');
+        if (slotWrap) slotWrap.style.display = 'none';
+        var nextBtn = document.getElementById('btnToConfirm');
+        if (nextBtn) nextBtn.disabled = true;
+
+        clearSelectedButtons('#bk_serviceMenu .service-card, #bk_serviceMenu .slot-btn, #bk_slots .slot-btn, #bk_slots button');
+        document.querySelectorAll('#bk_serviceMenu input[type="radio"], #bk_serviceMenu input[type="checkbox"]').forEach(function(el){ el.checked = false; });
+        document.querySelectorAll('#bk_serviceMenu input[type="number"]').forEach(function(el){ el.value = 0; });
+
+        try { if (typeof selectTechOption === 'function') selectTechOption('any'); } catch(e) {}
+        try { if (typeof updateBreakdown === 'function') updateBreakdown(); } catch(e) {}
+    }
+
+    function clearGroupBookingRuntime(){
+        clearField('grp_time');
+        clearField('grp_date');
+        var gSlots = document.getElementById('grp_slots');
+        if (gSlots) gSlots.innerHTML = '';
+        var gSlotWrap = document.getElementById('grp_slotsContainer');
+        if (gSlotWrap) gSlotWrap.style.display = 'none';
+        var gNext = document.getElementById('grp_toConfirmBtn');
+        if (gNext) gNext.disabled = true;
+
+        clearSelectedButtons('#grp_serviceList .service-card, #grp_slots .slot-btn, #grp_slots button, .grp-tech-card, .grp-member-tech, .grp-person-tab');
+        document.querySelectorAll('#grp_serviceList input[type="radio"], #grp_serviceList input[type="checkbox"]').forEach(function(el){ el.checked = false; });
+        document.querySelectorAll('#grp_serviceList input[type="number"]').forEach(function(el){ el.value = 0; });
+
+        // Known/likely globals used by group-booking.js across earlier builds.
+        [
+            'grp_members','grp_selectedMembers','grp_selectedServices','grp_assignments','grp_memberAssignments',
+            'grp_slotMap','grp_availableSlotMap','grp_availableTechMap','grp_selectedSlotTechs','grp_selectedTechs',
+            'grp_cachedAvailability','grp_lastAvailability','grp_groupBookingDraft','grp_confirmedGroup',
+            'groupMembers','groupSelections','groupAssignments','groupSlotMap','groupSelectedTechs'
+        ].forEach(function(k){
+            try {
+                if (Array.isArray(window[k])) window[k] = [];
+                else if (window[k] && typeof window[k] === 'object') window[k] = {};
+                else window[k] = null;
+            } catch(e) {}
+        });
+
+        // Do not erase profile/client identity. Only booking-draft state is cleared.
+        try { if (typeof grp_renderTabs === 'function') grp_renderTabs(); } catch(e) {}
+        try { if (typeof grp_updateProgress === 'function') grp_updateProgress(); } catch(e) {}
+    }
+
+    window.thurayaClearBookingDraftsHF21 = function(options){
+        options = options || {};
+        if (options.group !== false) clearGroupBookingRuntime();
+        if (options.individual !== false) clearIndividualBookingRuntime();
+    };
+
+    function wrapWhenAvailable(name, wrapperFactory){
+        var attempts = 0;
+        var timer = setInterval(function(){
+            attempts += 1;
+            if (typeof window[name] === 'function' && !window[name].__thurayaHF21Wrapped) {
+                var original = window[name];
+                var wrapped = wrapperFactory(original);
+                wrapped.__thurayaHF21Wrapped = true;
+                window[name] = wrapped;
+                clearInterval(timer);
+            }
+            if (attempts > 80) clearInterval(timer);
+        }, 100);
+    }
+
+    // After successful group booking, clear all booking draft state so the next
+    // individual/group booking starts fresh with no previous member tech/time.
+    wrapWhenAvailable('grp_confirmBooking', function(original){
+        return async function(){
+            var result = original.apply(this, arguments);
+            try { if (result && typeof result.then === 'function') await result; } catch(e) { throw e; }
+            setTimeout(function(){ window.thurayaClearBookingDraftsHF21({ group:true, individual:true }); }, 350);
+            return result;
+        };
+    });
+
+    // Starting a new group or individual booking must never inherit the previous
+    // group slot/tech map.
+    wrapWhenAvailable('grp_bookAgain', function(original){
+        return function(){
+            window.thurayaClearBookingDraftsHF21({ group:true, individual:true });
+            return original.apply(this, arguments);
+        };
+    });
+
+    wrapWhenAvailable('grp_soloMode', function(original){
+        return function(){
+            window.thurayaClearBookingDraftsHF21({ group:true, individual:true });
+            return original.apply(this, arguments);
+        };
+    });
+
+    wrapWhenAvailable('bk_bookAgain', function(original){
+        return function(){
+            window.thurayaClearBookingDraftsHF21({ group:true, individual:true });
+            return original.apply(this, arguments);
+        };
+    });
+
+    // If user returns to the booking mode after success, reset draft state once.
+    var lastScreen = '';
+    var previousShowScreen = window.showScreen;
+    if (typeof previousShowScreen === 'function' && !previousShowScreen.__thurayaHF21ScreenWrapped) {
+        window.showScreen = function(id){
+            var result = previousShowScreen.apply(this, arguments);
+            if (id === 'screen-booking-mode' && (lastScreen === 'screen-group-success' || lastScreen === 'screen-success')) {
+                setTimeout(function(){ window.thurayaClearBookingDraftsHF21({ group:true, individual:true }); }, 120);
+            }
+            lastScreen = id || lastScreen;
+            return result;
+        };
+        window.showScreen.__thurayaHF21ScreenWrapped = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        // Keep initial load clean without affecting logged-in profile state.
+        setTimeout(function(){
+            clearField('grp_time');
+            clearField('bk_time');
+        }, 800);
+    });
+})();
+// ============================================================
+// END HF21 Group Booking State Reset
+// ============================================================
