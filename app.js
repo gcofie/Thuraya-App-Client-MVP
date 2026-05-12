@@ -498,13 +498,15 @@ function bk_publishMenuSyncState(services, source = 'Menu_Settings_V2') {
 
 function bk_renderLoadedMenu(services, source = 'Menu_Settings_V2') {
     services.sort((a, b) =>
-        String(a.department || '').localeCompare(String(b.department || '')) ||
-        (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
-        String(a.category || '').localeCompare(String(b.category || ''), undefined, { numeric: true, sensitivity: 'base' }) ||
-        String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' })
+        th_v2DeptOrder(a.department || a.appliesTo) - th_v2DeptOrder(b.department || b.appliesTo) ||
+        th_v2SortValue(a.sortOrder ?? a.order) - th_v2SortValue(b.sortOrder ?? b.order) ||
+        th_v2TieBreak(a.mainCategory || a.ritualGroup || a.category, b.mainCategory || b.ritualGroup || b.category) ||
+        th_v2TieBreak(a.subCategory || a.category || a.serviceType, b.subCategory || b.category || b.serviceType) ||
+        th_v2TieBreak(a.name || a.serviceName, b.name || b.serviceName)
     );
     bk_menuServices = services.filter(bk_menuIsActive);
     bk_publishMenuSyncState(bk_menuServices, source);
+    if (source === 'Menu_Settings_V2') th_v2PublishSortAudit(bk_menuServices);
     renderMenuForDept(bk_selectedDept);
 }
 
@@ -1450,9 +1452,28 @@ function th_v2ServiceDeptMatches(s, dept) {
     return true;
 }
 
+// HF89B6: Menu_Settings_V2 priority enforcement.
+// Sort Order is the single ordering authority; text sorting is only a fallback
+// when Menu Settings V2 has no usable Sort Order for that level.
+function th_v2SortValue(value, fallback = 999999) {
+    const n = Number(String(value ?? '').replace(/[^0-9.\-]/g, ''));
+    return Number.isFinite(n) ? n : fallback;
+}
+
 function th_v2GroupOrder(group) {
-    const n = Number(group?.order);
-    return Number.isFinite(n) ? n : 999;
+    return th_v2SortValue(group?.order);
+}
+
+function th_v2DeptOrder(dept) {
+    const d = String(dept || '').toLowerCase();
+    if (d.includes('hand')) return 10;
+    if (d.includes('foot') || d.includes('feet')) return 20;
+    if (d.includes('both')) return 30;
+    return 99;
+}
+
+function th_v2TieBreak(a, b) {
+    return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true, sensitivity: 'base' });
 }
 
 function th_v2BuildHierarchy(dept) {
@@ -1467,8 +1488,7 @@ function th_v2BuildHierarchy(dept) {
         const subRaw = th_v2Text(s.subCategory || s.category || s.serviceType || '');
         const sub = (!subRaw || subRaw.toLowerCase() === main.toLowerCase()) ? 'Services' : subRaw;
         const subDesc = th_v2Text(s.categoryDescription || s.subCategoryDescription || s.serviceTypeDescription || '');
-        const sort = Number(s.sortOrder ?? s.order ?? 999);
-        const order = Number.isFinite(sort) ? sort : 999;
+        const order = th_v2SortValue(s.sortOrder ?? s.order);
 
         if (!groups.has(main)) {
             groups.set(main, { title: main, desc: mainDesc, order, count: 0, subGroups: new Map() });
@@ -1491,17 +1511,36 @@ function th_v2BuildHierarchy(dept) {
     groups.forEach(g => {
         g.subGroups.forEach(sg => {
             sg.items.sort((a, b) =>
-                (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+                th_v2SortValue(a.sortOrder ?? a.order) - th_v2SortValue(b.sortOrder ?? b.order) ||
                 (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
-                String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' })
+                th_v2TieBreak(a.name || a.serviceName, b.name || b.serviceName)
             );
         });
     });
 
     return Array.from(groups.values()).sort((a, b) =>
         th_v2GroupOrder(a) - th_v2GroupOrder(b) ||
-        String(a.title).localeCompare(String(b.title), undefined, { numeric: true, sensitivity: 'base' })
+        th_v2TieBreak(a.title, b.title)
     );
+}
+
+function th_v2PublishSortAudit(services) {
+    const audit = (services || []).map(s => ({
+        department: s.department || s.appliesTo || '',
+        mainCategory: s.mainCategory || s.ritualGroup || s.category || '',
+        subCategory: s.subCategory || s.category || s.serviceType || '',
+        serviceName: s.name || s.serviceName || '',
+        sortOrder: th_v2SortValue(s.sortOrder ?? s.order),
+        status: s.status || ''
+    })).sort((a, b) =>
+        th_v2DeptOrder(a.department) - th_v2DeptOrder(b.department) ||
+        th_v2SortValue(a.sortOrder) - th_v2SortValue(b.sortOrder) ||
+        th_v2TieBreak(a.mainCategory, b.mainCategory) ||
+        th_v2TieBreak(a.subCategory, b.subCategory) ||
+        th_v2TieBreak(a.serviceName, b.serviceName)
+    );
+    window.THURAYA_CLIENT_MENU_SORT_AUDIT = audit;
+    if (window.console && console.table) console.table(audit);
 }
 
 function th_v2Meta(group) {
@@ -1532,7 +1571,7 @@ function th_renderV2MenuForDept(dept) {
         const sectionId = `bk_v2_${dept.toLowerCase()}_${index}`;
         const subGroups = Array.from(group.subGroups.values()).sort((a, b) =>
             th_v2GroupOrder(a) - th_v2GroupOrder(b) ||
-            String(a.title).localeCompare(String(b.title), undefined, { numeric: true, sensitivity: 'base' })
+            th_v2TieBreak(a.title, b.title)
         );
         return `
             <div class="thuraya-accordion-section th-v2-section" data-category="${th_refEscape(group.title)}">

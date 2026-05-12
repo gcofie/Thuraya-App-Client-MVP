@@ -1,0 +1,27 @@
+THURAYA CLIENT APP — HF89B6 SORT ORDER ENFORCEMENT
+
+Scope:
+- Client App only
+- No Staff App files
+- No UI redesign
+- No booking-flow logic changes
+
+Fix:
+- Menu_Settings_V2 Sort Order is now the priority authority for:
+  1. Department order: Hand before Foot
+  2. Main Category order
+  3. Sub Category order
+  4. Service order
+- Text/name sorting is only fallback when Sort Order is missing.
+- Added console audit object: THURAYA_CLIENT_MENU_SORT_AUDIT
+
+Validation:
+1. Login works.
+2. Open Booking > Services.
+3. Check Hand category order matches Menu Settings V2 Sort Order.
+4. Open Nail Architecture and confirm subcategories/services follow Menu Settings V2 order.
+5. Switch to Foot and confirm category/service order.
+6. Select a service and continue to the booking flow.
+7. Optional browser console check:
+   THURAYA_CLIENT_MENU_SORT_AUDIT
+   console.table(THURAYA_CLIENT_MENU_SORT_AUDIT)
