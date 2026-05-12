@@ -1892,3 +1892,189 @@ window.grp_startSplitPlanner = function(dateStr, split) {
 // ============================================================
 // END THURAYA GROUP MENU MATCH INDIVIDUAL — HARD OVERRIDE
 // ============================================================
+
+// ============================================================
+// THURAYA HF89C — CLIENT GROUP MENU TRUE PARITY
+// Purpose: stop Client Group Booking from maintaining its own
+// service-menu renderer. Group service selection now renders from
+// the exact Individual Booking renderer/output, then rewires the
+// markup to group-specific selection handlers and member state.
+// Scope: menu rendering only. Does not change group availability,
+// split planning, billing, Firebase writes, or booking confirmation.
+// ============================================================
+(function () {
+    if (window.__THURAYA_HF89C_GROUP_MENU_TRUE_PARITY__) return;
+    window.__THURAYA_HF89C_GROUP_MENU_TRUE_PARITY__ = true;
+
+    const VERSION = 'HF89C · Client Group Menu True Parity';
+
+    function hf89c_escapeRegExp(value) {
+        return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function hf89c_memberSelectionsForIndividualRenderer(member) {
+        return (member?.selectedServices || []).map(s => ({
+            ...s,
+            dept: member.dept || s.dept || 'Hand'
+        }));
+    }
+
+    function hf89c_captureIndividualMenuHtml(dept, selectedServices) {
+        if (typeof renderMenuForDept !== 'function') return '';
+
+        const realMenu = document.getElementById('bk_serviceMenu');
+        const originalId = realMenu ? realMenu.id : '';
+        const originalSelected = Array.isArray(window.bk_selectedServices)
+            ? [...window.bk_selectedServices]
+            : (typeof bk_selectedServices !== 'undefined' && Array.isArray(bk_selectedServices) ? [...bk_selectedServices] : []);
+
+        const temp = document.createElement('div');
+        temp.id = 'bk_serviceMenu';
+        temp.style.cssText = 'position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+
+        try {
+            if (realMenu) realMenu.id = 'bk_serviceMenu_hf89c_original';
+            document.body.appendChild(temp);
+
+            // renderMenuForDept restores selected state from bk_selectedServices.
+            // Use the active group member selection temporarily so the captured
+            // Individual Booking markup already contains the correct selected UI.
+            if (typeof bk_selectedServices !== 'undefined') {
+                bk_selectedServices = selectedServices;
+            }
+            window.bk_selectedServices = selectedServices;
+
+            renderMenuForDept(dept);
+            return temp.innerHTML || '';
+        } catch (e) {
+            console.warn('HF89C could not capture Individual menu renderer:', e);
+            return '';
+        } finally {
+            try { temp.remove(); } catch (e) {}
+            if (realMenu && originalId) realMenu.id = originalId;
+            if (typeof bk_selectedServices !== 'undefined') {
+                bk_selectedServices = originalSelected;
+            }
+            window.bk_selectedServices = originalSelected;
+            if (typeof updateBreakdown === 'function') {
+                try { updateBreakdown(); } catch (e) {}
+            }
+        }
+    }
+
+    function hf89c_rewireHtmlForGroup(html, memberIndex) {
+        if (!html) return html;
+        let out = String(html);
+
+        // Convert IDs used by Individual Booking to Group Booking IDs.
+        out = out.replace(/id="bk_cb_/g, 'id="grp_cb_');
+        out = out.replace(/id='bk_cb_/g, "id='grp_cb_");
+        out = out.replace(/id="bk_qty_/g, 'id="grp_qty_');
+        out = out.replace(/id='bk_qty_/g, "id='grp_qty_");
+        out = out.replace(/for="bk_cb_/g, 'for="grp_cb_');
+        out = out.replace(/for='bk_cb_/g, "for='grp_cb_");
+
+        // Convert individual action handlers to group action handlers.
+        out = out.replace(/bk_toggleCard\(/g, 'grp_toggleCard(');
+        out = out.replace(/bk_updateCounter\(/g, 'grp_updateCounter(');
+        out = out.replace(/bk_toggleMenuSection\(/g, 'grp_toggleMenuSection(');
+
+        // Ensure radio groups are group-member scoped. This prevents one
+        // member's rendered radio group from colliding with another if the DOM
+        // is ever preserved by the browser or a future transition layer.
+        out = out.replace(/name="([^"]*bk_[^"]*)"/g, function (_, name) {
+            return 'name="grp_m' + memberIndex + '_' + name.replace(/\s+/g, '_') + '"';
+        });
+        out = out.replace(/name='([^']*bk_[^']*)'/g, function (_, name) {
+            return "name='grp_m" + memberIndex + '_' + name.replace(/\s+/g, '_') + "'";
+        });
+
+        // Also update groupName arguments inside inline onclick handlers.
+        out = out.replace(/'((?:bk_|th_|grp_ref_)[^']*)'/g, function (match, value) {
+            if (/^(bk_base_|bk_hand_|bk_ref_)/.test(value)) {
+                return "'grp_m" + memberIndex + '_' + value.replace(/\s+/g, '_') + "'";
+            }
+            return match;
+        });
+
+        return out;
+    }
+
+    function hf89c_openSelectedSections(container, selectedServices) {
+        (selectedServices || []).forEach(selected => {
+            const id = selected?.id;
+            if (!id) return;
+            const escapedId = (window.CSS && CSS.escape) ? CSS.escape(id) : hf89c_escapeRegExp(id);
+            const input = container.querySelector('#grp_cb_' + escapedId) || document.getElementById('grp_cb_' + id);
+            const qty = container.querySelector('#grp_qty_' + escapedId) || document.getElementById('grp_qty_' + id);
+            const anchor = input || qty;
+            if (!anchor) return;
+            if (input) input.checked = true;
+            if (qty && Number(selected.qty || 0) > 0) qty.value = selected.qty;
+            const card = anchor.closest('.service-card, .service, .simple-service, .th-ref-counter-service');
+            const section = anchor.closest('.thuraya-accordion-section, details');
+            card?.classList.add('selected');
+            if (section) {
+                section.classList.add('open');
+                section.setAttribute('open', '');
+                section.querySelector('.thuraya-accordion-head')?.setAttribute('aria-expanded', 'true');
+            }
+        });
+    }
+
+    window.grp_renderServiceList = function () {
+        const container = document.getElementById('grp_serviceList');
+        if (!container) return;
+
+        const member = grp_members[grp_activeMember];
+        if (!member) return;
+
+        const dept = member.dept || 'Hand';
+        const selected = hf89c_memberSelectionsForIndividualRenderer(member);
+        let html = hf89c_captureIndividualMenuHtml(dept, selected);
+
+        if (!html || !String(html).trim()) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:24px 0;">No services available for this category.</p>';
+            return;
+        }
+
+        container.classList.remove('th-ref-menu');
+        container.setAttribute('data-menu-source', 'Menu_Settings_V2');
+        container.setAttribute('data-menu-renderer', 'individual-booking-parity');
+        container.innerHTML = hf89c_rewireHtmlForGroup(html, grp_activeMember);
+        hf89c_openSelectedSections(container, member.selectedServices || []);
+
+        setTimeout(() => {
+            if (typeof bk_syncAllAccordionHeights === 'function') {
+                try { bk_syncAllAccordionHeights(container); } catch (e) {}
+            }
+            if (typeof window.grp_polishAndWireCTAs === 'function') {
+                try { window.grp_polishAndWireCTAs(); } catch (e) {}
+            }
+        }, 60);
+    };
+
+    window.thurayaClientGroupMenuParityAudit = function () {
+        const container = document.getElementById('grp_serviceList');
+        const individualCards = document.querySelectorAll('#bk_serviceMenu .service-card').length;
+        const groupCards = document.querySelectorAll('#grp_serviceList .service-card').length;
+        const result = {
+            version: VERSION,
+            source: 'Menu_Settings_V2',
+            renderer: container?.getAttribute('data-menu-renderer') || 'not-mounted',
+            selectedMember: typeof grp_activeMember !== 'undefined' ? grp_activeMember : null,
+            selectedDept: grp_members?.[grp_activeMember]?.dept || null,
+            activeServiceCount: Array.isArray(window.bk_menuServices) ? window.bk_menuServices.length : (Array.isArray(bk_menuServices) ? bk_menuServices.length : 0),
+            individualVisibleCards: individualCards,
+            groupVisibleCards: groupCards,
+            timestamp: new Date().toISOString()
+        };
+        console.log('THURAYA HF89C · Client Group Menu Parity Audit', result);
+        return result;
+    };
+
+    console.log('✅ THURAYA HF89C loaded: Group Booking service menu now renders from the Individual Booking menu pipeline.');
+})();
+// ============================================================
+// END THURAYA HF89C — CLIENT GROUP MENU TRUE PARITY
+// ============================================================
