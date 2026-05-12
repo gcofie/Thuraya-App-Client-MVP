@@ -9,7 +9,7 @@ window.bk_setEarlyBookFor = function(val){
 // ============================================================
 //  THURAYA — CLIENT SELF-BOOKING   app.js
 //  Same Firebase backend as the Staff OS.
-//  Collections read:  Menu_Services, Users (techs),
+//  Collections read:  Menu_Settings_V2, Users (techs),
 //                     Appointments, Tax_Settings, Promos,
 //                     Client_Users
 //  Collections write: Client_Users, Appointments,
@@ -452,23 +452,8 @@ function bk_renderLoadedMenu(services) {
 function loadMenu() {
     const container = document.getElementById('bk_serviceMenu');
 
-    const startLegacyFallback = () => {
-        db.collection('Menu_Services').onSnapshot(snap => {
-            if (snap.empty) {
-                if (container) container.innerHTML =
-                    '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
-                return;
-            }
-            const services = [];
-            snap.forEach(doc => services.push(bk_normalizeLegacyMenuDoc(doc)));
-            bk_renderLoadedMenu(services);
-        }, err => {
-            const c = document.getElementById('bk_serviceMenu');
-            if (c) c.innerHTML =
-                `<p style="color:var(--error);text-align:center;padding:20px;">Could not load menu: ${err.message}</p>`;
-        });
-    };
-
+    // HF89B: Client App menu source enforcement.
+    // Menu_Settings_V2 is now the only booking menu source. No Menu_Services fallback.
     db.collection('Menu_Settings_V2').onSnapshot(snap => {
         const services = [];
         snap.forEach(doc => {
@@ -476,16 +461,19 @@ function loadMenu() {
             if (bk_menuIsActive(data)) services.push(bk_normalizeV2MenuDoc(doc));
         });
 
-        if (services.length) {
-            bk_renderLoadedMenu(services);
+        if (!services.length) {
+            bk_menuServices = [];
+            if (container) container.innerHTML =
+                '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No active Menu_Settings_V2 services available.</p>';
             return;
         }
 
-        // Safe fallback for older/staging environments while production completes V2 CSV import.
-        startLegacyFallback();
+        bk_renderLoadedMenu(services);
     }, err => {
-        console.warn('Menu_Settings_V2 unavailable, falling back to Menu_Services:', err);
-        startLegacyFallback();
+        const c = document.getElementById('bk_serviceMenu');
+        if (c) c.innerHTML =
+            `<p style="color:var(--error);text-align:center;padding:20px;">Could not load Menu_Settings_V2: ${err.message}</p>`;
+        console.error('Menu_Settings_V2 load failed:', err);
     });
 }
 
@@ -832,32 +820,33 @@ function th_findServiceMatch(ref, placementKey, radioGroup) {
         wanted.some(w => th_norm(s.name).includes(w) || w.includes(th_norm(s.name)))
     );
 
-    // Staff App / Firebase values must win whenever a matching live service exists.
-    // The reference structure remains only as the luxury display shell and fallback.
-    const livePrice = match && match.price !== undefined && match.price !== null && match.price !== '' ? Number(match.price) : undefined;
-    const liveDuration = match && match.duration !== undefined && match.duration !== null && match.duration !== '' ? Number(match.duration) : undefined;
-    const liveDesc = match?.desc || match?.description || match?.serviceDescription;
+    // HF89B: the reference structure remains a visual shell only.
+    // A card is rendered only when the service exists in Menu_Settings_V2.
+    if (!match) return null;
+
+    const livePrice = match.price !== undefined && match.price !== null && match.price !== '' ? Number(match.price) : undefined;
+    const liveDuration = match.duration !== undefined && match.duration !== null && match.duration !== '' ? Number(match.duration) : undefined;
+    const liveDesc = match.desc || match.description || match.serviceDescription;
 
     const merged = {
         ...ref,
-        ...(match || {}),
-        price: Number.isFinite(livePrice) ? livePrice : (Number(ref.price) || 0),
-        duration: Number.isFinite(liveDuration) ? liveDuration : (Number(ref.duration) || 0),
-        desc: liveDesc || ref.desc || '',
-        inputType: match?.inputType || ref.inputType || 'radio',
-        tag: match?.tag || ref.tag || '',
-        priceLabel: match?.priceLabel || (Number.isFinite(livePrice) ? '' : (ref.priceLabel || ''))
+        ...match,
+        price: Number.isFinite(livePrice) ? livePrice : 0,
+        duration: Number.isFinite(liveDuration) ? liveDuration : 0,
+        desc: liveDesc || '',
+        inputType: match.inputType || ref.inputType || 'radio',
+        tag: match.tag || ref.tag || '',
+        priceLabel: match.priceLabel || ''
     };
 
-    // Keep approved client-facing labels such as "Full Set", while syncing the live values behind them.
-    merged.name = ref.displayName || ref.name || match?.name || 'Service';
-
-    // Keep a placement-safe ID so repeated reference sections do not collide visually/selection-wise.
-    merged.id = `th_${placementKey}_${match?.id || th_slug(ref.name || ref.displayName)}`;
+    // Preserve approved visual labels while all data/pricing/duration/status comes from V2.
+    merged.name = ref.displayName || ref.name || match.name || 'Service';
+    merged.id = `th_${placementKey}_${match.id}`;
     merged.department = 'Hand';
-    merged.status = match?.status || ref.status || 'Active';
+    merged.status = match.status || 'Active';
     merged.radioGroup = radioGroup || `bk_ref_${placementKey}`;
-    merged.liveSynced = !!match;
+    merged.liveSynced = true;
+    merged.sourceCollection = 'Menu_Settings_V2';
     return merged;
 }
 function th_refEscape(value) {
@@ -877,6 +866,7 @@ function th_priceLabel(service) {
 
 function th_buildReferenceServiceCard(ref, dept, placementKey, radioGroup, variant='simple') {
     const s = th_findServiceMatch(ref, placementKey, radioGroup);
+    if (!s) return '';
     const type = s.inputType || 'radio';
     const id = s.id;
     const name = s.name || 'Service';
@@ -1243,7 +1233,7 @@ function renderHandMenuFootStyle(dept) {
         const refs = th_collectHandLeafServices(node, []);
         const services = refs
             .map((ref, serviceIndex) => th_findServiceMatch(ref, `hand_${th_slug(cat)}_${serviceIndex}`, `bk_hand_${th_slug(cat)}`))
-            .filter(s => !s.status || s.status === 'Active');
+            .filter(s => s && (!s.status || s.status === 'Active'));
 
         if (!services.length) return '';
 
@@ -4190,3 +4180,26 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     console.log('THURAYA Client HF28 Emergency Booking Recovery loaded');
 })();
 
+
+
+// ============================================================
+// HF89B — Client App Menu_Settings_V2 Consumer Audit
+// Read-only helper. Run in console: thurayaClientMenuV2Audit()
+// ============================================================
+window.thurayaClientMenuV2Audit = function() {
+    const services = Array.isArray(bk_menuServices) ? bk_menuServices : [];
+    const audit = {
+        version: 'HF89B · Client Menu_Settings_V2 Sync',
+        source: 'Menu_Settings_V2',
+        activeServiceCount: services.length,
+        nonV2Items: services.filter(s => s.sourceCollection && s.sourceCollection !== 'Menu_Settings_V2').length,
+        handItems: services.filter(s => ['hand','both'].includes(String(s.department || '').toLowerCase())).length,
+        footItems: services.filter(s => ['foot','both'].includes(String(s.department || '').toLowerCase())).length,
+        selectedDept: bk_selectedDept,
+        renderedServiceCards: document.querySelectorAll('#bk_serviceMenu .service-card').length,
+        selectedServices: (bk_selectedServices || []).length,
+        timestamp: new Date().toISOString()
+    };
+    console.log('THURAYA HF89B · Client Menu_Settings_V2 Audit', audit);
+    return audit;
+};
