@@ -362,9 +362,30 @@ function _inferSubCategory(s, cat) {
 function bk_normalizeMenuDept(value) {
     const raw = String(value || 'Hand').trim();
     const l = raw.toLowerCase();
-    if (l.includes('both')) return 'Both';
-    if (l.includes('foot')) return 'Foot';
+    if (l.includes('both') || l.includes('hand & foot') || l.includes('hand/foot')) return 'Both';
+    if (l.includes('foot') || l.includes('feet')) return 'Foot';
     return 'Hand';
+}
+
+// Client App restore guard:
+// Menu_Settings_V2 may arrive from Staff App using either camelCase fields
+// or the approved spreadsheet labels with spaces. Read both without changing UI/booking logic.
+function bk_menuField(data = {}, keys = [], fallback = '') {
+    for (const key of keys) {
+        if (data[key] !== undefined && data[key] !== null && String(data[key]).trim() !== '') return data[key];
+    }
+
+    const compact = {};
+    Object.keys(data || {}).forEach(k => {
+        compact[String(k).toLowerCase().replace(/[^a-z0-9]/g, '')] = data[k];
+    });
+
+    for (const key of keys) {
+        const ck = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (compact[ck] !== undefined && compact[ck] !== null && String(compact[ck]).trim() !== '') return compact[ck];
+    }
+
+    return fallback;
 }
 
 function bk_menuNumber(value, fallback = 0) {
@@ -380,13 +401,13 @@ function bk_menuIsActive(data = {}) {
 
 function bk_normalizeV2MenuDoc(doc) {
     const d = doc.data() || {};
-    const serviceName = d.serviceName || d.name || d.displayName || 'Service';
-    const serviceDescription = d.serviceDescription || d.description || d.desc || '';
-    const dept = bk_normalizeMenuDept(d.department || d.appliesTo || d.dept);
-    const sortOrder = bk_menuNumber(d.sortOrder ?? d.priority ?? d.order, 999);
-    const price = bk_menuNumber(d.price ?? d.priceGHC ?? d.priceValue ?? d.unitPrice ?? d.amount, 0);
-    const duration = Math.max(0, parseInt(bk_menuNumber(d.duration ?? d.durationMins ?? d.minutes, 0), 10) || 0);
-    const inputTypeRaw = String(d.inputType || d.selection || d.serviceType || '').trim().toLowerCase();
+    const serviceName = bk_menuField(d, ['serviceName', 'Service Name', 'name', 'displayName'], 'Service');
+    const serviceDescription = bk_menuField(d, ['serviceDescription', 'Service Description', 'description', 'desc'], '');
+    const dept = bk_normalizeMenuDept(bk_menuField(d, ['department', 'Department', 'appliesTo', 'dept'], 'Hand'));
+    const sortOrder = bk_menuNumber(bk_menuField(d, ['sortOrder', 'Sort Order', 'priority', 'order'], 999), 999);
+    const price = bk_menuNumber(bk_menuField(d, ['price', 'Price', 'priceGHC', 'priceValue', 'unitPrice', 'amount'], 0), 0);
+    const duration = Math.max(0, parseInt(bk_menuNumber(bk_menuField(d, ['duration', 'Duration', 'durationMins', 'minutes'], 0), 0), 10) || 0);
+    const inputTypeRaw = String(bk_menuField(d, ['inputType', 'Input Type', 'selection', 'serviceType', 'Service Type'], '')).trim().toLowerCase();
     const inputType = inputTypeRaw.includes('counter') || inputTypeRaw.includes('quantity') || inputTypeRaw.includes('per_nail') || inputTypeRaw.includes('per nail') || inputTypeRaw.includes('unit')
         ? 'counter'
         : (inputTypeRaw.includes('checkbox') || inputTypeRaw.includes('multi') || inputTypeRaw.includes('add') || inputTypeRaw.includes('upgrade') ? 'checkbox' : 'radio');
@@ -402,12 +423,12 @@ function bk_normalizeV2MenuDoc(doc) {
         serviceDescription,
         department: dept,
         appliesTo: dept,
-        mainCategory: d.ritualGroup || d.mainCategory || d.mainMenu || '',
-        category: d.category || d.subCategory || d.subMenu || d.serviceType || 'General',
-        subCategory: d.category || d.subCategory || d.subMenu || '',
-        serviceType: d.serviceType || '',
-        categoryDescription: d.categoryDescription || d.subCategoryDescription || '',
-        mainCategoryDescription: d.ritualGroupDescription || d.mainCategoryDescription || '',
+        mainCategory: bk_menuField(d, ['ritualGroup', 'Ritual Group', 'mainCategory', 'Main Category', 'mainMenu'], ''),
+        category: bk_menuField(d, ['category', 'Category', 'subCategory', 'Sub Category', 'subMenu', 'serviceType', 'Service Type'], 'General'),
+        subCategory: bk_menuField(d, ['subCategory', 'Sub Category', 'category', 'Category', 'subMenu'], ''),
+        serviceType: bk_menuField(d, ['serviceType', 'Service Type'], ''),
+        categoryDescription: bk_menuField(d, ['categoryDescription', 'Category Description', 'subCategoryDescription', 'Sub Category Description'], ''),
+        mainCategoryDescription: bk_menuField(d, ['ritualGroupDescription', 'Ritual Group Description', 'mainCategoryDescription', 'Main Category Description'], ''),
         price,
         priceGHC: price,
         duration,
