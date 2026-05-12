@@ -5333,3 +5333,27 @@ body,
   display:block !important;
   margin-top:4px !important;
 }
+
+/* HF89B3 Client App only — soften Menu_Settings_V2 category descriptions */
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup span,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
+  font-family:var(--th-font-sans, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif) !important;
+  font-size:clamp(15px, 3.65vw, 18px) !important;
+  line-height:1.42 !important;
+  font-weight:400 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+  color:var(--th-muted, #6f6a63) !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-title,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup strong,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup strong{
+  font-weight:700 !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  margin:22px 2px 12px !important;
+}
