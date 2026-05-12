@@ -1602,10 +1602,17 @@ function bk_syncAccordionHeight(section) {
     const body = section.querySelector(':scope > .thuraya-accordion-body');
     if (!body) return;
 
+    // HF89B5 Client App only:
+    // Menu_Settings_V2 categories can contain many services. The older CSS had a
+    // fixed 2400px accordion ceiling, which could visually cut off long categories
+    // such as Nail Architecture even when the data was loaded correctly.
     if (section.classList.contains('open')) {
-        body.style.maxHeight = body.scrollHeight + 'px';
+        const fullHeight = Math.max(body.scrollHeight, body.firstElementChild?.scrollHeight || 0, 1);
+        body.style.setProperty('max-height', fullHeight + 80 + 'px', 'important');
+        body.style.setProperty('overflow', 'hidden', 'important');
     } else {
-        body.style.maxHeight = '0px';
+        body.style.setProperty('max-height', '0px', 'important');
+        body.style.setProperty('overflow', 'hidden', 'important');
     }
 }
 

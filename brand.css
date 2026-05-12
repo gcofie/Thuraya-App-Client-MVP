@@ -5385,3 +5385,17 @@ body,
 #screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
   margin-top:5px !important;
 }
+
+
+/* HF89B5 — Client App Menu_Settings_V2 uncapped accordion rendering
+   Keeps sections collapsed until opened, but removes the old 2400px ceiling that
+   could hide services in long V2 categories such as Nail Architecture. */
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body{
+  max-height:none !important;
+  overflow:visible !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-body,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-body{
+  transition:max-height .28s ease !important;
+}
