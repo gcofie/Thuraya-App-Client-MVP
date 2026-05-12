@@ -5271,3 +5271,65 @@ body,
   #bk_serviceMenu.th-ref-menu .service-row{gap:10px;}
 }
 /* === END THURAYA CLIENT APP — STAFF MENU SYNC / SIMULATOR STRUCTURE === */
+
+/* HF89B2 Client App V2 menu sync polish: prevent V2 category text from clipping */
+#screen-services #bk_serviceMenu.th-v2-menu,
+#bk_serviceMenu.th-v2-menu{
+  width:100% !important;
+  max-width:100% !important;
+  overflow:visible !important;
+  box-sizing:border-box !important;
+  padding-bottom:120px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-section,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-section{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-head,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-head{
+  height:auto !important;
+  min-height:96px !important;
+  align-items:flex-start !important;
+  gap:14px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title-wrap{
+  min-width:0 !important;
+  max-width:calc(100% - 58px) !important;
+  overflow:visible !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title,
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere !important;
+  word-break:normal !important;
+  hyphens:auto !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title{
+  line-height:1.12 !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta{
+  line-height:1.35 !important;
+  margin-top:8px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-chevron{
+  flex:0 0 auto !important;
+  margin-top:4px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-body{
+  overflow:hidden !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  display:block !important;
+  margin:18px 2px 10px !important;
+  padding:0 4px !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
+  display:block !important;
+  margin-top:4px !important;
+}

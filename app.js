@@ -1434,7 +1434,145 @@ function renderHandMenuFootStyle(dept) {
     updateBreakdown();
 }
 
+
+// ── HF89B2: TRUE Menu_Settings_V2 hierarchy renderer ─────────────
+// Client App only. Uses Menu_Settings_V2 as the single display structure:
+// Department → Main Category → Sub Category → Service Name.
+function th_v2Text(value, fallback='') {
+    return String(value ?? fallback).trim().replace(/\s+/g, ' ');
+}
+
+function th_v2ServiceDeptMatches(s, dept) {
+    const d = String(s.department || s.appliesTo || '').toLowerCase();
+    if (d.includes('both') || d.includes('hand & foot') || d.includes('hand/foot')) return true;
+    if (dept === 'Foot') return d.includes('foot') || d.includes('feet');
+    if (dept === 'Hand') return d.includes('hand') || (!d.includes('foot') && !d.includes('feet'));
+    return true;
+}
+
+function th_v2GroupOrder(group) {
+    const n = Number(group?.order);
+    return Number.isFinite(n) ? n : 999;
+}
+
+function th_v2BuildHierarchy(dept) {
+    const groups = new Map();
+
+    (bk_menuServices || []).forEach(s => {
+        if (!bk_menuIsActive(s)) return;
+        if (!th_v2ServiceDeptMatches(s, dept)) return;
+
+        const main = th_v2Text(s.mainCategory || s.ritualGroup || s.category || 'Services', 'Services');
+        const mainDesc = th_v2Text(s.mainCategoryDescription || s.ritualGroupDescription || '');
+        const subRaw = th_v2Text(s.subCategory || s.category || s.serviceType || '');
+        const sub = (!subRaw || subRaw.toLowerCase() === main.toLowerCase()) ? 'Services' : subRaw;
+        const subDesc = th_v2Text(s.categoryDescription || s.subCategoryDescription || s.serviceTypeDescription || '');
+        const sort = Number(s.sortOrder ?? s.order ?? 999);
+        const order = Number.isFinite(sort) ? sort : 999;
+
+        if (!groups.has(main)) {
+            groups.set(main, { title: main, desc: mainDesc, order, count: 0, subGroups: new Map() });
+        }
+        const g = groups.get(main);
+        if (!g.desc && mainDesc) g.desc = mainDesc;
+        g.order = Math.min(g.order, order);
+        g.count += 1;
+
+        if (!g.subGroups.has(sub)) {
+            g.subGroups.set(sub, { title: sub, desc: subDesc, order, items: [] });
+        }
+        const sg = g.subGroups.get(sub);
+        if (!sg.desc && subDesc) sg.desc = subDesc;
+        sg.order = Math.min(sg.order, order);
+        sg.items.push(s);
+    });
+
+    const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
+    groups.forEach(g => {
+        g.subGroups.forEach(sg => {
+            sg.items.sort((a, b) =>
+                (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+                (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+                String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' })
+            );
+        });
+    });
+
+    return Array.from(groups.values()).sort((a, b) =>
+        th_v2GroupOrder(a) - th_v2GroupOrder(b) ||
+        String(a.title).localeCompare(String(b.title), undefined, { numeric: true, sensitivity: 'base' })
+    );
+}
+
+function th_v2Meta(group) {
+    const subCount = Array.from(group.subGroups.values()).filter(sg => sg.title !== 'Services').length;
+    const count = group.count || 0;
+    if (group.desc) return `${group.desc} • ${count} option${count === 1 ? '' : 's'}`;
+    if (subCount) return `${subCount} section${subCount === 1 ? '' : 's'} • ${count} option${count === 1 ? '' : 's'}`;
+    return `${count} option${count === 1 ? '' : 's'}`;
+}
+
+function th_renderV2MenuForDept(dept) {
+    const container = document.getElementById('bk_serviceMenu');
+    if (!container) return;
+
+    container.classList.remove('th-ref-menu');
+    container.classList.add('th-v2-menu');
+
+    const groups = th_v2BuildHierarchy(dept);
+
+    function renderSubGroup(sg) {
+        const showHeading = sg.title && sg.title !== 'Services';
+        return `
+            ${showHeading ? `<div class="menu-subgroup-label th-v2-subgroup">${th_refEscape(sg.title)}${sg.desc ? `<span>${th_refEscape(sg.desc)}</span>` : ''}</div>` : ''}
+            <div class="thuraya-accordion-inner">${sg.items.map(s => _buildCard(s, dept)).join('')}</div>`;
+    }
+
+    function renderGroup(group, index) {
+        const sectionId = `bk_v2_${dept.toLowerCase()}_${index}`;
+        const subGroups = Array.from(group.subGroups.values()).sort((a, b) =>
+            th_v2GroupOrder(a) - th_v2GroupOrder(b) ||
+            String(a.title).localeCompare(String(b.title), undefined, { numeric: true, sensitivity: 'base' })
+        );
+        return `
+            <div class="thuraya-accordion-section th-v2-section" data-category="${th_refEscape(group.title)}">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="bk_toggleMenuSection(this)">
+                    <span class="thuraya-accordion-title-wrap">
+                        <span class="thuraya-accordion-title">${th_refEscape(group.title)}</span>
+                        <span class="thuraya-accordion-meta">${th_refEscape(th_v2Meta(group))}</span>
+                    </span>
+                    <span class="thuraya-accordion-chevron">›</span>
+                </button>
+                <div class="thuraya-accordion-body" id="${sectionId}">
+                    ${subGroups.map(renderSubGroup).join('')}
+                </div>
+            </div>`;
+    }
+
+    container.innerHTML = groups.map(renderGroup).join('') || `<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No ${dept.toLowerCase()} therapy services available.</p>`;
+
+    bk_selectedServices.forEach(sel => {
+        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const qty = document.getElementById('bk_qty_' + sel.id);
+        const input = cb || qty;
+        if (cb) { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
+        if (qty) qty.value = sel.qty || 1;
+        const section = input?.closest('.thuraya-accordion-section');
+        if (section) {
+            section.classList.add('open');
+            section.querySelector('.thuraya-accordion-head')?.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    setTimeout(() => { bk_syncAllAccordionHeights(container); bk_finalSyncCTAs(); }, 80);
+    updateBreakdown();
+}
+// ── END HF89B2 V2 renderer ─────────────────────────────────────────
+
 function renderMenuForDept(dept) {
+    if (bk_menuServices && bk_menuServices.some(s => s.sourceCollection === 'Menu_Settings_V2')) {
+        if (dept === 'Hand' || dept === 'Foot') return th_renderV2MenuForDept(dept);
+    }
     if (dept === 'Hand') return renderHandMenuFootStyle(dept);
     if (dept === 'Foot') return renderFootMenuCustom(dept);
     return renderMenuForDeptLegacy(dept);
