@@ -394,23 +394,43 @@ function bk_menuNumber(value, fallback = 0) {
 }
 
 function bk_menuIsActive(data = {}) {
-    if (data.isActive === false) return false;
-    const st = String(data.status || 'active').trim().toLowerCase();
-    return !['inactive', 'disabled', 'off', 'false', 'no', '0'].includes(st);
+    const rawActive = bk_menuField(data, ['isActive', 'Is Active', 'active', 'Active'], '');
+    if (rawActive !== '') {
+        const a = String(rawActive).trim().toLowerCase();
+        if (['false', 'no', '0', 'inactive', 'disabled', 'off'].includes(a)) return false;
+    }
+
+    const st = String(bk_menuField(data, ['status', 'Status'], 'active')).trim().toLowerCase();
+    return !['inactive', 'disabled', 'off', 'false', 'no', '0', 'archived', 'deleted'].includes(st);
+}
+
+function bk_cleanMenuLabel(value, fallback = '') {
+    return String(value ?? fallback)
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/^[•·\-–—]+\s*/g, '')
+        .trim();
+}
+
+function bk_normalizeInputType(value, serviceName = '') {
+    const raw = String(value || serviceName || '').trim().toLowerCase();
+    if (raw.includes('counter') || raw.includes('quantity') || raw.includes('per_nail') || raw.includes('per nail') || raw.includes('unit') || raw.includes('per finger') || raw.includes('per toe')) return 'counter';
+    if (raw.includes('checkbox') || raw.includes('multi') || raw.includes('add-on') || raw.includes('addon') || raw.includes('upgrade') || raw.includes('optional')) return 'checkbox';
+    return 'radio';
 }
 
 function bk_normalizeV2MenuDoc(doc) {
     const d = doc.data() || {};
-    const serviceName = bk_menuField(d, ['serviceName', 'Service Name', 'name', 'displayName'], 'Service');
-    const serviceDescription = bk_menuField(d, ['serviceDescription', 'Service Description', 'description', 'desc'], '');
-    const dept = bk_normalizeMenuDept(bk_menuField(d, ['department', 'Department', 'appliesTo', 'dept'], 'Hand'));
-    const sortOrder = bk_menuNumber(bk_menuField(d, ['sortOrder', 'Sort Order', 'priority', 'order'], 999), 999);
-    const price = bk_menuNumber(bk_menuField(d, ['price', 'Price', 'priceGHC', 'priceValue', 'unitPrice', 'amount'], 0), 0);
-    const duration = Math.max(0, parseInt(bk_menuNumber(bk_menuField(d, ['duration', 'Duration', 'durationMins', 'minutes'], 0), 0), 10) || 0);
-    const inputTypeRaw = String(bk_menuField(d, ['inputType', 'Input Type', 'selection', 'serviceType', 'Service Type'], '')).trim().toLowerCase();
-    const inputType = inputTypeRaw.includes('counter') || inputTypeRaw.includes('quantity') || inputTypeRaw.includes('per_nail') || inputTypeRaw.includes('per nail') || inputTypeRaw.includes('unit')
-        ? 'counter'
-        : (inputTypeRaw.includes('checkbox') || inputTypeRaw.includes('multi') || inputTypeRaw.includes('add') || inputTypeRaw.includes('upgrade') ? 'checkbox' : 'radio');
+    const serviceName = bk_cleanMenuLabel(bk_menuField(d, ['serviceName', 'Service Name', 'name', 'displayName', 'Service'], 'Service'), 'Service');
+    const serviceDescription = bk_cleanMenuLabel(bk_menuField(d, ['serviceDescription', 'Service Description', 'description', 'Description', 'desc'], ''));
+    const dept = bk_normalizeMenuDept(bk_menuField(d, ['department', 'Department', 'appliesTo', 'dept', 'Therapy', 'Service Department'], 'Hand'));
+    const sortOrder = bk_menuNumber(bk_menuField(d, ['sortOrder', 'Sort Order', 'priority', 'Priority', 'order', 'Order'], 999), 999);
+    const price = bk_menuNumber(bk_menuField(d, ['price', 'Price', 'priceGHC', 'Price GHC', 'priceValue', 'unitPrice', 'amount'], 0), 0);
+    const duration = Math.max(0, parseInt(bk_menuNumber(bk_menuField(d, ['duration', 'Duration', 'durationMins', 'Duration Mins', 'minutes', 'Minutes'], 0), 0), 10) || 0);
+    const inputType = bk_normalizeInputType(bk_menuField(d, ['inputType', 'Input Type', 'selection', 'Selection Type'], ''), serviceName);
+    const mainCategory = bk_cleanMenuLabel(bk_menuField(d, ['ritualGroup', 'Ritual Group', 'mainCategory', 'Main Category', 'mainMenu', 'Main Menu'], ''));
+    const category = bk_cleanMenuLabel(bk_menuField(d, ['category', 'Category', 'subCategory', 'Sub Category', 'subMenu', 'Sub Menu', 'serviceType', 'Service Type'], 'General'), 'General');
+    const subCategory = bk_cleanMenuLabel(bk_menuField(d, ['subCategory', 'Sub Category', 'category', 'Category', 'subMenu', 'Sub Menu'], category));
 
     return {
         ...d,
@@ -423,20 +443,20 @@ function bk_normalizeV2MenuDoc(doc) {
         serviceDescription,
         department: dept,
         appliesTo: dept,
-        mainCategory: bk_menuField(d, ['ritualGroup', 'Ritual Group', 'mainCategory', 'Main Category', 'mainMenu'], ''),
-        category: bk_menuField(d, ['category', 'Category', 'subCategory', 'Sub Category', 'subMenu', 'serviceType', 'Service Type'], 'General'),
-        subCategory: bk_menuField(d, ['subCategory', 'Sub Category', 'category', 'Category', 'subMenu'], ''),
-        serviceType: bk_menuField(d, ['serviceType', 'Service Type'], ''),
-        categoryDescription: bk_menuField(d, ['categoryDescription', 'Category Description', 'subCategoryDescription', 'Sub Category Description'], ''),
-        mainCategoryDescription: bk_menuField(d, ['ritualGroupDescription', 'Ritual Group Description', 'mainCategoryDescription', 'Main Category Description'], ''),
+        mainCategory,
+        category,
+        subCategory,
+        serviceType: bk_cleanMenuLabel(bk_menuField(d, ['serviceType', 'Service Type'], '')),
+        categoryDescription: bk_cleanMenuLabel(bk_menuField(d, ['categoryDescription', 'Category Description', 'subCategoryDescription', 'Sub Category Description'], '')),
+        mainCategoryDescription: bk_cleanMenuLabel(bk_menuField(d, ['ritualGroupDescription', 'Ritual Group Description', 'mainCategoryDescription', 'Main Category Description'], '')),
         price,
         priceGHC: price,
         duration,
         inputType,
         sortOrder,
         order: sortOrder,
-        status: 'Active',
-        isActive: true,
+        status: bk_cleanMenuLabel(bk_menuField(d, ['status', 'Status'], 'Active'), 'Active'),
+        isActive: bk_menuIsActive(d),
         tag: d.tag || 'None'
     };
 }
@@ -459,7 +479,24 @@ function bk_normalizeLegacyMenuDoc(doc) {
     };
 }
 
-function bk_renderLoadedMenu(services) {
+function bk_publishMenuSyncState(services, source = 'Menu_Settings_V2') {
+    const counts = (services || []).reduce((acc, s) => {
+        const dept = bk_normalizeMenuDept(s.department || s.appliesTo);
+        acc[dept] = (acc[dept] || 0) + 1;
+        return acc;
+    }, {});
+    window.THURAYA_CLIENT_MENU_SYNC = {
+        source,
+        total: (services || []).length,
+        hand: counts.Hand || 0,
+        foot: counts.Foot || 0,
+        both: counts.Both || 0,
+        updatedAt: new Date().toISOString()
+    };
+    window.bk_menuServices = services || [];
+}
+
+function bk_renderLoadedMenu(services, source = 'Menu_Settings_V2') {
     services.sort((a, b) =>
         String(a.department || '').localeCompare(String(b.department || '')) ||
         (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
@@ -467,6 +504,7 @@ function bk_renderLoadedMenu(services) {
         String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' })
     );
     bk_menuServices = services.filter(bk_menuIsActive);
+    bk_publishMenuSyncState(bk_menuServices, source);
     renderMenuForDept(bk_selectedDept);
 }
 
@@ -482,7 +520,7 @@ function loadMenu() {
             }
             const services = [];
             snap.forEach(doc => services.push(bk_normalizeLegacyMenuDoc(doc)));
-            bk_renderLoadedMenu(services);
+            bk_renderLoadedMenu(services, 'Menu_Services');
         }, err => {
             const c = document.getElementById('bk_serviceMenu');
             if (c) c.innerHTML =
@@ -498,7 +536,7 @@ function loadMenu() {
         });
 
         if (services.length) {
-            bk_renderLoadedMenu(services);
+            bk_renderLoadedMenu(services, 'Menu_Settings_V2');
             return;
         }
 
@@ -1379,6 +1417,22 @@ function renderMenuForDept(dept) {
     if (dept === 'Foot') return renderFootMenuCustom(dept);
     return renderMenuForDeptLegacy(dept);
 }
+
+
+// HF89B Client App Menu_Settings_V2 sync helper.
+// Read-only diagnostic used after staging upload: run THURAYA_CLIENT_MENU_SYNC in console.
+window.THURAYA_CLIENT_VALIDATE_MENU_SYNC = function(){
+    const state = window.THURAYA_CLIENT_MENU_SYNC || {};
+    return {
+        source: state.source || 'not-loaded',
+        total: state.total || 0,
+        hand: state.hand || 0,
+        foot: state.foot || 0,
+        both: state.both || 0,
+        ok: !!(state.total && (state.hand || state.both) && (state.foot || state.both)),
+        updatedAt: state.updatedAt || null
+    };
+};
 
 // ── THURAYA SERVICE MENU INTERACTION POLISH — SAFE UI ONLY ─────────────
 // Multiple sections can stay open. All sections start collapsed.
