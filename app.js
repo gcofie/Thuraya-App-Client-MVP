@@ -1476,6 +1476,53 @@ function th_v2TieBreak(a, b) {
     return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true, sensitivity: 'base' });
 }
 
+
+
+// HF89B7: Live Final Menu priority map from Menu Settings V2 display.
+// The Client App must match the Live Final Menu accordion order, not the
+// per-service Sort Order when service rows use their own internal ordering.
+const TH_LIVE_FINAL_MENU_PRIORITY = {
+    Hand: [
+        'Hand Therapies',
+        'Finishing Indulgences',
+        'Nail Architecture',
+        'Polish & Finish',
+        'The Pleiades Studio',
+        'Editorial Nail Art',
+        'Couture Nail Art',
+        'Embellishment Drawers'
+    ],
+    Foot: [
+        'Foundation Rituals',
+        'Urban Express Rituals',
+        'The Medi-Cleanse Series',
+        'Finishing Indulgences',
+        'Polish & Finish',
+        'Editorial Nail Art'
+    ]
+};
+
+function th_liveKey(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
+function th_livePriority(dept, title, fallback = 999999) {
+    const list = TH_LIVE_FINAL_MENU_PRIORITY[dept] || [];
+    const target = th_liveKey(title);
+    const idx = list.findIndex(x => th_liveKey(x) === target);
+    return idx >= 0 ? (idx + 1) * 1000 : fallback;
+}
+
+function th_liveSortGroups(dept, a, b) {
+    const ap = th_livePriority(dept, a.title, th_v2GroupOrder(a));
+    const bp = th_livePriority(dept, b.title, th_v2GroupOrder(b));
+    return ap - bp || th_v2GroupOrder(a) - th_v2GroupOrder(b) || th_v2TieBreak(a.title, b.title);
+}
+
 function th_v2BuildHierarchy(dept) {
     const groups = new Map();
 
@@ -1518,10 +1565,7 @@ function th_v2BuildHierarchy(dept) {
         });
     });
 
-    return Array.from(groups.values()).sort((a, b) =>
-        th_v2GroupOrder(a) - th_v2GroupOrder(b) ||
-        th_v2TieBreak(a.title, b.title)
-    );
+    return Array.from(groups.values()).sort((a, b) => th_liveSortGroups(dept, a, b));
 }
 
 function th_v2PublishSortAudit(services) {
