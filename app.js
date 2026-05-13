@@ -9,7 +9,7 @@ window.bk_setEarlyBookFor = function(val){
 // ============================================================
 //  THURAYA — CLIENT SELF-BOOKING   app.js
 //  Same Firebase backend as the Staff OS.
-//  Collections read:  Menu_Services, Users (techs),
+//  Collections read:  Menu_Settings_V2, Users (techs),
 //                     Appointments, Tax_Settings, Promos,
 //                     Client_Users
 //  Collections write: Client_Users, Appointments,
@@ -461,24 +461,6 @@ function bk_normalizeV2MenuDoc(doc) {
     };
 }
 
-function bk_normalizeLegacyMenuDoc(doc) {
-    const d = doc.data() || {};
-    return {
-        ...d,
-        id: doc.id,
-        sourceCollection: 'Menu_Services',
-        name: d.name || d.serviceName || 'Service',
-        desc: d.desc || d.description || d.serviceDescription || '',
-        department: bk_normalizeMenuDept(d.department || d.appliesTo),
-        price: bk_menuNumber(d.price ?? d.priceGHC ?? d.priceValue, 0),
-        duration: Math.max(0, parseInt(bk_menuNumber(d.duration, 0), 10) || 0),
-        sortOrder: bk_menuNumber(d.sortOrder ?? d.priority ?? d.order, 999),
-        inputType: d.inputType || 'radio',
-        status: bk_menuIsActive(d) ? 'Active' : 'Inactive',
-        isActive: bk_menuIsActive(d)
-    };
-}
-
 function bk_publishMenuSyncState(services, source = 'Menu_Settings_V2') {
     const counts = (services || []).reduce((acc, s) => {
         const dept = bk_normalizeMenuDept(s.department || s.appliesTo);
@@ -494,6 +476,11 @@ function bk_publishMenuSyncState(services, source = 'Menu_Settings_V2') {
         updatedAt: new Date().toISOString()
     };
     window.bk_menuServices = services || [];
+    try {
+        window.dispatchEvent(new CustomEvent('THURAYA_MENU_SETTINGS_V2_READY', {
+            detail: { services: window.bk_menuServices, source, counts }
+        }));
+    } catch (e) {}
 }
 
 function bk_renderLoadedMenu(services, source = 'Menu_Settings_V2') {
@@ -513,23 +500,6 @@ function bk_renderLoadedMenu(services, source = 'Menu_Settings_V2') {
 function loadMenu() {
     const container = document.getElementById('bk_serviceMenu');
 
-    const startLegacyFallback = () => {
-        db.collection('Menu_Services').onSnapshot(snap => {
-            if (snap.empty) {
-                if (container) container.innerHTML =
-                    '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
-                return;
-            }
-            const services = [];
-            snap.forEach(doc => services.push(bk_normalizeLegacyMenuDoc(doc)));
-            bk_renderLoadedMenu(services, 'Menu_Services');
-        }, err => {
-            const c = document.getElementById('bk_serviceMenu');
-            if (c) c.innerHTML =
-                `<p style="color:var(--error);text-align:center;padding:20px;">Could not load menu: ${err.message}</p>`;
-        });
-    };
-
     db.collection('Menu_Settings_V2').onSnapshot(snap => {
         const services = [];
         snap.forEach(doc => {
@@ -542,11 +512,17 @@ function loadMenu() {
             return;
         }
 
-        // Safe fallback for older/staging environments while production completes V2 CSV import.
-        startLegacyFallback();
+        bk_menuServices = [];
+        bk_publishMenuSyncState([], 'Menu_Settings_V2');
+        if (container) container.innerHTML =
+            '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No active services found in Menu Settings V2.</p>';
     }, err => {
-        console.warn('Menu_Settings_V2 unavailable, falling back to Menu_Services:', err);
-        startLegacyFallback();
+        console.error('Menu_Settings_V2 unavailable:', err);
+        bk_menuServices = [];
+        bk_publishMenuSyncState([], 'Menu_Settings_V2');
+        const c = document.getElementById('bk_serviceMenu');
+        if (c) c.innerHTML =
+            `<p style="color:var(--error);text-align:center;padding:20px;">Could not load Menu Settings V2: ${err.message}</p>`;
     });
 }
 
@@ -1653,12 +1629,13 @@ function th_renderV2MenuForDept(dept) {
 // ── END HF89B2 V2 renderer ─────────────────────────────────────────
 
 function renderMenuForDept(dept) {
-    if (bk_menuServices && bk_menuServices.some(s => s.sourceCollection === 'Menu_Settings_V2')) {
-        if (dept === 'Hand' || dept === 'Foot') return th_renderV2MenuForDept(dept);
-    }
-    if (dept === 'Hand') return renderHandMenuFootStyle(dept);
-    if (dept === 'Foot') return renderFootMenuCustom(dept);
-    return renderMenuForDeptLegacy(dept);
+    // HF89B8 Client App clean menu sync:
+    // Menu_Settings_V2 is the only live menu source. No legacy/static menu fallback.
+    if (dept === 'Hand' || dept === 'Foot') return th_renderV2MenuForDept(dept);
+
+    const container = document.getElementById('bk_serviceMenu');
+    if (container) container.innerHTML =
+        '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">Please choose Hand Therapy or Foot Therapy.</p>';
 }
 
 
@@ -1674,6 +1651,18 @@ window.THURAYA_CLIENT_VALIDATE_MENU_SYNC = function(){
         both: state.both || 0,
         ok: !!(state.total && (state.hand || state.both) && (state.foot || state.both)),
         updatedAt: state.updatedAt || null
+    };
+};
+
+// HF89B8 audit helper: confirms the Client App has no active legacy menu source.
+window.THURAYA_CLIENT_MENU_SOURCE_AUDIT = function(){
+    const services = window.bk_menuServices || [];
+    const sources = Array.from(new Set(services.map(s => s.sourceCollection || 'unknown')));
+    return {
+        expectedSource: 'Menu_Settings_V2',
+        activeSources: sources,
+        total: services.length,
+        clean: sources.length === 0 || sources.every(s => s === 'Menu_Settings_V2')
     };
 };
 
