@@ -1880,3 +1880,305 @@ window.grp_startSplitPlanner = function(dateStr, split) {
 // ============================================================
 // END HF89B11 — GROUP BOOKING LIVE MENU SETTINGS V2 REFRESH
 // ============================================================
+
+// ============================================================
+// HF89B12 — GROUP BOOKING DIRECT MENU_SETTINGS_V2 LOADER
+// Client App only. Final guard for Group Booking Step 2.
+// If window.bk_menuServices is not ready/visible to group-booking.js,
+// Group Booking loads Menu_Settings_V2 directly and renders from that cache.
+// No Staff App changes. No booking logic redesign.
+// ============================================================
+(function () {
+    const GROUP_FINAL_PRIORITY = {
+        Hand: [
+            'Hand Therapies',
+            'Finishing Indulgences',
+            'Nail Architecture',
+            'Polish & Finish',
+            'The Pleiades Studio',
+            'Editorial Nail Art',
+            'Couture Nail Art',
+            'Embellishment Drawers'
+        ],
+        Foot: [
+            'Foundation Rituals',
+            'Urban Express Rituals',
+            'The Medi-Cleanse Series',
+            'Finishing Indulgences',
+            'Polish & Finish',
+            'Editorial Nail Art'
+        ]
+    };
+
+    function txt(v, fallback = '') {
+        return String(v ?? fallback).trim().replace(/\s+/g, ' ');
+    }
+
+    function pick(obj, keys, fallback = '') {
+        for (const k of keys) {
+            if (obj && obj[k] !== undefined && obj[k] !== null && txt(obj[k]) !== '') return obj[k];
+        }
+        const compact = {};
+        Object.keys(obj || {}).forEach(k => {
+            compact[String(k).toLowerCase().replace(/[^a-z0-9]/g, '')] = obj[k];
+        });
+        for (const k of keys) {
+            const ck = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (compact[ck] !== undefined && compact[ck] !== null && txt(compact[ck]) !== '') return compact[ck];
+        }
+        return fallback;
+    }
+
+    function num(v, fallback = 999999) {
+        const n = Number(String(v ?? '').replace(/[^0-9.\-]/g, ''));
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    function active(raw) {
+        const activeValue = txt(pick(raw, ['isActive', 'Is Active', 'active', 'Active'], ''));
+        if (activeValue) {
+            const a = activeValue.toLowerCase();
+            if (['false', 'no', '0', 'inactive', 'disabled', 'off'].includes(a)) return false;
+        }
+        const status = txt(pick(raw, ['status', 'Status'], 'Active'), 'Active').toLowerCase();
+        return !['inactive', 'disabled', 'off', 'false', 'no', '0', 'archived', 'deleted'].includes(status);
+    }
+
+    function normDept(value) {
+        const d = txt(value, 'Hand').toLowerCase();
+        if (d.includes('both') || d.includes('hand & foot') || d.includes('hand/foot')) return 'Both';
+        if (d.includes('foot') || d.includes('feet')) return 'Foot';
+        return 'Hand';
+    }
+
+    function deptMatches(item, dept) {
+        const d = normDept(item.department || item.appliesTo || item.Department || item.dept);
+        return d === 'Both' || d === dept;
+    }
+
+    function inputType(raw, serviceName) {
+        const r = txt(raw || serviceName).toLowerCase();
+        if (r.includes('counter') || r.includes('quantity') || r.includes('per nail') || r.includes('per finger') || r.includes('per toe')) return 'counter';
+        if (r.includes('checkbox') || r.includes('multi') || r.includes('add-on') || r.includes('addon') || r.includes('upgrade') || r.includes('optional')) return 'checkbox';
+        return 'radio';
+    }
+
+    function normalizeDoc(id, raw) {
+        const serviceName = txt(pick(raw, ['serviceName', 'Service Name', 'name', 'displayName', 'Service'], 'Service'), 'Service');
+        const department = normDept(pick(raw, ['department', 'Department', 'appliesTo', 'dept', 'Therapy', 'Service Department'], 'Hand'));
+        const sortOrder = num(pick(raw, ['sortOrder', 'Sort Order', 'priority', 'Priority', 'order', 'Order'], 999999));
+        const price = Number(String(pick(raw, ['price', 'Price', 'priceGHC', 'Price GHC', 'priceValue', 'unitPrice', 'amount'], 0)).replace(/[^0-9.\-]/g, '')) || 0;
+        const duration = Number(String(pick(raw, ['duration', 'Duration', 'durationMins', 'Duration Mins', 'minutes', 'Minutes'], 0)).replace(/[^0-9.\-]/g, '')) || 0;
+        const mainCategory = txt(pick(raw, ['ritualGroup', 'Ritual Group', 'mainCategory', 'Main Category', 'mainMenu', 'Main Menu'], 'Services'), 'Services');
+        const subCategory = txt(pick(raw, ['subCategory', 'Sub Category', 'category', 'Category', 'subMenu', 'Sub Menu', 'serviceType', 'Service Type'], 'Services'), 'Services');
+        return {
+            ...raw,
+            id: String(id || raw.id || `${department}_${mainCategory}_${serviceName}_${sortOrder}`).replace(/[^a-zA-Z0-9_\-:.]/g, '_'),
+            sourceCollection: 'Menu_Settings_V2',
+            name: serviceName,
+            displayName: serviceName,
+            desc: txt(pick(raw, ['serviceDescription', 'Service Description', 'description', 'Description', 'desc'], '')),
+            description: txt(pick(raw, ['serviceDescription', 'Service Description', 'description', 'Description', 'desc'], '')),
+            department,
+            appliesTo: department,
+            mainCategory,
+            ritualGroup: mainCategory,
+            category: subCategory,
+            subCategory,
+            serviceType: txt(pick(raw, ['serviceType', 'Service Type'], '')),
+            mainCategoryDescription: txt(pick(raw, ['ritualGroupDescription', 'Ritual Group Description', 'mainCategoryDescription', 'Main Category Description'], '')),
+            categoryDescription: txt(pick(raw, ['categoryDescription', 'Category Description', 'subCategoryDescription', 'Sub Category Description', 'serviceTypeDescription', 'Service Type Description'], '')),
+            price,
+            priceGHC: price,
+            duration,
+            dur: duration,
+            inputType: inputType(pick(raw, ['inputType', 'Input Type', 'selection', 'Selection Type'], ''), serviceName),
+            sortOrder,
+            order: sortOrder,
+            status: txt(pick(raw, ['status', 'Status'], 'Active'), 'Active'),
+            isActive: active(raw)
+        };
+    }
+
+    function key(value) {
+        return txt(value).toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function priority(dept, title, fallback) {
+        const list = GROUP_FINAL_PRIORITY[dept] || [];
+        const idx = list.findIndex(x => key(x) === key(title));
+        return idx >= 0 ? (idx + 1) * 1000 : fallback;
+    }
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[m]));
+    }
+
+    function getLiveMenu() {
+        const appMenu = Array.isArray(window.bk_menuServices) ? window.bk_menuServices : [];
+        const groupCache = Array.isArray(window.THURAYA_GROUP_MENU_V2_CACHE) ? window.THURAYA_GROUP_MENU_V2_CACHE : [];
+        return appMenu.length ? appMenu : groupCache;
+    }
+
+    function startDirectSnapshot() {
+        if (window.__THURAYA_GROUP_DIRECT_MENU_LISTENER__) return;
+        if (typeof db === 'undefined' || !db || !db.collection) return;
+        window.__THURAYA_GROUP_DIRECT_MENU_LISTENER__ = true;
+        try {
+            db.collection('Menu_Settings_V2').onSnapshot(snap => {
+                const list = [];
+                snap.forEach(doc => {
+                    const raw = doc.data() || {};
+                    if (active(raw)) list.push(normalizeDoc(doc.id, raw));
+                });
+                window.THURAYA_GROUP_MENU_V2_CACHE = list;
+                if (!Array.isArray(window.bk_menuServices) || !window.bk_menuServices.length) window.bk_menuServices = list;
+                const groupScreen = document.getElementById('screen-group-services');
+                if (groupScreen && groupScreen.classList.contains('active') && typeof grp_renderServiceList === 'function') {
+                    grp_renderServiceList();
+                }
+            }, err => console.error('Group Menu_Settings_V2 direct load failed:', err));
+        } catch (e) {
+            console.error('Group Menu_Settings_V2 listener setup failed:', e);
+        }
+    }
+
+    function buildHierarchy(dept) {
+        const groups = new Map();
+        getLiveMenu().forEach(raw => {
+            const item = raw.sourceCollection === 'Menu_Settings_V2' ? raw : normalizeDoc(raw.id, raw);
+            if (!active(item)) return;
+            if (!deptMatches(item, dept)) return;
+
+            const main = txt(item.mainCategory || item.ritualGroup || item.category || 'Services', 'Services');
+            const mainDesc = txt(item.mainCategoryDescription || item.ritualGroupDescription || '');
+            const subRaw = txt(item.subCategory || item.category || item.serviceType || '');
+            const sub = (!subRaw || key(subRaw) === key(main)) ? 'Services' : subRaw;
+            const subDesc = txt(item.categoryDescription || item.subCategoryDescription || item.serviceTypeDescription || '');
+            const order = num(item.sortOrder ?? item.order);
+
+            if (!groups.has(main)) groups.set(main, { title: main, desc: mainDesc, order, count: 0, subGroups: new Map() });
+            const g = groups.get(main);
+            if (!g.desc && mainDesc) g.desc = mainDesc;
+            g.order = Math.min(g.order, order);
+            g.count += 1;
+
+            if (!g.subGroups.has(sub)) g.subGroups.set(sub, { title: sub, desc: subDesc, order, items: [] });
+            const sg = g.subGroups.get(sub);
+            if (!sg.desc && subDesc) sg.desc = subDesc;
+            sg.order = Math.min(sg.order, order);
+            sg.items.push(item);
+        });
+
+        const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
+        groups.forEach(g => g.subGroups.forEach(sg => sg.items.sort((a, b) =>
+            num(a.sortOrder ?? a.order) - num(b.sortOrder ?? b.order) ||
+            (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+            txt(a.name || a.serviceName).localeCompare(txt(b.name || b.serviceName), undefined, { numeric: true, sensitivity: 'base' })
+        )));
+
+        return Array.from(groups.values()).sort((a, b) =>
+            priority(dept, a.title, a.order) - priority(dept, b.title, b.order) ||
+            a.order - b.order ||
+            txt(a.title).localeCompare(txt(b.title), undefined, { numeric: true, sensitivity: 'base' })
+        );
+    }
+
+    function meta(group) {
+        const count = group.count || 0;
+        if (group.desc) return `${group.desc} • ${count} option${count === 1 ? '' : 's'}`;
+        return `${count} option${count === 1 ? '' : 's'}`;
+    }
+
+    function renderSubGroup(sg, dept, selected) {
+        const showHeading = sg.title && sg.title !== 'Services';
+        return `${showHeading ? `<div class="menu-subgroup-label th-v2-subgroup">${esc(sg.title)}${sg.desc ? `<span>${esc(sg.desc)}</span>` : ''}</div>` : ''}
+            <div class="thuraya-accordion-inner">${sg.items.map(service => grp_buildCard(service, dept, selected)).join('')}</div>`;
+    }
+
+    function renderGroup(group, dept, selected, index) {
+        const sectionId = `grp_v2_${dept.toLowerCase()}_${grp_activeMember}_${index}`;
+        const subGroups = Array.from(group.subGroups.values()).sort((a, b) => a.order - b.order || txt(a.title).localeCompare(txt(b.title), undefined, { numeric: true, sensitivity: 'base' }));
+        return `<div class="thuraya-accordion-section grp-accordion-section th-v2-section" data-category="${esc(group.title)}">
+            <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="grp_toggleMenuSection(this)">
+                <span class="thuraya-accordion-title-wrap">
+                    <span class="thuraya-accordion-title">${esc(group.title)}</span>
+                    <span class="thuraya-accordion-meta">${esc(meta(group))}</span>
+                </span>
+                <span class="thuraya-accordion-chevron">›</span>
+            </button>
+            <div class="thuraya-accordion-body" id="${sectionId}">${subGroups.map(sg => renderSubGroup(sg, dept, selected)).join('')}</div>
+        </div>`;
+    }
+
+    grp_renderServiceList = function () {
+        const container = document.getElementById('grp_serviceList');
+        if (!container) return;
+        startDirectSnapshot();
+
+        const member = grp_members[grp_activeMember];
+        if (!member) return;
+        const dept = member.dept || 'Hand';
+        const selected = member.selectedServices || [];
+        container.classList.remove('th-ref-menu');
+        container.classList.add('th-v2-menu');
+
+        const menu = getLiveMenu();
+        const groups = buildHierarchy(dept);
+        if (!menu.length) {
+            container.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:32px 0;">Loading ${dept.toLowerCase()} therapy services…</p>`;
+            return;
+        }
+        container.innerHTML = groups.map((group, index) => renderGroup(group, dept, selected, index)).join('') ||
+            `<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No ${dept.toLowerCase()} therapy services available.</p>`;
+
+        selected.forEach(item => {
+            const input = document.getElementById('grp_cb_' + item.id) || document.getElementById('grp_qty_' + item.id);
+            const card = input?.closest('.service-card');
+            const section = input?.closest('.thuraya-accordion-section');
+            if (card) card.classList.add('selected');
+            if (input && input.type !== 'number') input.checked = true;
+            if (section) {
+                section.classList.add('open');
+                section.querySelector('.thuraya-accordion-head')?.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        window.THURAYA_GROUP_MENU_SOURCE_AUDIT = function () {
+            const current = getLiveMenu();
+            const counts = current.reduce((acc, s) => {
+                const d = normDept(s.department || s.appliesTo || s.Department);
+                acc[d] = (acc[d] || 0) + 1;
+                return acc;
+            }, {});
+            return {
+                expectedSource: 'Menu_Settings_V2',
+                renderer: 'HF89B12_GROUP_DIRECT_V2_ONLY',
+                menuCount: current.length,
+                hand: counts.Hand || 0,
+                foot: counts.Foot || 0,
+                both: counts.Both || 0,
+                department: dept,
+                groups: groups.map(g => ({ title: g.title, count: g.count, order: g.order })),
+                clean: true
+            };
+        };
+
+        setTimeout(() => {
+            if (typeof bk_syncAllAccordionHeights === 'function') bk_syncAllAccordionHeights(container);
+            if (typeof window.grp_polishAndWireCTAs === 'function') window.grp_polishAndWireCTAs();
+        }, 80);
+    };
+
+    startDirectSnapshot();
+    window.THURAYA_GROUP_MENU_FORCE_REFRESH = function () {
+        startDirectSnapshot();
+        if (typeof grp_renderServiceList === 'function') grp_renderServiceList();
+        return window.THURAYA_GROUP_MENU_SOURCE_AUDIT ? window.THURAYA_GROUP_MENU_SOURCE_AUDIT() : null;
+    };
+
+    console.log('✅ HF89B12: Group Booking directly loads Menu_Settings_V2 for Hand and Foot when app menu is not ready.');
+})();
+// ============================================================
+// END HF89B12 — GROUP BOOKING DIRECT MENU_SETTINGS_V2 LOADER
+// ============================================================
