@@ -5399,3 +5399,45 @@ body,
 #screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-body{
   transition:max-height .28s ease !important;
 }
+
+/* =========================================================
+   HF89B15 — GROUP BOOKING V2 MENU ENGINE POLISH
+   Group Booking now consumes the same Menu_Settings_V2 hierarchy
+   as Individual Booking. This keeps long V2 categories visible.
+   ========================================================= */
+#grp_serviceList.th-v2-menu,
+#grp_serviceList.grp-v2-menu{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:14px !important;
+  padding:2px 0 44px !important;
+}
+
+#grp_serviceList.th-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body,
+#grp_serviceList.grp-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body{
+  max-height:none !important;
+}
+
+#grp_serviceList.th-v2-menu .th-v2-subgroup,
+#grp_serviceList.grp-v2-menu .th-v2-subgroup{
+  padding:14px 4px 4px !important;
+  color:rgba(47,41,34,.62) !important;
+  font-size:.70rem !important;
+  line-height:1.2 !important;
+  font-weight:850 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+}
+
+#grp_serviceList.th-v2-menu .th-v2-subgroup span,
+#grp_serviceList.grp-v2-menu .th-v2-subgroup span{
+  display:block !important;
+  margin-top:5px !important;
+  color:rgba(47,41,34,.58) !important;
+  font-size:.74rem !important;
+  line-height:1.35 !important;
+  font-weight:500 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
