@@ -5441,3 +5441,48 @@ body,
   letter-spacing:0 !important;
   text-transform:none !important;
 }
+
+/* =========================================================
+   THURAYA CLIENT LOGIN CTA POLISH — GOOGLE PRIMARY
+   Scope: welcome screen only. CSS-only; auth/guest/email logic untouched.
+   Purpose: keep Google as the primary action and make Guest as discreet as Email.
+   ========================================================= */
+#screen-welcome .welcome-actions{
+  gap:14px !important;
+}
+
+#screen-welcome #btnGoogleSignIn{
+  min-height:62px !important;
+  border-radius:28px !important;
+}
+
+#screen-welcome #btnGuestSignIn{
+  min-height:auto !important;
+  width:auto !important;
+  align-self:center !important;
+  margin-top:2px !important;
+  padding:6px 0 !important;
+  border:none !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  color:rgba(248,247,243,.92) !important;
+  box-shadow:none !important;
+  font-family:"DM Sans",system-ui,sans-serif !important;
+  font-size:.9rem !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+  line-height:1.25 !important;
+  text-transform:none !important;
+  text-decoration:underline !important;
+  text-decoration-thickness:1px !important;
+  text-underline-offset:4px !important;
+}
+
+#screen-welcome #btnGuestSignIn:hover,
+#screen-welcome #btnGuestSignIn:focus{
+  color:#F8F7F3 !important;
+  outline:none !important;
+}
+/* === END THURAYA CLIENT LOGIN CTA POLISH — GOOGLE PRIMARY === */
