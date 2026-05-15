@@ -275,10 +275,9 @@
 }
 #screen-welcome .welcome-copy{color:rgba(248,247,243,.92)!important;font-family:"Cormorant Garamond",Georgia,serif!important;font-weight:400!important;font-size:clamp(1.65rem,6.4vw,2.12rem)!important;line-height:1.32!important;margin:0 auto 54px!important;max-width:340px!important;opacity:1!important;}
 #screen-welcome .welcome-copy p{margin:0!important;}
-#screen-welcome .welcome-actions{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;max-width:340px!important;margin:0 auto!important;}
+#screen-welcome .welcome-actions{display:flex!important;flex-direction:column!important;gap:16px!important;width:100%!important;max-width:340px!important;margin:0 auto!important;}
 #screen-welcome #btnGoogleSignIn{min-height:62px!important;border-radius:28px!important;background:#F8F7F3!important;color:#000!important;border:1px solid #F8F7F3!important;box-shadow:none!important;font-family:"DM Sans",system-ui,sans-serif!important;font-weight:700!important;letter-spacing:.18em!important;text-transform:uppercase!important;}
-#screen-welcome #btnGuestSignIn{min-height:auto!important;width:auto!important;align-self:center!important;margin-top:2px!important;padding:6px 0!important;border:none!important;border-radius:0!important;background:transparent!important;color:rgba(248,247,243,.92)!important;box-shadow:none!important;font-family:"DM Sans",system-ui,sans-serif!important;font-size:.9rem!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important;text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:4px!important;}
-#screen-welcome #btnGuestSignIn:hover,#screen-welcome #btnGuestSignIn:focus{color:#F8F7F3!important;outline:none!important;}
+#screen-welcome #btnGuestSignIn{min-height:62px!important;border-radius:28px!important;background:#000!important;color:#F8F7F3!important;border:1px solid rgba(248,247,243,.72)!important;box-shadow:none!important;font-family:"DM Sans",system-ui,sans-serif!important;font-weight:700!important;letter-spacing:.18em!important;text-transform:uppercase!important;}
 #screen-welcome .divider,#screen-welcome .divider span{color:rgba(248,247,243,.78)!important;background:transparent!important;font-family:"Cormorant Garamond",Georgia,serif!important;font-size:1.15rem!important;margin:0!important;}
 #screen-welcome .p9b-email-wrap{display:block!important;margin-top:10px!important;}
 #screen-welcome .p9b-email-toggle,
@@ -340,7 +339,7 @@
                         Continue with Google
                     </button>
                     <button class="btn-outline full" id="btnGuestSignIn" onclick="continueAsGuest()">
-                        Continue as guest
+                        Continue as Guest
                     </button>
                     <button class="btn-ghost" id="btnViewBookings" style="display:none;">View My Bookings</button>
                 </div>
@@ -1251,6 +1250,62 @@
 </section>
 
 </template>
+
+
+
+<script id="thurayaWelcomeSecondaryRowPolish">
+(function(){
+  function placeSecondaryLoginRow(){
+    var screen = document.getElementById('screen-welcome');
+    if (!screen) return;
+
+    var inner = screen.querySelector('.welcome-inner');
+    var actions = screen.querySelector('.welcome-actions');
+    var guest = document.getElementById('btnGuestSignIn');
+    if (!inner || !actions || !guest) return;
+
+    var row = document.getElementById('thurayaLoginSecondaryRow');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'thurayaLoginSecondaryRow';
+      row.className = 'thuraya-login-secondary-row';
+      row.setAttribute('aria-label', 'Alternative sign in options');
+      inner.appendChild(row);
+    }
+
+    if (guest.parentElement !== row) row.appendChild(guest);
+
+    var separator = row.querySelector('.thuraya-login-secondary-separator');
+    if (!separator) {
+      separator = document.createElement('span');
+      separator.className = 'thuraya-login-secondary-separator';
+      separator.setAttribute('aria-hidden', 'true');
+      separator.textContent = '|';
+      row.appendChild(separator);
+    }
+
+    var emailWrap = screen.querySelector('.p9b-email-wrap, .p9-softgate-card, .p9b-email-block');
+    var emailToggle = screen.querySelector('.p9b-email-toggle, [data-p9b-email-toggle], button[onclick*="Email"], button[onclick*="email"]');
+    var emailNode = emailWrap || (emailToggle ? emailToggle.parentElement : null);
+
+    if (emailNode && emailNode !== row && emailNode.parentElement !== row) {
+      row.appendChild(emailNode);
+    } else if (emailToggle && emailToggle.parentElement !== row && !emailWrap) {
+      row.appendChild(emailToggle);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    placeSecondaryLoginRow();
+    setTimeout(placeSecondaryLoginRow, 250);
+    setTimeout(placeSecondaryLoginRow, 900);
+  });
+  window.addEventListener('load', function(){
+    placeSecondaryLoginRow();
+    setTimeout(placeSecondaryLoginRow, 700);
+  });
+})();
+</script>
 
 </body>
 </html>
