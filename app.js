@@ -3713,6 +3713,9 @@ window.bk_upcomingReschedule = function() {
         const shouldShow = hasClient && activeId && !NAV_HIDDEN_SCREENS.has(activeId);
 
         nav.style.display = shouldShow ? 'grid' : 'none';
+        nav.hidden = !shouldShow;
+        nav.classList.toggle('thuraya-bottom-nav--hidden', !shouldShow);
+        nav.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
         if (!shouldShow) return;
 
         nav.querySelectorAll('.thuraya-bottom-nav-item').forEach(btn => btn.classList.remove('active'));

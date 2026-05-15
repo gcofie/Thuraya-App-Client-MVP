@@ -5562,3 +5562,83 @@ body,
   }
 }
 /* === END THURAYA WELCOME LOGIN SECONDARY ROW — FINAL POLISH === */
+
+/* =========================================================
+   THURAYA WELCOME MOBILE FIX — SECONDARY LINKS + NAV HIDE
+   Scope: welcome/login page only. Logic untouched.
+   Purpose: keep Guest/Email visible at bottom on mobile and
+            prevent shortcut nav from appearing before login.
+   ========================================================= */
+
+/* Respect JS inline hiding even though the nav base style uses !important. */
+.thuraya-bottom-nav[style*="display: none"],
+.thuraya-bottom-nav.thuraya-bottom-nav--hidden,
+#app:has(#screen-welcome.active) .thuraya-bottom-nav,
+#screen-welcome.active ~ .thuraya-bottom-nav{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+#screen-welcome .welcome-inner{
+  padding-bottom:148px !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row{
+  bottom:calc(68px + env(safe-area-inset-bottom)) !important;
+  gap:18px !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row #btnGuestSignIn,
+#screen-welcome .thuraya-login-secondary-row .p9b-email-toggle,
+#screen-welcome .thuraya-login-secondary-row .btn-ghost,
+#screen-welcome .thuraya-login-secondary-row button,
+#screen-welcome .thuraya-login-secondary-row a{
+  color:rgba(248,247,243,.58) !important;
+  text-decoration-color:rgba(248,247,243,.48) !important;
+  font-weight:500 !important;
+  font-size:clamp(.78rem, 2.9vw, .88rem) !important;
+  line-height:1.12 !important;
+  opacity:1 !important;
+  text-decoration-thickness:.75px !important;
+  text-underline-offset:4px !important;
+}
+
+#screen-welcome .thuraya-login-secondary-separator{
+  color:rgba(248,247,243,.36) !important;
+  font-weight:400 !important;
+  opacity:1 !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row #btnGuestSignIn:active,
+#screen-welcome .thuraya-login-secondary-row .p9b-email-toggle:active,
+#screen-welcome .thuraya-login-secondary-row .btn-ghost:active,
+#screen-welcome .thuraya-login-secondary-row button:active,
+#screen-welcome .thuraya-login-secondary-row a:active{
+  color:rgba(248,247,243,.78) !important;
+  text-decoration-color:rgba(248,247,243,.68) !important;
+}
+
+@media(max-width:430px){
+  #screen-welcome .welcome-inner{
+    padding-bottom:142px !important;
+  }
+
+  #screen-welcome .thuraya-login-secondary-row{
+    left:16px !important;
+    right:16px !important;
+    bottom:calc(70px + env(safe-area-inset-bottom)) !important;
+    gap:16px !important;
+  }
+
+  #screen-welcome .thuraya-login-secondary-row #btnGuestSignIn,
+  #screen-welcome .thuraya-login-secondary-row .p9b-email-toggle,
+  #screen-welcome .thuraya-login-secondary-row .btn-ghost,
+  #screen-welcome .thuraya-login-secondary-row button,
+  #screen-welcome .thuraya-login-secondary-row a{
+    font-size:.82rem !important;
+    font-weight:500 !important;
+  }
+}
+/* === END THURAYA WELCOME MOBILE FIX === */
