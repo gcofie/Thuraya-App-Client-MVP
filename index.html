@@ -216,7 +216,7 @@
             }
         }
     </style>
-  <link rel="stylesheet" href="brand.css?v=client-availability-hf18-20260509">
+  <link rel="stylesheet" href="brand.css?v=client-emergency-booking-hf28-20260509">
 <style id="thurayaInlineContinueFix">
         .thuraya-inline-continue {
             width: 100%;
@@ -1227,7 +1227,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
-<script src="app.js?v=client-hf21-group-state-reset-20260509"></script>
+<script src="app.js?v=client-hf89b-menu-settings-v2-sync-20260512"></script>
     <script src="group-booking.js?v=group-pick-visible-hardfix-20260504"></script>
     <script src="availability.js?v=phase8-smart-booking-20260427"></script>
     <script src="phase-9a-soft-login-gate.js?v=phase9a-full-20260428"></script>
@@ -1250,6 +1250,62 @@
 </section>
 
 </template>
+
+
+
+<script id="thurayaWelcomeSecondaryRowPolish">
+(function(){
+  function placeSecondaryLoginRow(){
+    var screen = document.getElementById('screen-welcome');
+    if (!screen) return;
+
+    var inner = screen.querySelector('.welcome-inner');
+    var actions = screen.querySelector('.welcome-actions');
+    var guest = document.getElementById('btnGuestSignIn');
+    if (!inner || !actions || !guest) return;
+
+    var row = document.getElementById('thurayaLoginSecondaryRow');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'thurayaLoginSecondaryRow';
+      row.className = 'thuraya-login-secondary-row';
+      row.setAttribute('aria-label', 'Alternative sign in options');
+      inner.appendChild(row);
+    }
+
+    if (guest.parentElement !== row) row.appendChild(guest);
+
+    var separator = row.querySelector('.thuraya-login-secondary-separator');
+    if (!separator) {
+      separator = document.createElement('span');
+      separator.className = 'thuraya-login-secondary-separator';
+      separator.setAttribute('aria-hidden', 'true');
+      separator.textContent = '|';
+      row.appendChild(separator);
+    }
+
+    var emailWrap = screen.querySelector('.p9b-email-wrap, .p9-softgate-card, .p9b-email-block');
+    var emailToggle = screen.querySelector('.p9b-email-toggle, [data-p9b-email-toggle], button[onclick*="Email"], button[onclick*="email"]');
+    var emailNode = emailWrap || (emailToggle ? emailToggle.parentElement : null);
+
+    if (emailNode && emailNode !== row && emailNode.parentElement !== row) {
+      row.appendChild(emailNode);
+    } else if (emailToggle && emailToggle.parentElement !== row && !emailWrap) {
+      row.appendChild(emailToggle);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    placeSecondaryLoginRow();
+    setTimeout(placeSecondaryLoginRow, 250);
+    setTimeout(placeSecondaryLoginRow, 900);
+  });
+  window.addEventListener('load', function(){
+    placeSecondaryLoginRow();
+    setTimeout(placeSecondaryLoginRow, 700);
+  });
+})();
+</script>
 
 </body>
 </html>

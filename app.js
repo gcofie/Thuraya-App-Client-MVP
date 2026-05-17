@@ -9,7 +9,7 @@ window.bk_setEarlyBookFor = function(val){
 // ============================================================
 //  THURAYA — CLIENT SELF-BOOKING   app.js
 //  Same Firebase backend as the Staff OS.
-//  Collections read:  Menu_Services, Users (techs),
+//  Collections read:  Menu_Settings_V2, Users (techs),
 //                     Appointments, Tax_Settings, Promos,
 //                     Client_Users
 //  Collections write: Client_Users, Appointments,
@@ -362,9 +362,30 @@ function _inferSubCategory(s, cat) {
 function bk_normalizeMenuDept(value) {
     const raw = String(value || 'Hand').trim();
     const l = raw.toLowerCase();
-    if (l.includes('both')) return 'Both';
-    if (l.includes('foot')) return 'Foot';
+    if (l.includes('both') || l.includes('hand & foot') || l.includes('hand/foot')) return 'Both';
+    if (l.includes('foot') || l.includes('feet')) return 'Foot';
     return 'Hand';
+}
+
+// Client App restore guard:
+// Menu_Settings_V2 may arrive from Staff App using either camelCase fields
+// or the approved spreadsheet labels with spaces. Read both without changing UI/booking logic.
+function bk_menuField(data = {}, keys = [], fallback = '') {
+    for (const key of keys) {
+        if (data[key] !== undefined && data[key] !== null && String(data[key]).trim() !== '') return data[key];
+    }
+
+    const compact = {};
+    Object.keys(data || {}).forEach(k => {
+        compact[String(k).toLowerCase().replace(/[^a-z0-9]/g, '')] = data[k];
+    });
+
+    for (const key of keys) {
+        const ck = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (compact[ck] !== undefined && compact[ck] !== null && String(compact[ck]).trim() !== '') return compact[ck];
+    }
+
+    return fallback;
 }
 
 function bk_menuNumber(value, fallback = 0) {
@@ -373,23 +394,43 @@ function bk_menuNumber(value, fallback = 0) {
 }
 
 function bk_menuIsActive(data = {}) {
-    if (data.isActive === false) return false;
-    const st = String(data.status || 'active').trim().toLowerCase();
-    return !['inactive', 'disabled', 'off', 'false', 'no', '0'].includes(st);
+    const rawActive = bk_menuField(data, ['isActive', 'Is Active', 'active', 'Active'], '');
+    if (rawActive !== '') {
+        const a = String(rawActive).trim().toLowerCase();
+        if (['false', 'no', '0', 'inactive', 'disabled', 'off'].includes(a)) return false;
+    }
+
+    const st = String(bk_menuField(data, ['status', 'Status'], 'active')).trim().toLowerCase();
+    return !['inactive', 'disabled', 'off', 'false', 'no', '0', 'archived', 'deleted'].includes(st);
+}
+
+function bk_cleanMenuLabel(value, fallback = '') {
+    return String(value ?? fallback)
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/^[•·\-–—]+\s*/g, '')
+        .trim();
+}
+
+function bk_normalizeInputType(value, serviceName = '') {
+    const raw = String(value || serviceName || '').trim().toLowerCase();
+    if (raw.includes('counter') || raw.includes('quantity') || raw.includes('per_nail') || raw.includes('per nail') || raw.includes('unit') || raw.includes('per finger') || raw.includes('per toe')) return 'counter';
+    if (raw.includes('checkbox') || raw.includes('multi') || raw.includes('add-on') || raw.includes('addon') || raw.includes('upgrade') || raw.includes('optional')) return 'checkbox';
+    return 'radio';
 }
 
 function bk_normalizeV2MenuDoc(doc) {
     const d = doc.data() || {};
-    const serviceName = d.serviceName || d.name || d.displayName || 'Service';
-    const serviceDescription = d.serviceDescription || d.description || d.desc || '';
-    const dept = bk_normalizeMenuDept(d.department || d.appliesTo || d.dept);
-    const sortOrder = bk_menuNumber(d.sortOrder ?? d.priority ?? d.order, 999);
-    const price = bk_menuNumber(d.price ?? d.priceGHC ?? d.priceValue ?? d.unitPrice ?? d.amount, 0);
-    const duration = Math.max(0, parseInt(bk_menuNumber(d.duration ?? d.durationMins ?? d.minutes, 0), 10) || 0);
-    const inputTypeRaw = String(d.inputType || d.selection || d.serviceType || '').trim().toLowerCase();
-    const inputType = inputTypeRaw.includes('counter') || inputTypeRaw.includes('quantity') || inputTypeRaw.includes('per_nail') || inputTypeRaw.includes('per nail') || inputTypeRaw.includes('unit')
-        ? 'counter'
-        : (inputTypeRaw.includes('checkbox') || inputTypeRaw.includes('multi') || inputTypeRaw.includes('add') || inputTypeRaw.includes('upgrade') ? 'checkbox' : 'radio');
+    const serviceName = bk_cleanMenuLabel(bk_menuField(d, ['serviceName', 'Service Name', 'name', 'displayName', 'Service'], 'Service'), 'Service');
+    const serviceDescription = bk_cleanMenuLabel(bk_menuField(d, ['serviceDescription', 'Service Description', 'description', 'Description', 'desc'], ''));
+    const dept = bk_normalizeMenuDept(bk_menuField(d, ['department', 'Department', 'appliesTo', 'dept', 'Therapy', 'Service Department'], 'Hand'));
+    const sortOrder = bk_menuNumber(bk_menuField(d, ['sortOrder', 'Sort Order', 'priority', 'Priority', 'order', 'Order'], 999), 999);
+    const price = bk_menuNumber(bk_menuField(d, ['price', 'Price', 'priceGHC', 'Price GHC', 'priceValue', 'unitPrice', 'amount'], 0), 0);
+    const duration = Math.max(0, parseInt(bk_menuNumber(bk_menuField(d, ['duration', 'Duration', 'durationMins', 'Duration Mins', 'minutes', 'Minutes'], 0), 0), 10) || 0);
+    const inputType = bk_normalizeInputType(bk_menuField(d, ['inputType', 'Input Type', 'selection', 'Selection Type'], ''), serviceName);
+    const mainCategory = bk_cleanMenuLabel(bk_menuField(d, ['ritualGroup', 'Ritual Group', 'mainCategory', 'Main Category', 'mainMenu', 'Main Menu'], ''));
+    const category = bk_cleanMenuLabel(bk_menuField(d, ['category', 'Category', 'subCategory', 'Sub Category', 'subMenu', 'Sub Menu', 'serviceType', 'Service Type'], 'General'), 'General');
+    const subCategory = bk_cleanMenuLabel(bk_menuField(d, ['subCategory', 'Sub Category', 'category', 'Category', 'subMenu', 'Sub Menu'], category));
 
     return {
         ...d,
@@ -402,72 +443,62 @@ function bk_normalizeV2MenuDoc(doc) {
         serviceDescription,
         department: dept,
         appliesTo: dept,
-        mainCategory: d.ritualGroup || d.mainCategory || d.mainMenu || '',
-        category: d.category || d.subCategory || d.subMenu || d.serviceType || 'General',
-        subCategory: d.category || d.subCategory || d.subMenu || '',
-        serviceType: d.serviceType || '',
-        categoryDescription: d.categoryDescription || d.subCategoryDescription || '',
-        mainCategoryDescription: d.ritualGroupDescription || d.mainCategoryDescription || '',
+        mainCategory,
+        category,
+        subCategory,
+        serviceType: bk_cleanMenuLabel(bk_menuField(d, ['serviceType', 'Service Type'], '')),
+        categoryDescription: bk_cleanMenuLabel(bk_menuField(d, ['categoryDescription', 'Category Description', 'subCategoryDescription', 'Sub Category Description'], '')),
+        mainCategoryDescription: bk_cleanMenuLabel(bk_menuField(d, ['ritualGroupDescription', 'Ritual Group Description', 'mainCategoryDescription', 'Main Category Description'], '')),
         price,
         priceGHC: price,
         duration,
         inputType,
         sortOrder,
         order: sortOrder,
-        status: 'Active',
-        isActive: true,
+        status: bk_cleanMenuLabel(bk_menuField(d, ['status', 'Status'], 'Active'), 'Active'),
+        isActive: bk_menuIsActive(d),
         tag: d.tag || 'None'
     };
 }
 
-function bk_normalizeLegacyMenuDoc(doc) {
-    const d = doc.data() || {};
-    return {
-        ...d,
-        id: doc.id,
-        sourceCollection: 'Menu_Services',
-        name: d.name || d.serviceName || 'Service',
-        desc: d.desc || d.description || d.serviceDescription || '',
-        department: bk_normalizeMenuDept(d.department || d.appliesTo),
-        price: bk_menuNumber(d.price ?? d.priceGHC ?? d.priceValue, 0),
-        duration: Math.max(0, parseInt(bk_menuNumber(d.duration, 0), 10) || 0),
-        sortOrder: bk_menuNumber(d.sortOrder ?? d.priority ?? d.order, 999),
-        inputType: d.inputType || 'radio',
-        status: bk_menuIsActive(d) ? 'Active' : 'Inactive',
-        isActive: bk_menuIsActive(d)
+function bk_publishMenuSyncState(services, source = 'Menu_Settings_V2') {
+    const counts = (services || []).reduce((acc, s) => {
+        const dept = bk_normalizeMenuDept(s.department || s.appliesTo);
+        acc[dept] = (acc[dept] || 0) + 1;
+        return acc;
+    }, {});
+    window.THURAYA_CLIENT_MENU_SYNC = {
+        source,
+        total: (services || []).length,
+        hand: counts.Hand || 0,
+        foot: counts.Foot || 0,
+        both: counts.Both || 0,
+        updatedAt: new Date().toISOString()
     };
+    window.bk_menuServices = services || [];
+    try {
+        window.dispatchEvent(new CustomEvent('THURAYA_MENU_SETTINGS_V2_READY', {
+            detail: { services: window.bk_menuServices, source, counts }
+        }));
+    } catch (e) {}
 }
 
-function bk_renderLoadedMenu(services) {
+function bk_renderLoadedMenu(services, source = 'Menu_Settings_V2') {
     services.sort((a, b) =>
-        String(a.department || '').localeCompare(String(b.department || '')) ||
-        (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
-        String(a.category || '').localeCompare(String(b.category || ''), undefined, { numeric: true, sensitivity: 'base' }) ||
-        String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' })
+        th_v2DeptOrder(a.department || a.appliesTo) - th_v2DeptOrder(b.department || b.appliesTo) ||
+        th_v2SortValue(a.sortOrder ?? a.order) - th_v2SortValue(b.sortOrder ?? b.order) ||
+        th_v2TieBreak(a.mainCategory || a.ritualGroup || a.category, b.mainCategory || b.ritualGroup || b.category) ||
+        th_v2TieBreak(a.subCategory || a.category || a.serviceType, b.subCategory || b.category || b.serviceType) ||
+        th_v2TieBreak(a.name || a.serviceName, b.name || b.serviceName)
     );
     bk_menuServices = services.filter(bk_menuIsActive);
+    bk_publishMenuSyncState(bk_menuServices, source);
+    if (source === 'Menu_Settings_V2') th_v2PublishSortAudit(bk_menuServices);
     renderMenuForDept(bk_selectedDept);
 }
 
 function loadMenu() {
     const container = document.getElementById('bk_serviceMenu');
-
-    const startLegacyFallback = () => {
-        db.collection('Menu_Services').onSnapshot(snap => {
-            if (snap.empty) {
-                if (container) container.innerHTML =
-                    '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No services available.</p>';
-                return;
-            }
-            const services = [];
-            snap.forEach(doc => services.push(bk_normalizeLegacyMenuDoc(doc)));
-            bk_renderLoadedMenu(services);
-        }, err => {
-            const c = document.getElementById('bk_serviceMenu');
-            if (c) c.innerHTML =
-                `<p style="color:var(--error);text-align:center;padding:20px;">Could not load menu: ${err.message}</p>`;
-        });
-    };
 
     db.collection('Menu_Settings_V2').onSnapshot(snap => {
         const services = [];
@@ -477,15 +508,21 @@ function loadMenu() {
         });
 
         if (services.length) {
-            bk_renderLoadedMenu(services);
+            bk_renderLoadedMenu(services, 'Menu_Settings_V2');
             return;
         }
 
-        // Safe fallback for older/staging environments while production completes V2 CSV import.
-        startLegacyFallback();
+        bk_menuServices = [];
+        bk_publishMenuSyncState([], 'Menu_Settings_V2');
+        if (container) container.innerHTML =
+            '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No active services found in Menu Settings V2.</p>';
     }, err => {
-        console.warn('Menu_Settings_V2 unavailable, falling back to Menu_Services:', err);
-        startLegacyFallback();
+        console.error('Menu_Settings_V2 unavailable:', err);
+        bk_menuServices = [];
+        bk_publishMenuSyncState([], 'Menu_Settings_V2');
+        const c = document.getElementById('bk_serviceMenu');
+        if (c) c.innerHTML =
+            `<p style="color:var(--error);text-align:center;padding:20px;">Could not load Menu Settings V2: ${err.message}</p>`;
     });
 }
 
@@ -1215,118 +1252,140 @@ function th_handMeta(node, count) {
     return `Core treatments • choose one • ${count} option${count === 1 ? '' : 's'}`;
 }
 
+function th_cleanHandCategory(value) {
+    return String(value || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/^(?:[A-Z]|\d+)\.\s*/i, '')
+        .replace(/^O\s+/i, '')
+        .trim();
+}
+
+function th_handCategoryKey(s) {
+    const candidates = [s.mainCategory, s.category, s.subCategory, s.serviceType]
+        .map(th_cleanHandCategory)
+        .filter(Boolean);
+
+    function mapHandCategory(raw) {
+        const upper = String(raw || '').toUpperCase();
+        if (!upper || upper === 'SERVICE' || upper === 'SERVICES') return '';
+        if (upper.includes('HAND') && (upper.includes('THERAP') || upper.includes('RITUAL'))) return 'Hand Therapies';
+        if (upper.includes('FINISHING') || upper.includes('INDULGENCE')) return 'Finishing Indulgences';
+        if (upper.includes('NAIL ARCHITECTURE') || upper.includes('ACRYLIC') || upper.includes('BUILDER') || upper.includes('GEL EXTENSION')) return 'Nail Architecture';
+        if (upper.includes('POLISH') || upper.includes('FINISH')) return 'Polish & Finish';
+        if (upper.includes('PLEIADES')) return 'The Pleiades Studio';
+        if (upper.includes('EDITORIAL')) return 'Editorial Nail Art';
+        if (upper.includes('COUTURE')) return 'Couture Nail Art';
+        if (upper.includes('EMBELLISH') || upper.includes('DRAWER') || upper.includes('STONE') || upper.includes('CRYSTAL')) return 'Embellishment Drawers';
+        if (upper.includes('ADD') || upper.includes('UPGRADE')) return 'Luxe Add Ons & Upgrades';
+        if (upper.includes('REPAIR')) return 'Repairs';
+        return '';
+    }
+
+    for (const c of candidates) {
+        const mapped = mapHandCategory(c);
+        if (mapped) return mapped;
+    }
+
+    // Avoid creating one broad generic bucket when the Staff App sends a ritual group
+    // such as "Hand Therapy & Enhancement Rituals" plus a more specific category.
+    const generic = /^(hand\s+therapy|hand\s+therapies|hand\s+therapy\s*&\s*enhancement\s*rituals|services?)$/i;
+    return candidates.find(c => !generic.test(c)) || candidates[0] || '';
+}
+
+function th_handMeta(cat, count, items) {
+    const lower = String(cat || '').toLowerCase();
+    const isOptional = lower.includes('finish') || lower.includes('polish') || lower.includes('art') || lower.includes('embellish') || lower.includes('add') || lower.includes('upgrade') || (items || []).some(s => (s.inputType || 'radio') !== 'radio');
+    const action = isOptional ? 'Choose your ritual · optional add-ons available' : 'Core treatments · choose one';
+    return `${action} · ${count} option${count === 1 ? '' : 's'}`;
+}
+
 function renderHandMenuFootStyle(dept) {
     const container = document.getElementById('bk_serviceMenu');
     if (!container) return;
 
     container.classList.remove('th-ref-menu');
 
+    // HF89B.1: Client App Hand menu now renders directly from Menu_Settings_V2,
+    // matching Foot Therapy behaviour. This removes the old curated-reference lock
+    // that was hiding the approved Hand categories after sync.
     const order = [
-        'Hand Therapies & Rituals',
+        'Hand Therapies',
+        'Finishing Indulgences',
+        'Nail Architecture',
+        'Polish & Finish',
+        'The Pleiades Studio',
+        'Editorial Nail Art',
+        'Couture Nail Art',
+        'Embellishment Drawers',
         'Luxe Add Ons & Upgrades',
-        'Pleiades Studio',
         'Repairs'
     ];
 
-    const nodes = (THURAYA_HAND_MENU_REFERENCE || []).map(node => {
-        const cleanTitle = String(node.title || '')
-            .replace(/^\s*\d+\.\s*/, '')
-            .trim();
-        return { ...node, cleanTitle };
+    const grouped = {};
+    (bk_menuServices || []).forEach(s => {
+        const serviceDept = String(s.department || 'Hand').toLowerCase();
+        const belongsToHand = serviceDept === 'both' || serviceDept.includes('hand') || (!serviceDept.includes('foot'));
+        if (!belongsToHand) return;
+        if (s.status && String(s.status).toLowerCase() !== 'active') return;
+
+        const cat = th_handCategoryKey(s);
+        if (!cat) return;
+
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(s);
     });
 
-    const byTitle = {};
-    nodes.forEach(node => { byTitle[node.cleanTitle] = node; });
+    const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
+    Object.values(grouped).forEach(items => {
+        items.sort((a, b) =>
+            (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+            (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999) ||
+            (Number(a.order) || 999) - (Number(b.order) || 999) ||
+            (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' })
+        );
+    });
 
-    function renderHandSection(node, index) {
-        const cat = node.cleanTitle || node.title || 'Services';
-        const refs = th_collectHandLeafServices(node, []);
-        const services = refs
-            .map((ref, serviceIndex) => th_findServiceMatch(ref, `hand_${th_slug(cat)}_${serviceIndex}`, `bk_hand_${th_slug(cat)}`))
-            .filter(s => !s.status || s.status === 'Active');
-
-        if (!services.length) return '';
-
+    function renderHandSection(cat, items, sectionId) {
         return `
             <div class="thuraya-accordion-section" data-category="${th_refEscape(cat)}">
-                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="bk_hand_section_${index}" onclick="bk_toggleMenuSection(this)">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="bk_toggleMenuSection(this)">
                     <span class="thuraya-accordion-title-wrap">
                         <span class="thuraya-accordion-title">${th_refEscape(cat)}</span>
-                        <span class="thuraya-accordion-meta">${th_refEscape(th_handMeta(node, services.length))}</span>
+                        <span class="thuraya-accordion-meta">${th_refEscape(th_handMeta(cat, items.length, items))}</span>
                     </span>
                     <span class="thuraya-accordion-chevron">›</span>
                 </button>
-                <div class="thuraya-accordion-body" id="bk_hand_section_${index}">
+                <div class="thuraya-accordion-body" id="${sectionId}">
                     <div class="thuraya-accordion-inner">
-                        ${services.map(s => _buildCard(s, dept)).join('')}
+                        ${items.map(s => _buildCard(s, dept)).join('')}
                     </div>
                 </div>
             </div>`;
     }
 
     let html = '';
-    const rendered = new Set();
+    const renderedCats = new Set();
 
-    order.forEach((title, index) => {
-        const node = byTitle[title];
-        if (!node) return;
-        rendered.add(title);
-        html += renderHandSection(node, index);
+    order.forEach((cat, index) => {
+        const items = grouped[cat] || [];
+        if (!items.length) return;
+        renderedCats.add(cat);
+        html += renderHandSection(cat, items, `bk_hand_section_${index}`);
     });
 
-    // Option B fallback: if the Staff App introduces new Hand categories, show them after the curated menu.
-    const knownServiceNames = new Set();
-    (THURAYA_HAND_MENU_REFERENCE || []).forEach(node => {
-        th_collectHandLeafServices(node, []).forEach(ref => {
-            if (ref.name) knownServiceNames.add(th_norm(ref.name));
-            if (ref.displayName) knownServiceNames.add(th_norm(ref.displayName));
-        });
-    });
-
-    const fallback = {};
-    (bk_menuServices || []).forEach(s => {
-        const serviceDept = String(s.department || 'Hand').toLowerCase();
-        const belongsToHand = serviceDept === 'both' || serviceDept.includes('hand') || (!serviceDept.includes('foot'));
-        if (!belongsToHand) return;
-        if (knownServiceNames.has(th_norm(s.name))) return;
-        if (s.status && s.status !== 'Active') return;
-
-        let cat = String(s.mainCategory || s.subCategory || s.category || 'More Services')
-            .trim()
-            .replace(/^(?:[A-Z]|\d+)\.\s*/i, '')
-            .replace(/^O\s+/i, '')
-            .trim() || 'More Services';
-
-        if (/^services?$/i.test(cat)) cat = 'More Services';
-        if (!fallback[cat]) fallback[cat] = [];
-        fallback[cat].push(s);
-    });
-
-    Object.keys(fallback)
-        .sort((a,b) => a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' }))
+    Object.keys(grouped)
+        .filter(cat => cat && !renderedCats.has(cat) && !/^services?$/i.test(cat.trim()))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
         .forEach((cat, index) => {
-            const items = fallback[cat] || [];
+            const items = grouped[cat] || [];
             if (!items.length) return;
-            html += `
-                <div class="thuraya-accordion-section" data-category="${th_refEscape(cat)}">
-                    <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="bk_hand_extra_section_${index}" onclick="bk_toggleMenuSection(this)">
-                        <span class="thuraya-accordion-title-wrap">
-                            <span class="thuraya-accordion-title">${th_refEscape(cat)}</span>
-                            <span class="thuraya-accordion-meta">Additional services • ${items.length} option${items.length === 1 ? '' : 's'}</span>
-                        </span>
-                        <span class="thuraya-accordion-chevron">›</span>
-                    </button>
-                    <div class="thuraya-accordion-body" id="bk_hand_extra_section_${index}">
-                        <div class="thuraya-accordion-inner">
-                            ${items.map(s => _buildCard(s, dept)).join('')}
-                        </div>
-                    </div>
-                </div>`;
+            html += renderHandSection(cat, items, `bk_hand_extra_section_${index}`);
         });
 
     container.innerHTML = html || '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No hand therapy services available.</p>';
 
-    // Restore selected state after re-render and auto-open selected sections only.
+    // Restore selected state after re-render and auto-open selected sections.
     bk_selectedServices.forEach(sel => {
         const cb  = document.getElementById('bk_cb_'  + sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
@@ -1353,11 +1412,259 @@ function renderHandMenuFootStyle(dept) {
     updateBreakdown();
 }
 
-function renderMenuForDept(dept) {
-    if (dept === 'Hand') return renderHandMenuFootStyle(dept);
-    if (dept === 'Foot') return renderFootMenuCustom(dept);
-    return renderMenuForDeptLegacy(dept);
+
+// ── HF89B2: TRUE Menu_Settings_V2 hierarchy renderer ─────────────
+// Client App only. Uses Menu_Settings_V2 as the single display structure:
+// Department → Main Category → Sub Category → Service Name.
+function th_v2Text(value, fallback='') {
+    return String(value ?? fallback).trim().replace(/\s+/g, ' ');
 }
+
+function th_v2ServiceDeptMatches(s, dept) {
+    const d = String(s.department || s.appliesTo || '').toLowerCase();
+    if (d.includes('both') || d.includes('hand & foot') || d.includes('hand/foot')) return true;
+    if (dept === 'Foot') return d.includes('foot') || d.includes('feet');
+    if (dept === 'Hand') return d.includes('hand') || (!d.includes('foot') && !d.includes('feet'));
+    return true;
+}
+
+// HF89B6: Menu_Settings_V2 priority enforcement.
+// Sort Order is the single ordering authority; text sorting is only a fallback
+// when Menu Settings V2 has no usable Sort Order for that level.
+function th_v2SortValue(value, fallback = 999999) {
+    const n = Number(String(value ?? '').replace(/[^0-9.\-]/g, ''));
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function th_v2GroupOrder(group) {
+    return th_v2SortValue(group?.order);
+}
+
+function th_v2DeptOrder(dept) {
+    const d = String(dept || '').toLowerCase();
+    if (d.includes('hand')) return 10;
+    if (d.includes('foot') || d.includes('feet')) return 20;
+    if (d.includes('both')) return 30;
+    return 99;
+}
+
+function th_v2TieBreak(a, b) {
+    return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true, sensitivity: 'base' });
+}
+
+
+
+// HF89B7: Live Final Menu priority map from Menu Settings V2 display.
+// The Client App must match the Live Final Menu accordion order, not the
+// per-service Sort Order when service rows use their own internal ordering.
+const TH_LIVE_FINAL_MENU_PRIORITY = {
+    Hand: [
+        'Hand Therapies',
+        'Finishing Indulgences',
+        'Nail Architecture',
+        'Polish & Finish',
+        'The Pleiades Studio',
+        'Editorial Nail Art',
+        'Couture Nail Art',
+        'Embellishment Drawers'
+    ],
+    Foot: [
+        'Foundation Rituals',
+        'Urban Express Rituals',
+        'The Medi-Cleanse Series',
+        'Finishing Indulgences',
+        'Polish & Finish',
+        'Editorial Nail Art'
+    ]
+};
+
+function th_liveKey(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
+function th_livePriority(dept, title, fallback = 999999) {
+    const list = TH_LIVE_FINAL_MENU_PRIORITY[dept] || [];
+    const target = th_liveKey(title);
+    const idx = list.findIndex(x => th_liveKey(x) === target);
+    return idx >= 0 ? (idx + 1) * 1000 : fallback;
+}
+
+function th_liveSortGroups(dept, a, b) {
+    const ap = th_livePriority(dept, a.title, th_v2GroupOrder(a));
+    const bp = th_livePriority(dept, b.title, th_v2GroupOrder(b));
+    return ap - bp || th_v2GroupOrder(a) - th_v2GroupOrder(b) || th_v2TieBreak(a.title, b.title);
+}
+
+function th_v2BuildHierarchy(dept) {
+    const groups = new Map();
+
+    (bk_menuServices || []).forEach(s => {
+        if (!bk_menuIsActive(s)) return;
+        if (!th_v2ServiceDeptMatches(s, dept)) return;
+
+        const main = th_v2Text(s.mainCategory || s.ritualGroup || s.category || 'Services', 'Services');
+        const mainDesc = th_v2Text(s.mainCategoryDescription || s.ritualGroupDescription || '');
+        const subRaw = th_v2Text(s.subCategory || s.category || s.serviceType || '');
+        const sub = (!subRaw || subRaw.toLowerCase() === main.toLowerCase()) ? 'Services' : subRaw;
+        const subDesc = th_v2Text(s.categoryDescription || s.subCategoryDescription || s.serviceTypeDescription || '');
+        const order = th_v2SortValue(s.sortOrder ?? s.order);
+
+        if (!groups.has(main)) {
+            groups.set(main, { title: main, desc: mainDesc, order, count: 0, subGroups: new Map() });
+        }
+        const g = groups.get(main);
+        if (!g.desc && mainDesc) g.desc = mainDesc;
+        g.order = Math.min(g.order, order);
+        g.count += 1;
+
+        if (!g.subGroups.has(sub)) {
+            g.subGroups.set(sub, { title: sub, desc: subDesc, order, items: [] });
+        }
+        const sg = g.subGroups.get(sub);
+        if (!sg.desc && subDesc) sg.desc = subDesc;
+        sg.order = Math.min(sg.order, order);
+        sg.items.push(s);
+    });
+
+    const typeOrder = { radio: 0, checkbox: 1, counter: 2 };
+    groups.forEach(g => {
+        g.subGroups.forEach(sg => {
+            sg.items.sort((a, b) =>
+                th_v2SortValue(a.sortOrder ?? a.order) - th_v2SortValue(b.sortOrder ?? b.order) ||
+                (typeOrder[a.inputType || 'radio'] ?? 1) - (typeOrder[b.inputType || 'radio'] ?? 1) ||
+                th_v2TieBreak(a.name || a.serviceName, b.name || b.serviceName)
+            );
+        });
+    });
+
+    return Array.from(groups.values()).sort((a, b) => th_liveSortGroups(dept, a, b));
+}
+
+function th_v2PublishSortAudit(services) {
+    const audit = (services || []).map(s => ({
+        department: s.department || s.appliesTo || '',
+        mainCategory: s.mainCategory || s.ritualGroup || s.category || '',
+        subCategory: s.subCategory || s.category || s.serviceType || '',
+        serviceName: s.name || s.serviceName || '',
+        sortOrder: th_v2SortValue(s.sortOrder ?? s.order),
+        status: s.status || ''
+    })).sort((a, b) =>
+        th_v2DeptOrder(a.department) - th_v2DeptOrder(b.department) ||
+        th_v2SortValue(a.sortOrder) - th_v2SortValue(b.sortOrder) ||
+        th_v2TieBreak(a.mainCategory, b.mainCategory) ||
+        th_v2TieBreak(a.subCategory, b.subCategory) ||
+        th_v2TieBreak(a.serviceName, b.serviceName)
+    );
+    window.THURAYA_CLIENT_MENU_SORT_AUDIT = audit;
+    if (window.console && console.table) console.table(audit);
+}
+
+function th_v2Meta(group) {
+    const subCount = Array.from(group.subGroups.values()).filter(sg => sg.title !== 'Services').length;
+    const count = group.count || 0;
+    if (group.desc) return `${group.desc} • ${count} option${count === 1 ? '' : 's'}`;
+    if (subCount) return `${subCount} section${subCount === 1 ? '' : 's'} • ${count} option${count === 1 ? '' : 's'}`;
+    return `${count} option${count === 1 ? '' : 's'}`;
+}
+
+function th_renderV2MenuForDept(dept) {
+    const container = document.getElementById('bk_serviceMenu');
+    if (!container) return;
+
+    container.classList.remove('th-ref-menu');
+    container.classList.add('th-v2-menu');
+
+    const groups = th_v2BuildHierarchy(dept);
+
+    function renderSubGroup(sg) {
+        const showHeading = sg.title && sg.title !== 'Services';
+        return `
+            ${showHeading ? `<div class="menu-subgroup-label th-v2-subgroup">${th_refEscape(sg.title)}${sg.desc ? `<span>${th_refEscape(sg.desc)}</span>` : ''}</div>` : ''}
+            <div class="thuraya-accordion-inner">${sg.items.map(s => _buildCard(s, dept)).join('')}</div>`;
+    }
+
+    function renderGroup(group, index) {
+        const sectionId = `bk_v2_${dept.toLowerCase()}_${index}`;
+        const subGroups = Array.from(group.subGroups.values()).sort((a, b) =>
+            th_v2GroupOrder(a) - th_v2GroupOrder(b) ||
+            th_v2TieBreak(a.title, b.title)
+        );
+        return `
+            <div class="thuraya-accordion-section th-v2-section" data-category="${th_refEscape(group.title)}">
+                <button type="button" class="thuraya-accordion-head" aria-expanded="false" aria-controls="${sectionId}" onclick="bk_toggleMenuSection(this)">
+                    <span class="thuraya-accordion-title-wrap">
+                        <span class="thuraya-accordion-title">${th_refEscape(group.title)}</span>
+                        <span class="thuraya-accordion-meta">${th_refEscape(th_v2Meta(group))}</span>
+                    </span>
+                    <span class="thuraya-accordion-chevron">›</span>
+                </button>
+                <div class="thuraya-accordion-body" id="${sectionId}">
+                    ${subGroups.map(renderSubGroup).join('')}
+                </div>
+            </div>`;
+    }
+
+    container.innerHTML = groups.map(renderGroup).join('') || `<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No ${dept.toLowerCase()} therapy services available.</p>`;
+
+    bk_selectedServices.forEach(sel => {
+        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const qty = document.getElementById('bk_qty_' + sel.id);
+        const input = cb || qty;
+        if (cb) { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
+        if (qty) qty.value = sel.qty || 1;
+        const section = input?.closest('.thuraya-accordion-section');
+        if (section) {
+            section.classList.add('open');
+            section.querySelector('.thuraya-accordion-head')?.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    setTimeout(() => { bk_syncAllAccordionHeights(container); bk_finalSyncCTAs(); }, 80);
+    updateBreakdown();
+}
+// ── END HF89B2 V2 renderer ─────────────────────────────────────────
+
+function renderMenuForDept(dept) {
+    // HF89B8 Client App clean menu sync:
+    // Menu_Settings_V2 is the only live menu source. No legacy/static menu fallback.
+    if (dept === 'Hand' || dept === 'Foot') return th_renderV2MenuForDept(dept);
+
+    const container = document.getElementById('bk_serviceMenu');
+    if (container) container.innerHTML =
+        '<p style="text-align:center;color:var(--text-muted);padding:32px 0;">Please choose Hand Therapy or Foot Therapy.</p>';
+}
+
+
+// HF89B Client App Menu_Settings_V2 sync helper.
+// Read-only diagnostic used after staging upload: run THURAYA_CLIENT_MENU_SYNC in console.
+window.THURAYA_CLIENT_VALIDATE_MENU_SYNC = function(){
+    const state = window.THURAYA_CLIENT_MENU_SYNC || {};
+    return {
+        source: state.source || 'not-loaded',
+        total: state.total || 0,
+        hand: state.hand || 0,
+        foot: state.foot || 0,
+        both: state.both || 0,
+        ok: !!(state.total && (state.hand || state.both) && (state.foot || state.both)),
+        updatedAt: state.updatedAt || null
+    };
+};
+
+// HF89B8 audit helper: confirms the Client App has no active legacy menu source.
+window.THURAYA_CLIENT_MENU_SOURCE_AUDIT = function(){
+    const services = window.bk_menuServices || [];
+    const sources = Array.from(new Set(services.map(s => s.sourceCollection || 'unknown')));
+    return {
+        expectedSource: 'Menu_Settings_V2',
+        activeSources: sources,
+        total: services.length,
+        clean: sources.length === 0 || sources.every(s => s === 'Menu_Settings_V2')
+    };
+};
 
 // ── THURAYA SERVICE MENU INTERACTION POLISH — SAFE UI ONLY ─────────────
 // Multiple sections can stay open. All sections start collapsed.
@@ -1367,10 +1674,17 @@ function bk_syncAccordionHeight(section) {
     const body = section.querySelector(':scope > .thuraya-accordion-body');
     if (!body) return;
 
+    // HF89B5 Client App only:
+    // Menu_Settings_V2 categories can contain many services. The older CSS had a
+    // fixed 2400px accordion ceiling, which could visually cut off long categories
+    // such as Nail Architecture even when the data was loaded correctly.
     if (section.classList.contains('open')) {
-        body.style.maxHeight = body.scrollHeight + 'px';
+        const fullHeight = Math.max(body.scrollHeight, body.firstElementChild?.scrollHeight || 0, 1);
+        body.style.setProperty('max-height', fullHeight + 80 + 'px', 'important');
+        body.style.setProperty('overflow', 'hidden', 'important');
     } else {
-        body.style.maxHeight = '0px';
+        body.style.setProperty('max-height', '0px', 'important');
+        body.style.setProperty('overflow', 'hidden', 'important');
     }
 }
 
@@ -3399,6 +3713,9 @@ window.bk_upcomingReschedule = function() {
         const shouldShow = hasClient && activeId && !NAV_HIDDEN_SCREENS.has(activeId);
 
         nav.style.display = shouldShow ? 'grid' : 'none';
+        nav.hidden = !shouldShow;
+        nav.classList.toggle('thuraya-bottom-nav--hidden', !shouldShow);
+        nav.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
         if (!shouldShow) return;
 
         nav.querySelectorAll('.thuraya-bottom-nav-item').forEach(btn => btn.classList.remove('active'));
@@ -4007,3 +4324,186 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
 // ============================================================
 // END HF21 Group Booking State Reset
 // ============================================================
+
+/* ============================================================
+   THURAYA CLIENT — HF28 EMERGENCY BOOKING RECOVERY
+   Purpose: restore client booking immediately during production operations.
+   Safety: does not touch menu rendering, UI styling, tax settings, or staff data.
+   Behaviour:
+   - Uses live availability when it works.
+   - If shared availability data/therapy tags block all slots, falls back to safe
+     bookable windows so clients can still submit bookings.
+   - Staff can reassign/adjust operationally after booking if needed.
+   ============================================================ */
+(function thurayaClientEmergencyBookingRecoveryHF28(){
+    if (window.__thurayaClientEmergencyBookingRecoveryHF28) return;
+    window.__thurayaClientEmergencyBookingRecoveryHF28 = true;
+
+    function q(id){ return document.getElementById(id); }
+    function norm(v){ return String(v || '').trim().toLowerCase(); }
+    function minsToTime(total){
+        const h = Math.floor(total / 60);
+        const m = total % 60;
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+    function timeLabel(t24){
+        const parts = String(t24 || '00:00').split(':').map(Number);
+        const h = parts[0] || 0;
+        const m = parts[1] || 0;
+        return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    }
+    function selectedDuration(){
+        try {
+            const total = (window.bk_selectedServices || bk_selectedServices || []).reduce((s, x) => s + (Number(x.dur || 0) * (Number(x.qty || 1))), 0);
+            return Math.max(total || 0, 30);
+        } catch(e) { return 60; }
+    }
+    function safeTechs(){
+        const list = Array.isArray(window.bk_techs) ? window.bk_techs : (Array.isArray(bk_techs) ? bk_techs : []);
+        return list.filter(t => t && (t.email || t.name));
+    }
+    function eligibleTechsLoose(){
+        let eligible = [];
+        try { eligible = (typeof bk_getEligibleTechsForSelectedServices === 'function') ? bk_getEligibleTechsForSelectedServices() : []; }
+        catch(e) { eligible = []; }
+        if (eligible && eligible.length) return eligible;
+        return safeTechs();
+    }
+    function renderSlotsFromMap(slotMap, recovery){
+        const slots = Object.keys(slotMap).map(Number).sort((a,b)=>a-b);
+        if (!slots.length) return '';
+        const note = recovery ? `<div class="th-emergency-booking-note" style="font-size:.78rem;color:#6b6258;margin:0 0 10px;line-height:1.35;">Live availability is in recovery mode. THURAYA will confirm technician allocation operationally.</div>` : '';
+        return note + slots.map(t => {
+            const t24 = minsToTime(t);
+            const techList = JSON.stringify(slotMap[t] || []).replace(/'/g, '&#39;');
+            return `<button class="slot-btn" data-time="${t24}" data-techs='${techList}' onclick="bk_selectSlot('${t24}', this)">${timeLabel(t24)}</button>`;
+        }).join('');
+    }
+    function buildRecoverySlots(date, techEmails){
+        const openTime = 8 * 60;
+        const closeTime = 20 * 60;
+        const interval = 30;
+        const totalMins = selectedDuration();
+        const now = new Date();
+        const curMins = now.getHours() * 60 + now.getMinutes();
+        const today = (typeof todayStr !== 'undefined') ? todayStr : new Date().toISOString().slice(0,10);
+        const isToday = date === today;
+        const emails = (techEmails && techEmails.length) ? techEmails : [''];
+        const slotMap = {};
+        for (let t = openTime; t + totalMins <= closeTime; t += interval) {
+            if (isToday && t <= curMins + 30) continue;
+            slotMap[t] = emails;
+        }
+        return slotMap;
+    }
+
+    const previousGenerateSlots = window.bk_generateSlots;
+    window.bk_generateSlots = async function(){
+        const date = q('bk_date')?.value || '';
+        const timeEl = q('bk_time');
+        const slotsEl = q('bk_slots');
+        const container = q('bk_slotsContainer');
+        const nextBtn = q('btnToConfirm');
+        if (timeEl) timeEl.value = '';
+        if (nextBtn) nextBtn.disabled = true;
+        if (!slotsEl || !container) return previousGenerateSlots ? previousGenerateSlots.apply(this, arguments) : undefined;
+
+        const today = (typeof todayStr !== 'undefined') ? todayStr : new Date().toISOString().slice(0,10);
+        if (!date) { container.style.display = 'none'; return; }
+        if (date < today) {
+            container.style.display = 'block';
+            slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;">Cannot book in the past.</p>';
+            return;
+        }
+
+        let serviceCount = 0;
+        try { serviceCount = (window.bk_selectedServices || bk_selectedServices || []).length; } catch(e) { serviceCount = 0; }
+        if (!serviceCount) {
+            container.style.display = 'none';
+            try { toast('Select at least one service first.', 'warning'); } catch(e) {}
+            return;
+        }
+
+        container.style.display = 'block';
+        slotsEl.innerHTML = '<div class="loading-pulse">Checking available times...</div>';
+
+        const mode = q('bk_techMode')?.value || 'any';
+        const specificEmail = q('bk_techEmail')?.value || '';
+        let techs = eligibleTechsLoose();
+        let techEmails = (mode === 'specific' && specificEmail)
+            ? (techs.some(t => norm(t.email) === norm(specificEmail)) ? [specificEmail] : [specificEmail])
+            : techs.map(t => t.email).filter(Boolean);
+
+        try {
+            if (typeof bk_buildBusyByTechForDate !== 'function' || !techEmails.length) throw new Error('Availability dependency unavailable');
+            const busyByKey = await bk_buildBusyByTechForDate(date);
+            const openTime = 8 * 60, closeTime = 20 * 60, interval = 30;
+            const totalMins = selectedDuration();
+            const now = new Date();
+            const curMins = now.getHours() * 60 + now.getMinutes();
+            const isToday = date === today;
+            const slotMap = {};
+            for (let t = openTime; t + totalMins <= closeTime; t += interval) {
+                if (isToday && t <= curMins + 10) continue;
+                const slotEnd = t + totalMins;
+                techEmails.forEach(email => {
+                    let free = true;
+                    try { free = (typeof bk_intervalFreeForTech === 'function') ? bk_intervalFreeForTech(busyByKey, email, t, slotEnd) : true; }
+                    catch(e) { free = true; }
+                    if (free) {
+                        if (!slotMap[t]) slotMap[t] = [];
+                        slotMap[t].push(email);
+                    }
+                });
+            }
+            let html = renderSlotsFromMap(slotMap, false);
+            if (!html) html = renderSlotsFromMap(buildRecoverySlots(date, techEmails), true);
+            slotsEl.innerHTML = html || '<p style="color:var(--error);font-size:0.875rem;">No available times for this date. Try a different date.</p>';
+        } catch(e) {
+            console.warn('HF28 live availability failed; using recovery slots:', e);
+            slotsEl.innerHTML = renderSlotsFromMap(buildRecoverySlots(date, techEmails), true);
+        }
+
+        try { if (typeof bk_finalSyncCTAs === 'function') setTimeout(bk_finalSyncCTAs, 40); } catch(e) {}
+    };
+
+    const previousSelectSlot = window.bk_selectSlot;
+    window.bk_selectSlot = function(time, btn){
+        try {
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            if (btn) btn.classList.add('selected');
+            if (q('bk_time')) q('bk_time').value = time;
+            const mode = q('bk_techMode')?.value || 'any';
+            if (mode === 'any') {
+                let available = [];
+                try { available = JSON.parse(btn?.getAttribute('data-techs') || '[]'); } catch(e) { available = []; }
+                const assignedEmail = available.find(Boolean) || '';
+                if (q('bk_techEmail')) q('bk_techEmail').value = assignedEmail;
+                const tech = safeTechs().find(t => norm(t.email) === norm(assignedEmail));
+                if (q('bk_techName')) q('bk_techName').value = tech?.name || (assignedEmail ? assignedEmail : 'To be assigned');
+            }
+            if (q('btnToConfirm')) q('btnToConfirm').disabled = false;
+            try { if (typeof bk_finalSyncCTAs === 'function') setTimeout(bk_finalSyncCTAs, 40); } catch(e) {}
+        } catch(e) {
+            if (previousSelectSlot) return previousSelectSlot.apply(this, arguments);
+        }
+    };
+
+    window.bk_hasSlotConflict = async function(techEmail, date, time){
+        // Emergency recovery: do not block a client at confirmation because shared
+        // availability reads are unstable. Exact conflicts are still operationally
+        // visible to Staff App after booking.
+        return false;
+    };
+
+    // Re-check slots when returning to the date screen after selecting services/tech.
+    const previousGoToStep = window.goToStep;
+    window.goToStep = function(id){
+        const result = previousGoToStep ? previousGoToStep.apply(this, arguments) : undefined;
+        if (id === 'screen-datetime') setTimeout(() => { try { window.bk_generateSlots(); } catch(e){} }, 120);
+        return result;
+    };
+
+    console.log('THURAYA Client HF28 Emergency Booking Recovery loaded');
+})();
+

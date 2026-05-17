@@ -5271,3 +5271,374 @@ body,
   #bk_serviceMenu.th-ref-menu .service-row{gap:10px;}
 }
 /* === END THURAYA CLIENT APP — STAFF MENU SYNC / SIMULATOR STRUCTURE === */
+
+/* HF89B2 Client App V2 menu sync polish: prevent V2 category text from clipping */
+#screen-services #bk_serviceMenu.th-v2-menu,
+#bk_serviceMenu.th-v2-menu{
+  width:100% !important;
+  max-width:100% !important;
+  overflow:visible !important;
+  box-sizing:border-box !important;
+  padding-bottom:120px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-section,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-section{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-head,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-head{
+  height:auto !important;
+  min-height:96px !important;
+  align-items:flex-start !important;
+  gap:14px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title-wrap{
+  min-width:0 !important;
+  max-width:calc(100% - 58px) !important;
+  overflow:visible !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title,
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere !important;
+  word-break:normal !important;
+  hyphens:auto !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title{
+  line-height:1.12 !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta{
+  line-height:1.35 !important;
+  margin-top:8px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-chevron{
+  flex:0 0 auto !important;
+  margin-top:4px !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-body{
+  overflow:hidden !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  display:block !important;
+  margin:18px 2px 10px !important;
+  padding:0 4px !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
+  display:block !important;
+  margin-top:4px !important;
+}
+
+/* HF89B3 Client App only — soften Menu_Settings_V2 category descriptions */
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup span,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
+  font-family:var(--th-font-sans, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif) !important;
+  font-size:clamp(15px, 3.65vw, 18px) !important;
+  line-height:1.42 !important;
+  font-weight:400 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+  color:var(--th-muted, #6f6a63) !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-title,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-title,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup strong,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup strong{
+  font-weight:700 !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  margin:22px 2px 12px !important;
+}
+
+/* HF89B4 Client App only — luxury category description scale correction
+   Match Menu_Settings_V2 category/subcategory descriptions to service description feel. */
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup span,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
+  font-family:var(--th-font-sans, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif) !important;
+  font-size:clamp(12.5px, 3.15vw, 14.5px) !important;
+  line-height:1.42 !important;
+  font-weight:400 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+  color:var(--th-muted, #6f6a63) !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-meta,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-meta{
+  margin-top:8px !important;
+  max-width:92% !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup{
+  margin:20px 2px 10px !important;
+}
+#bk_serviceMenu.th-v2-menu .th-v2-subgroup span,
+#screen-services #bk_serviceMenu.th-v2-menu .th-v2-subgroup span{
+  margin-top:5px !important;
+}
+
+
+/* HF89B5 — Client App Menu_Settings_V2 uncapped accordion rendering
+   Keeps sections collapsed until opened, but removes the old 2400px ceiling that
+   could hide services in long V2 categories such as Nail Architecture. */
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body{
+  max-height:none !important;
+  overflow:visible !important;
+}
+#bk_serviceMenu.th-v2-menu .thuraya-accordion-body,
+#screen-services #bk_serviceMenu.th-v2-menu .thuraya-accordion-body{
+  transition:max-height .28s ease !important;
+}
+
+/* =========================================================
+   HF89B15 — GROUP BOOKING V2 MENU ENGINE POLISH
+   Group Booking now consumes the same Menu_Settings_V2 hierarchy
+   as Individual Booking. This keeps long V2 categories visible.
+   ========================================================= */
+#grp_serviceList.th-v2-menu,
+#grp_serviceList.grp-v2-menu{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:14px !important;
+  padding:2px 0 44px !important;
+}
+
+#grp_serviceList.th-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body,
+#grp_serviceList.grp-v2-menu .thuraya-accordion-section.open > .thuraya-accordion-body{
+  max-height:none !important;
+}
+
+#grp_serviceList.th-v2-menu .th-v2-subgroup,
+#grp_serviceList.grp-v2-menu .th-v2-subgroup{
+  padding:14px 4px 4px !important;
+  color:rgba(47,41,34,.62) !important;
+  font-size:.70rem !important;
+  line-height:1.2 !important;
+  font-weight:850 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+}
+
+#grp_serviceList.th-v2-menu .th-v2-subgroup span,
+#grp_serviceList.grp-v2-menu .th-v2-subgroup span{
+  display:block !important;
+  margin-top:5px !important;
+  color:rgba(47,41,34,.58) !important;
+  font-size:.74rem !important;
+  line-height:1.35 !important;
+  font-weight:500 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+
+
+/* =========================================================
+   THURAYA WELCOME LOGIN SECONDARY ROW — FINAL POLISH
+   Scope: welcome/login screen only. CSS/UI placement only.
+   Keeps Google primary; places Guest + Email as discreet bottom links.
+   ========================================================= */
+#screen-welcome .welcome-inner{
+  position:relative !important;
+  padding-bottom:122px !important;
+}
+
+#screen-welcome .welcome-actions{
+  max-width:340px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+#screen-welcome #btnGoogleSignIn{
+  width:100% !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row{
+  position:absolute !important;
+  left:22px !important;
+  right:22px !important;
+  bottom:54px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:18px !important;
+  width:auto !important;
+  max-width:none !important;
+  margin:0 auto !important;
+  z-index:3 !important;
+  background:transparent !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row #btnGuestSignIn,
+#screen-welcome .thuraya-login-secondary-row .p9b-email-toggle,
+#screen-welcome .thuraya-login-secondary-row .btn-ghost,
+#screen-welcome .thuraya-login-secondary-row button,
+#screen-welcome .thuraya-login-secondary-row a{
+  width:auto !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  height:auto !important;
+  padding:0 0 3px !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  color:#F8F7F3 !important;
+  font-family:"DM Sans", system-ui, sans-serif !important;
+  font-size:clamp(.84rem, 3.15vw, .96rem) !important;
+  line-height:1.15 !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+  text-decoration:underline !important;
+  text-decoration-thickness:1px !important;
+  text-underline-offset:5px !important;
+  opacity:.96 !important;
+  white-space:nowrap !important;
+}
+
+#screen-welcome .thuraya-login-secondary-separator{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  color:rgba(248,247,243,.56) !important;
+  font-size:1.05rem !important;
+  line-height:1 !important;
+  transform:translateY(-1px) !important;
+  user-select:none !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row .p9b-email-wrap{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 !important;
+  padding:0 !important;
+  width:auto !important;
+  background:transparent !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row .p9b-email-panel,
+#screen-welcome .thuraya-login-secondary-row .p9b-email-block,
+#screen-welcome .thuraya-login-secondary-row .p9-softgate-card{
+  position:fixed !important;
+  left:50% !important;
+  bottom:106px !important;
+  transform:translateX(-50%) !important;
+  width:min(340px, calc(100vw - 44px)) !important;
+  max-width:340px !important;
+  z-index:20 !important;
+}
+
+@media(max-width:430px){
+  #screen-welcome .welcome-inner{
+    padding-bottom:116px !important;
+  }
+  #screen-welcome .thuraya-login-secondary-row{
+    left:18px !important;
+    right:18px !important;
+    bottom:44px !important;
+    gap:14px !important;
+  }
+  #screen-welcome .thuraya-login-secondary-row #btnGuestSignIn,
+  #screen-welcome .thuraya-login-secondary-row .p9b-email-toggle,
+  #screen-welcome .thuraya-login-secondary-row .btn-ghost,
+  #screen-welcome .thuraya-login-secondary-row button,
+  #screen-welcome .thuraya-login-secondary-row a{
+    font-size:.88rem !important;
+  }
+}
+/* === END THURAYA WELCOME LOGIN SECONDARY ROW — FINAL POLISH === */
+
+/* =========================================================
+   THURAYA WELCOME MOBILE FIX — SECONDARY LINKS + NAV HIDE
+   Scope: welcome/login page only. Logic untouched.
+   Purpose: keep Guest/Email visible at bottom on mobile and
+            prevent shortcut nav from appearing before login.
+   ========================================================= */
+
+/* Respect JS inline hiding even though the nav base style uses !important. */
+.thuraya-bottom-nav[style*="display: none"],
+.thuraya-bottom-nav.thuraya-bottom-nav--hidden,
+#app:has(#screen-welcome.active) .thuraya-bottom-nav,
+#screen-welcome.active ~ .thuraya-bottom-nav{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+#screen-welcome .welcome-inner{
+  padding-bottom:148px !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row{
+  bottom:calc(68px + env(safe-area-inset-bottom)) !important;
+  gap:18px !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row #btnGuestSignIn,
+#screen-welcome .thuraya-login-secondary-row .p9b-email-toggle,
+#screen-welcome .thuraya-login-secondary-row .btn-ghost,
+#screen-welcome .thuraya-login-secondary-row button,
+#screen-welcome .thuraya-login-secondary-row a{
+  color:rgba(248,247,243,.58) !important;
+  text-decoration-color:rgba(248,247,243,.48) !important;
+  font-weight:500 !important;
+  font-size:clamp(.78rem, 2.9vw, .88rem) !important;
+  line-height:1.12 !important;
+  opacity:1 !important;
+  text-decoration-thickness:.75px !important;
+  text-underline-offset:4px !important;
+}
+
+#screen-welcome .thuraya-login-secondary-separator{
+  color:rgba(248,247,243,.36) !important;
+  font-weight:400 !important;
+  opacity:1 !important;
+}
+
+#screen-welcome .thuraya-login-secondary-row #btnGuestSignIn:active,
+#screen-welcome .thuraya-login-secondary-row .p9b-email-toggle:active,
+#screen-welcome .thuraya-login-secondary-row .btn-ghost:active,
+#screen-welcome .thuraya-login-secondary-row button:active,
+#screen-welcome .thuraya-login-secondary-row a:active{
+  color:rgba(248,247,243,.78) !important;
+  text-decoration-color:rgba(248,247,243,.68) !important;
+}
+
+@media(max-width:430px){
+  #screen-welcome .welcome-inner{
+    padding-bottom:142px !important;
+  }
+
+  #screen-welcome .thuraya-login-secondary-row{
+    left:16px !important;
+    right:16px !important;
+    bottom:calc(70px + env(safe-area-inset-bottom)) !important;
+    gap:16px !important;
+  }
+
+  #screen-welcome .thuraya-login-secondary-row #btnGuestSignIn,
+  #screen-welcome .thuraya-login-secondary-row .p9b-email-toggle,
+  #screen-welcome .thuraya-login-secondary-row .btn-ghost,
+  #screen-welcome .thuraya-login-secondary-row button,
+  #screen-welcome .thuraya-login-secondary-row a{
+    font-size:.82rem !important;
+    font-weight:500 !important;
+  }
+}
+/* === END THURAYA WELCOME MOBILE FIX === */
