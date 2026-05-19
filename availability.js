@@ -76,6 +76,15 @@ function av_defaultSchedule() {
     return { worksToday: true, startMins: 8 * 60, endMins: 20 * 60 };
 }
 
+function av_bookingWindowFromSettings(data) {
+    const start = data?.bookingWindowStartTime || '';
+    const end = data?.bookingWindowEndTime || '';
+    const startMins = start ? av_toMins(start) : 0;
+    const endMins = end ? av_toMins(end) : 24 * 60;
+    if (startMins >= endMins) return { startMins: 0, endMins: 24 * 60 };
+    return { startMins, endMins };
+}
+
 function av_scheduleRecordsFromData(data) {
     if (!data) return [];
     const segments = [];
@@ -315,7 +324,7 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     const nowMins  = isToday ? (new Date().getHours() * 60 + new Date().getMinutes()) : -1;
 
     // ── Fetch all 4 layers in parallel ───────────────────────
-    const [blockSnap, schedSnap, leaveSnap, apptSnap] = await Promise.all([
+    const [blockSnap, schedSnap, leaveSnap, apptSnap, opsSnap] = await Promise.all([
         // Layer 0: fetch ALL calendar blocks and filter client-side.
         // This supports full_day, time_range, tech_specific and date_range blocks.
         // Calendar_Blocks is expected to be small; this avoids missing date_range records.
@@ -333,7 +342,15 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         db.collection('Appointments')
             .where('dateString', '==', dateStr)
             .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress'])
+            .get(),
+
+        // Global booking window shared with Staff Operations Timing Rules
+        db.collection('Settings').doc('operations_engine')
             .get()
+            .catch(e => {
+                console.warn('Availability: booking window settings unavailable:', e.message || e);
+                return null;
+            })
     ]);
 
     // ── Layer 0: parse calendar blocks ───────────────────────
@@ -369,6 +386,7 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
 
     // ── Build schedule map: techEmail → { startMins, endMins, worksToday } ──
     const scheduleMap = await av_buildScheduleMapForDate(schedSnap, techEmails, dateStr);
+    const bookingWindow = av_bookingWindowFromSettings(opsSnap && opsSnap.exists ? (opsSnap.data() || {}) : {});
 
     // Fallback for techs with no schedule doc — assume default hours
     techEmails.forEach(email => {
@@ -427,8 +445,9 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         if (techBlocked.has(email)) return;
 
         const busy      = busyMap[email] || [];
-        const openTime  = sched.startMins;
-        const closeTime = sched.endMins;
+        const openTime  = Math.max(sched.startMins, bookingWindow.startMins);
+        const closeTime = Math.min(sched.endMins, bookingWindow.endMins);
+        if (openTime >= closeTime) return;
 
         for (let t = openTime; t + totalMins <= closeTime; t += 30) {
             // Skip past slots for today
