@@ -25,6 +25,128 @@ function av_dayAbbr(dateStr) {
     return days[new Date(dateStr + 'T12:00:00').getDay()];
 }
 
+function av_scheduleDateValue(value) {
+    if (!value) return '';
+    if (typeof value === 'string') return value.slice(0, 10);
+    if (value && typeof value.toDate === 'function') {
+        try { return value.toDate().toISOString().slice(0, 10); } catch(e) {}
+    }
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    return '';
+}
+
+function av_scheduleMillis(value) {
+    if (!value) return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (value && typeof value.toMillis === 'function') {
+        try { return value.toMillis(); } catch(e) {}
+    }
+    if (value && typeof value.toDate === 'function') {
+        try { return value.toDate().getTime(); } catch(e) {}
+    }
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === 'string') {
+        const parsed = Date.parse(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+}
+
+function av_scheduleRecord(data, sourceOrder) {
+    if (!data) return null;
+    return {
+        workingDays: Array.isArray(data.workingDays) ? data.workingDays : [],
+        startMins: av_toMins(data.startTime || '08:00'),
+        endMins: av_toMins(data.endTime || '20:00'),
+        effectiveFrom: av_scheduleDateValue(data.effectiveFrom) || '0000-00-00',
+        _savedMillis: Math.max(av_scheduleMillis(data.savedAt), av_scheduleMillis(data.updatedAt), av_scheduleMillis(data.savedAtMs)),
+        _sourceOrder: sourceOrder || 0
+    };
+}
+
+function av_compareScheduleRecords(a, b) {
+    const eff = String(b.effectiveFrom || '').localeCompare(String(a.effectiveFrom || ''));
+    if (eff) return eff;
+    const saved = (b._savedMillis || 0) - (a._savedMillis || 0);
+    if (saved) return saved;
+    return (b._sourceOrder || 0) - (a._sourceOrder || 0);
+}
+
+function av_defaultSchedule() {
+    return { worksToday: true, startMins: 8 * 60, endMins: 20 * 60 };
+}
+
+function av_scheduleRecordsFromData(data) {
+    if (!data) return [];
+    const segments = [];
+    if (Array.isArray(data.scheduleSegments)) {
+        data.scheduleSegments.forEach(segment => {
+            const record = av_scheduleRecord(segment, 3);
+            if (record && record.workingDays.length) segments.push(record);
+        });
+    }
+    if (segments.length) return segments;
+
+    const records = [];
+    const current = av_scheduleRecord(data, 2);
+    if (current && current.workingDays.length) records.push(current);
+    return records;
+}
+
+function av_resolveScheduleFromRecords(records, dateStr) {
+    const dayAbbr = av_dayAbbr(dateStr);
+    const effective = (records || [])
+        .filter(s => !s.effectiveFrom || s.effectiveFrom <= dateStr)
+        .sort(av_compareScheduleRecords);
+
+    if (!effective.length) return av_defaultSchedule();
+
+    const match = effective.find(s => (s.workingDays || []).includes(dayAbbr));
+    if (match) return { worksToday: true, startMins: match.startMins, endMins: match.endMins };
+
+    const latest = effective[0] || {};
+    return {
+        worksToday: false,
+        startMins: Number.isFinite(latest.startMins) ? latest.startMins : 8 * 60,
+        endMins: Number.isFinite(latest.endMins) ? latest.endMins : 20 * 60
+    };
+}
+
+function av_resolveScheduleFromData(data, dateStr) {
+    return av_resolveScheduleFromRecords(av_scheduleRecordsFromData(data), dateStr);
+}
+
+async function av_scheduleHistoryRecords(email) {
+    try {
+        const snap = await db.collection('Staff_Schedules').doc(email)
+            .collection('history')
+            .orderBy('savedAt', 'desc')
+            .limit(60)
+            .get();
+        return snap.docs.flatMap(doc => av_scheduleRecordsFromData(doc.data() || {}));
+    } catch(e) {
+        console.warn('Availability: schedule history unavailable for', email, e);
+        return [];
+    }
+}
+
+async function av_buildScheduleMapForDate(schedSnap, techEmails, dateStr) {
+    const current = {};
+    schedSnap.forEach(doc => { current[doc.id] = doc.data() || {}; });
+
+    const entries = await Promise.all((techEmails || []).map(async email => {
+        const records = [];
+        if (current[email]) records.push(...av_scheduleRecordsFromData(current[email]));
+        records.push(...await av_scheduleHistoryRecords(email));
+        return [email, av_resolveScheduleFromRecords(records, dateStr)];
+    }));
+
+    return entries.reduce((map, [email, schedule]) => {
+        map[email] = schedule || av_defaultSchedule();
+        return map;
+    }, {});
+}
+
 
 // ── Phase 8 helpers: formatting + smart slot scoring ───────
 function av_formatTimeFromMins(t) {
@@ -246,16 +368,7 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     if (fullDayBlock) return {};
 
     // ── Build schedule map: techEmail → { startMins, endMins, worksToday } ──
-    const scheduleMap = {};
-    schedSnap.forEach(doc => {
-        const s = doc.data();
-        // Find the most recent effectiveFrom that is <= dateStr
-        scheduleMap[doc.id] = {
-            worksToday: (s.workingDays || []).includes(dayAbbr),
-            startMins:  av_toMins(s.startTime || '08:00'),
-            endMins:    av_toMins(s.endTime   || '20:00'),
-        };
-    });
+    const scheduleMap = await av_buildScheduleMapForDate(schedSnap, techEmails, dateStr);
 
     // Fallback for techs with no schedule doc — assume default hours
     techEmails.forEach(email => {
