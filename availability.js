@@ -19,6 +19,18 @@ function av_toMins(str) {
     return h * 60 + (m || 0);
 }
 
+const AV_SAME_DAY_SLOT_LEAD_MINS = 10;
+
+function av_todayStr() {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+function av_currentMins() {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+}
+
 // ── Helper: get day-of-week abbreviation from YYYY-MM-DD ─────
 function av_dayAbbr(dateStr) {
     const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -320,8 +332,8 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     totalMins = parseInt(totalMins || 0, 10);
 
     const dayAbbr  = av_dayAbbr(dateStr);
-    const isToday  = dateStr === todayStr;
-    const nowMins  = isToday ? (new Date().getHours() * 60 + new Date().getMinutes()) : -1;
+    const isToday  = dateStr === av_todayStr();
+    const nowMins  = isToday ? av_currentMins() + AV_SAME_DAY_SLOT_LEAD_MINS : -1;
 
     // ── Fetch all 4 layers in parallel ───────────────────────
     const [blockSnap, schedSnap, leaveSnap, apptSnap, opsSnap] = await Promise.all([
@@ -549,17 +561,21 @@ function av_ensureSoloTimeContinueCTA(active = false) {
 //  SOLO FLOW — replaces bk_generateSlots in app.js
 // ============================================================
 window.bk_generateSlots = async function() {
-    const date      = document.getElementById('bk_date').value;
+    const dateEl    = document.getElementById('bk_date');
+    const date      = dateEl?.value || '';
     const timeEl    = document.getElementById('bk_time');
     const slotsEl   = document.getElementById('bk_slots');
     const container = document.getElementById('bk_slotsContainer');
     const nextBtn   = document.getElementById('btnToConfirm');
+    const today     = av_todayStr();
+
+    if (dateEl) dateEl.min = today;
 
     timeEl.value    = '';
     nextBtn.disabled = true;
 
     if (!date) { container.style.display = 'none'; return; }
-    if (date < todayStr) {
+    if (date < today) {
         container.style.display = 'block';
         slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;">Cannot book in the past.</p>';
         return;
