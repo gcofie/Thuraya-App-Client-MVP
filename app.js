@@ -2430,6 +2430,26 @@ function timeToMins(str) {
     return h * 60 + m;
 }
 
+const BK_SAME_DAY_BOOKING_LEAD_MINS = 10;
+
+function bk_dynamicTodayStr() {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+function bk_currentMins() {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+}
+
+function bk_isPastOrTooSoonSlot(date, time) {
+    if (!date || !time) return false;
+    const today = bk_dynamicTodayStr();
+    if (date < today) return true;
+    if (date > today) return false;
+    return timeToMins(time) <= bk_currentMins() + BK_SAME_DAY_BOOKING_LEAD_MINS;
+}
+
 window.bk_selectSlot = function(time, btn) {
     document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
@@ -2733,6 +2753,11 @@ window.bk_confirmBooking = async function() {
     const time      = document.getElementById('bk_time').value;
 
     if (!date || !time) { toast('Please select a date and time.', 'warning'); return; }
+    if (bk_isPastOrTooSoonSlot(date, time)) {
+        toast('This time has passed. Please choose a later available time.', 'warning');
+        try { if (typeof bk_generateSlots === 'function') await bk_generateSlots(); } catch(e) {}
+        return;
+    }
     if (!bk_selectedServices.length) { toast('Please select at least one service.', 'warning'); return; }
 
     
@@ -4506,4 +4531,3 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
 
     console.log('THURAYA Client HF28 Emergency Booking Recovery loaded');
 })();
-

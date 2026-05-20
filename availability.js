@@ -19,10 +19,153 @@ function av_toMins(str) {
     return h * 60 + (m || 0);
 }
 
+const AV_SAME_DAY_SLOT_LEAD_MINS = 10;
+
+function av_todayStr() {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+function av_currentMins() {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+}
+
 // ── Helper: get day-of-week abbreviation from YYYY-MM-DD ─────
 function av_dayAbbr(dateStr) {
     const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     return days[new Date(dateStr + 'T12:00:00').getDay()];
+}
+
+function av_scheduleDateValue(value) {
+    if (!value) return '';
+    if (typeof value === 'string') return value.slice(0, 10);
+    if (value && typeof value.toDate === 'function') {
+        try { return value.toDate().toISOString().slice(0, 10); } catch(e) {}
+    }
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    return '';
+}
+
+function av_scheduleMillis(value) {
+    if (!value) return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (value && typeof value.toMillis === 'function') {
+        try { return value.toMillis(); } catch(e) {}
+    }
+    if (value && typeof value.toDate === 'function') {
+        try { return value.toDate().getTime(); } catch(e) {}
+    }
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === 'string') {
+        const parsed = Date.parse(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+}
+
+function av_scheduleRecord(data, sourceOrder) {
+    if (!data) return null;
+    return {
+        workingDays: Array.isArray(data.workingDays) ? data.workingDays : [],
+        startMins: av_toMins(data.startTime || '08:00'),
+        endMins: av_toMins(data.endTime || '20:00'),
+        effectiveFrom: av_scheduleDateValue(data.effectiveFrom) || '0000-00-00',
+        _savedMillis: Math.max(av_scheduleMillis(data.savedAt), av_scheduleMillis(data.updatedAt), av_scheduleMillis(data.savedAtMs)),
+        _sourceOrder: sourceOrder || 0
+    };
+}
+
+function av_compareScheduleRecords(a, b) {
+    const eff = String(b.effectiveFrom || '').localeCompare(String(a.effectiveFrom || ''));
+    if (eff) return eff;
+    const saved = (b._savedMillis || 0) - (a._savedMillis || 0);
+    if (saved) return saved;
+    return (b._sourceOrder || 0) - (a._sourceOrder || 0);
+}
+
+function av_defaultSchedule() {
+    return { worksToday: true, startMins: 8 * 60, endMins: 20 * 60 };
+}
+
+function av_bookingWindowFromSettings(data) {
+    const start = data?.bookingWindowStartTime || '';
+    const end = data?.bookingWindowEndTime || '';
+    const startMins = start ? av_toMins(start) : 0;
+    const endMins = end ? av_toMins(end) : 24 * 60;
+    if (startMins >= endMins) return { startMins: 0, endMins: 24 * 60 };
+    return { startMins, endMins };
+}
+
+function av_scheduleRecordsFromData(data) {
+    if (!data) return [];
+    const segments = [];
+    if (Array.isArray(data.scheduleSegments)) {
+        data.scheduleSegments.forEach(segment => {
+            const record = av_scheduleRecord(segment, 3);
+            if (record && record.workingDays.length) segments.push(record);
+        });
+    }
+    if (segments.length) return segments;
+
+    const records = [];
+    const current = av_scheduleRecord(data, 2);
+    if (current && current.workingDays.length) records.push(current);
+    return records;
+}
+
+function av_resolveScheduleFromRecords(records, dateStr) {
+    const dayAbbr = av_dayAbbr(dateStr);
+    const effective = (records || [])
+        .filter(s => !s.effectiveFrom || s.effectiveFrom <= dateStr)
+        .sort(av_compareScheduleRecords);
+
+    if (!effective.length) return av_defaultSchedule();
+
+    const match = effective.find(s => (s.workingDays || []).includes(dayAbbr));
+    if (match) return { worksToday: true, startMins: match.startMins, endMins: match.endMins };
+
+    const latest = effective[0] || {};
+    return {
+        worksToday: false,
+        startMins: Number.isFinite(latest.startMins) ? latest.startMins : 8 * 60,
+        endMins: Number.isFinite(latest.endMins) ? latest.endMins : 20 * 60
+    };
+}
+
+function av_resolveScheduleFromData(data, dateStr) {
+    return av_resolveScheduleFromRecords(av_scheduleRecordsFromData(data), dateStr);
+}
+
+async function av_scheduleHistoryRecords(email) {
+    try {
+        const snap = await db.collection('Staff_Schedules').doc(email)
+            .collection('history')
+            .orderBy('savedAt', 'desc')
+            .limit(60)
+            .get();
+        return snap.docs.flatMap(doc => av_scheduleRecordsFromData(doc.data() || {}));
+    } catch(e) {
+        console.warn('Availability: schedule history unavailable for', email, e);
+        return [];
+    }
+}
+
+async function av_buildScheduleMapForDate(schedSnap, techEmails, dateStr) {
+    const current = {};
+    schedSnap.forEach(doc => { current[doc.id] = doc.data() || {}; });
+
+    const entries = await Promise.all((techEmails || []).map(async email => {
+        const records = [];
+        if (current[email]) records.push(...av_scheduleRecordsFromData(current[email]));
+        records.push(...await av_scheduleHistoryRecords(email));
+        return [email, av_resolveScheduleFromRecords(records, dateStr)];
+    }));
+
+    return entries.reduce((map, [email, schedule]) => {
+        map[email] = schedule || av_defaultSchedule();
+        return map;
+    }, {});
 }
 
 
@@ -189,11 +332,11 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     totalMins = parseInt(totalMins || 0, 10);
 
     const dayAbbr  = av_dayAbbr(dateStr);
-    const isToday  = dateStr === todayStr;
-    const nowMins  = isToday ? (new Date().getHours() * 60 + new Date().getMinutes()) : -1;
+    const isToday  = dateStr === av_todayStr();
+    const nowMins  = isToday ? av_currentMins() + AV_SAME_DAY_SLOT_LEAD_MINS : -1;
 
     // ── Fetch all 4 layers in parallel ───────────────────────
-    const [blockSnap, schedSnap, leaveSnap, apptSnap] = await Promise.all([
+    const [blockSnap, schedSnap, leaveSnap, apptSnap, opsSnap] = await Promise.all([
         // Layer 0: fetch ALL calendar blocks and filter client-side.
         // This supports full_day, time_range, tech_specific and date_range blocks.
         // Calendar_Blocks is expected to be small; this avoids missing date_range records.
@@ -211,7 +354,15 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         db.collection('Appointments')
             .where('dateString', '==', dateStr)
             .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress'])
+            .get(),
+
+        // Global booking window shared with Staff Operations Timing Rules
+        db.collection('Settings').doc('operations_engine')
             .get()
+            .catch(e => {
+                console.warn('Availability: booking window settings unavailable:', e.message || e);
+                return null;
+            })
     ]);
 
     // ── Layer 0: parse calendar blocks ───────────────────────
@@ -246,16 +397,8 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     if (fullDayBlock) return {};
 
     // ── Build schedule map: techEmail → { startMins, endMins, worksToday } ──
-    const scheduleMap = {};
-    schedSnap.forEach(doc => {
-        const s = doc.data();
-        // Find the most recent effectiveFrom that is <= dateStr
-        scheduleMap[doc.id] = {
-            worksToday: (s.workingDays || []).includes(dayAbbr),
-            startMins:  av_toMins(s.startTime || '08:00'),
-            endMins:    av_toMins(s.endTime   || '20:00'),
-        };
-    });
+    const scheduleMap = await av_buildScheduleMapForDate(schedSnap, techEmails, dateStr);
+    const bookingWindow = av_bookingWindowFromSettings(opsSnap && opsSnap.exists ? (opsSnap.data() || {}) : {});
 
     // Fallback for techs with no schedule doc — assume default hours
     techEmails.forEach(email => {
@@ -314,8 +457,9 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         if (techBlocked.has(email)) return;
 
         const busy      = busyMap[email] || [];
-        const openTime  = sched.startMins;
-        const closeTime = sched.endMins;
+        const openTime  = Math.max(sched.startMins, bookingWindow.startMins);
+        const closeTime = Math.min(sched.endMins, bookingWindow.endMins);
+        if (openTime >= closeTime) return;
 
         for (let t = openTime; t + totalMins <= closeTime; t += 30) {
             // Skip past slots for today
@@ -417,17 +561,21 @@ function av_ensureSoloTimeContinueCTA(active = false) {
 //  SOLO FLOW — replaces bk_generateSlots in app.js
 // ============================================================
 window.bk_generateSlots = async function() {
-    const date      = document.getElementById('bk_date').value;
+    const dateEl    = document.getElementById('bk_date');
+    const date      = dateEl?.value || '';
     const timeEl    = document.getElementById('bk_time');
     const slotsEl   = document.getElementById('bk_slots');
     const container = document.getElementById('bk_slotsContainer');
     const nextBtn   = document.getElementById('btnToConfirm');
+    const today     = av_todayStr();
+
+    if (dateEl) dateEl.min = today;
 
     timeEl.value    = '';
     nextBtn.disabled = true;
 
     if (!date) { container.style.display = 'none'; return; }
-    if (date < todayStr) {
+    if (date < today) {
         container.style.display = 'block';
         slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;">Cannot book in the past.</p>';
         return;
