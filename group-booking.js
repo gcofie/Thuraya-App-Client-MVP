@@ -798,6 +798,12 @@ window.grp_confirmBooking = async function() {
             const isSplit = grp_selectedPlan.type === 'split';
             const dateStr = isSplit ? (m.splitDateStr || dateFallback) : dateFallback;
             const timeStr = isSplit ? (m.splitTimeStr || '') : (grp_selectedPlan.timeStr || timeFallback);
+            const serviceLineItems = typeof window.thBuildClientServiceSnapshots === 'function'
+                ? window.thBuildClientServiceSnapshots(mt.services, { snapshotSource: isSplit ? 'client_group_booking_split' : 'client_group_booking' })
+                : [];
+            const snapshotTotals = typeof window.thClientServiceSnapshotTotals === 'function'
+                ? window.thClientServiceSnapshotTotals(serviceLineItems)
+                : { serviceSubtotal: Number(mt.basePrice.toFixed(2)), taxTotal: (mt.taxLines || []).reduce((sum, row) => sum + (Number(row.amount) || 0), 0) };
             batch.set(ref, {
                 groupId: grp_groupId,
                 groupSize: grp_members.length,
@@ -820,7 +826,11 @@ window.grp_confirmBooking = async function() {
                 bookedPrice: Number(mt.basePrice.toFixed(2)),
                 grandTotal: billing.amountDue,
                 totalGHC: billing.amountDue,
+                serviceLineItems,
+                serviceSubtotal: snapshotTotals.serviceSubtotal,
+                taxTotal: snapshotTotals.taxTotal,
                 memberServiceTotal: Number(mt.grandTotal.toFixed(2)),
+                payableShare: billing.amountDue,
                 taxBreakdown: JSON.stringify(mt.taxLines.map(l => ({ name:l.name, rate:l.rate, amount:l.amount }))),
                 dateString: dateStr,
                 timeString: timeStr,

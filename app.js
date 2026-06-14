@@ -135,6 +135,97 @@ function applyTaxes(listedTotal) {
     return { basePrice, grandTotal, taxLines };
 }
 
+function bk_snapshotFirstPresent(source, keys, fallback = '') {
+    source = source || {};
+    for (const key of keys) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') return value;
+    }
+    return fallback;
+}
+
+function bk_snapshotNumber(value, fallback = 0) {
+    const n = Number(String(value ?? '').replace(/[^0-9.\-]/g, ''));
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function bk_snapshotTimestamp(value) {
+    if (!value) return '';
+    try {
+        if (typeof value.toDate === 'function') return value.toDate().toISOString();
+        if (value instanceof Date) return value.toISOString();
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? String(value) : d.toISOString();
+    } catch (e) {
+        return String(value || '');
+    }
+}
+
+function bk_findMenuItemForSnapshot(selected = {}) {
+    const selectedId = String(selected.id || selected.menuItemId || selected.serviceId || '').trim();
+    const sources = [
+        ...(Array.isArray(window.bk_menuServices) ? window.bk_menuServices : []),
+        ...(Array.isArray(window.THURAYA_GROUP_MENU_V2_CACHE) ? window.THURAYA_GROUP_MENU_V2_CACHE : [])
+    ];
+    return sources.find(item => String(item?.id || '') === selectedId) || selected || {};
+}
+
+function bk_buildServiceSnapshot(selected = {}, options = {}) {
+    const menuItem = bk_findMenuItemForSnapshot(selected);
+    const quantity = Math.max(1, parseInt(selected.qty ?? selected.quantity ?? 1, 10) || 1);
+    const unitPrice = bk_snapshotNumber(
+        bk_snapshotFirstPresent(menuItem, ['price', 'priceGHC', 'unitPrice', 'amount'], selected.price),
+        bk_snapshotNumber(selected.price, 0)
+    );
+    const duration = parseInt(bk_snapshotNumber(
+        bk_snapshotFirstPresent(menuItem, ['duration', 'durationMins', 'minutes'], selected.dur),
+        bk_snapshotNumber(selected.dur, 0)
+    ), 10) || 0;
+    const lineListedSubtotal = unitPrice * quantity;
+    const taxResult = typeof applyTaxes === 'function'
+        ? applyTaxes(lineListedSubtotal)
+        : { basePrice: lineListedSubtotal, taxLines: [] };
+    const lineTax = (taxResult.taxLines || []).reduce((sum, row) => sum + bk_snapshotNumber(row?.amount, 0), 0);
+    const name = String(
+        bk_snapshotFirstPresent(menuItem, ['serviceName', 'name', 'displayName', 'Service Name'], selected.name || 'Service')
+    ).trim() || 'Service';
+    const menuId = String(menuItem.id || selected.id || selected.menuItemId || selected.serviceId || '').trim();
+
+    return {
+        menuItemId: menuId,
+        serviceId: String(bk_snapshotFirstPresent(menuItem, ['serviceId'], menuId)),
+        serviceName: name,
+        quantity,
+        unitPriceAtBooking: Number(unitPrice.toFixed(2)),
+        durationAtBooking: duration,
+        menuUpdatedAtAtBooking: bk_snapshotTimestamp(bk_snapshotFirstPresent(menuItem, ['updatedAt', 'Last_Updated', 'lastUpdated', 'menuUpdatedAt'], '')),
+        menuVersionAtBooking: String(bk_snapshotFirstPresent(menuItem, ['menuVersion', 'version', 'schemaVersion'], '')),
+        priceMode: bk_taxInclusive ? 'inclusive' : 'exclusive',
+        lineSubtotal: Number((taxResult.basePrice || lineListedSubtotal).toFixed(2)),
+        taxAmount: Number(lineTax.toFixed(2)),
+        lineTotal: Number((taxResult.basePrice || lineListedSubtotal).toFixed(2)),
+        snapshotSource: String(options.snapshotSource || selected.snapshotSource || 'client_app')
+    };
+}
+
+window.thBuildClientServiceSnapshot = bk_buildServiceSnapshot;
+window.thBuildClientServiceSnapshots = function thBuildClientServiceSnapshots(selectedServices = [], options = {}) {
+    return (Array.isArray(selectedServices) ? selectedServices : [])
+        .filter(item => item && (item.id || item.name || item.serviceName))
+        .map(item => bk_buildServiceSnapshot(item, options));
+};
+
+window.thClientServiceSnapshotTotals = function thClientServiceSnapshotTotals(serviceLineItems = []) {
+    const rows = Array.isArray(serviceLineItems) ? serviceLineItems : [];
+    const serviceSubtotal = rows.reduce((sum, row) => sum + bk_snapshotNumber(row?.lineSubtotal, 0), 0);
+    const taxTotal = rows.reduce((sum, row) => sum + bk_snapshotNumber(row?.taxAmount, 0), 0);
+    return {
+        serviceSubtotal: Number(serviceSubtotal.toFixed(2)),
+        taxTotal: Number(taxTotal.toFixed(2)),
+        grandTotal: Number((serviceSubtotal + taxTotal).toFixed(2))
+    };
+}
+
 // ── Init & Auth ───────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2774,6 +2865,12 @@ const bookForDetails = bk_validateBookForDetails();
     const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
     const discountAmount = parseFloat(document.getElementById('bk_discountAmount').value || 0);
     const finalTotal = Math.max(0, grandTotal - discountAmount);
+    const serviceLineItems = typeof window.thBuildClientServiceSnapshots === 'function'
+        ? window.thBuildClientServiceSnapshots(bk_selectedServices, { snapshotSource: 'client_booking' })
+        : [];
+    const snapshotTotals = typeof window.thClientServiceSnapshotTotals === 'function'
+        ? window.thClientServiceSnapshotTotals(serviceLineItems)
+        : { serviceSubtotal: basePrice, taxTotal: taxLines.reduce((sum, row) => sum + (Number(row.amount) || 0), 0) };
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
@@ -2795,6 +2892,12 @@ const bookForDetails = bk_validateBookForDetails();
             bookedDuration:      totalMins,
             bookedPrice:         basePrice,
             grandTotal:          finalTotal,
+            amountDue:           finalTotal,
+            serviceLineItems,
+            serviceSubtotal:     snapshotTotals.serviceSubtotal,
+            taxTotal:            snapshotTotals.taxTotal,
+            memberServiceTotal:  finalTotal,
+            payableShare:        finalTotal,
             taxBreakdown:        JSON.stringify(taxLines.map(l => ({ name:l.name, rate:l.rate, amount:l.amount }))),
             promoCode:           document.getElementById('bk_promoCodeVal').value || '',
             promoId:             document.getElementById('bk_promoId').value      || '',
