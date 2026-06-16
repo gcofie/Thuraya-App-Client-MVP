@@ -194,7 +194,9 @@ function av_slotSmartScore(mins, techs, loadMap) {
 function av_rankSlotMap(slotMap, loadMap) {
     const ranked = Object.entries(slotMap || {}).map(([mins, techs]) => ({
         mins: Number(mins),
-        techs: [...new Set(techs || [])].sort((a, b) => (loadMap[a] || 0) - (loadMap[b] || 0)),
+        techs: typeof window.bk_sortTechnicianEmailsForAssignment === 'function'
+            ? window.bk_sortTechnicianEmailsForAssignment([...new Set(techs || [])], loadMap || {})
+            : [...new Set(techs || [])].sort((a, b) => ((loadMap[a] || 0) - (loadMap[b] || 0)) || String(a || '').localeCompare(String(b || ''))),
         score: av_slotSmartScore(Number(mins), techs || [], loadMap || {})
     })).sort((a, b) => b.score - a.score || a.mins - b.mins);
     const normalized = {};
@@ -590,13 +592,17 @@ window.bk_generateSlots = async function() {
 
     const mode          = document.getElementById('bk_techMode').value;
     const specificEmail = document.getElementById('bk_techEmail').value;
+    const eligibleTechs = typeof bk_getEligibleTechsForSelectedServices === 'function'
+        ? bk_getEligibleTechsForSelectedServices()
+        : (bk_techs || []);
+    const eligibleEmails = new Set((eligibleTechs || []).map(t => String(t.email || '').trim().toLowerCase()));
     const techsToCheck  = (mode === 'specific' && specificEmail)
-        ? [specificEmail]
-        : bk_techs.map(t => t.email);
+        ? (eligibleEmails.has(String(specificEmail || '').trim().toLowerCase()) ? [specificEmail] : [])
+        : (eligibleTechs || []).map(t => t.email);
 
     if (!techsToCheck.length) {
         container.style.display = 'none';
-        toast('No technicians available for this date.', 'warning');
+        toast('No eligible technicians available for the selected service department(s).', 'warning');
         return;
     }
 
@@ -640,7 +646,9 @@ window.bk_selectSlot = function(time, btn) {
             const available = JSON.parse(btn.getAttribute('data-techs') || '[]');
             if (available.length) {
                 const loadMap = window.av_lastSlotContext?.loadMap || {};
-                const assignedEmail = [...available].sort((a, b) => (loadMap[a] || 0) - (loadMap[b] || 0))[0];
+                const assignedEmail = typeof window.bk_sortTechnicianEmailsForAssignment === 'function'
+                    ? window.bk_sortTechnicianEmailsForAssignment(available, loadMap)[0]
+                    : [...available].sort((a, b) => ((loadMap[a] || 0) - (loadMap[b] || 0)) || String(a || '').localeCompare(String(b || '')))[0];
                 const tech = bk_techs.find(t => t.email === assignedEmail);
                 document.getElementById('bk_techEmail').value = assignedEmail;
                 document.getElementById('bk_techName').value  = tech?.name || assignedEmail;
@@ -695,11 +703,21 @@ window.grp_generateSlots = async function() {
         ]);
         const slotMap = av_mergeSlotMaps(maps);
 
-        // Filter: slot must have at least as many free techs as group members
+        // Filter: slot must have at least as many eligible free techs as group members
         const groupSize    = grp_members.length;
+        const memberIndexes = (grp_members || []).map((_, i) => i);
+        const techByEmail = new Map((bk_techs || []).map(t => [String(t.email || '').trim().toLowerCase(), t]));
         const filteredMap  = {};
         Object.entries(slotMap).forEach(([t, techs]) => {
-            if (techs.length >= groupSize) filteredMap[t] = techs;
+            if (typeof window.grpPickRankedTechsForMembers === 'function') {
+                const freeTechs = (techs || []).map(email => techByEmail.get(String(email || '').trim().toLowerCase())).filter(Boolean);
+                const picked = window.grpPickRankedTechsForMembers(memberIndexes, freeTechs, loadMap);
+                if (picked && picked.length >= groupSize) filteredMap[t] = picked.map(tech => tech.email);
+            } else if (techs.length >= groupSize) {
+                filteredMap[t] = typeof window.bk_sortTechnicianEmailsForAssignment === 'function'
+                    ? window.bk_sortTechnicianEmailsForAssignment(techs, loadMap)
+                    : techs;
+            }
         });
         const rankedResult = av_rankSlotMap(filteredMap, loadMap);
 
@@ -741,7 +759,9 @@ window.grp_selectSlot = window.grp_selectSlot || function(time, btn) {
 
         const loadMap = window.av_lastGroupSlotContext?.loadMap || {};
         window.grp_selectedTime = time;
-        window.grp_selectedSlotTechs = [...availableTechs].sort((a, b) => (loadMap[a] || 0) - (loadMap[b] || 0));
+        window.grp_selectedSlotTechs = typeof window.bk_sortTechnicianEmailsForAssignment === 'function'
+            ? window.bk_sortTechnicianEmailsForAssignment(availableTechs, loadMap)
+            : [...availableTechs].sort((a, b) => ((loadMap[a] || 0) - (loadMap[b] || 0)) || String(a || '').localeCompare(String(b || '')));
 
         const confirmBtn = document.getElementById('grp_toConfirmBtn');
         if (confirmBtn) confirmBtn.disabled = false;

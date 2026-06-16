@@ -2157,7 +2157,9 @@ async function loadTechs() {
                 name: d.name || doc.id,
                 // Therapy assignment comes from Staff App.
                 // Existing records without this field are treated as Both for safety.
-                therapyTypes: d.therapyTypes || d.therapyType || d.therapy || ['hand', 'foot']
+                therapyTypes: d.therapyTypes || d.therapyType || d.therapy || ['hand', 'foot'],
+                lastAssignedAt: d.lastAssignedAt || d.lastBookingAssignedAt || d.lastBookedAt || d.lastAssignmentAt || null,
+                lastAssignedAtMs: d.lastAssignedAtMs || d.lastBookingAssignedAtMs || d.lastBookedAtMs || 0
             });
         });
 
@@ -2224,6 +2226,78 @@ function bk_techMatchesSelectedTherapy(tech) {
 function bk_getEligibleTechsForSelectedServices() {
     return (bk_techs || []).filter(bk_techMatchesSelectedTherapy);
 }
+
+function bk_assignmentNorm(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function bk_assignmentTimestampMillis(value) {
+    if (!value) return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (value instanceof Date) return value.getTime();
+    if (value && typeof value.toMillis === 'function') {
+        try { return value.toMillis(); } catch(e) {}
+    }
+    if (value && typeof value.toDate === 'function') {
+        try { return value.toDate().getTime(); } catch(e) {}
+    }
+    if (typeof value === 'string') {
+        const parsed = Date.parse(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+}
+
+function bk_assignmentDepartment(value) {
+    const text = bk_assignmentNorm(value);
+    if (!text) return '';
+    if (text.includes('both')) return 'both';
+    if (text.includes('foot') || text.includes('feet') || text.includes('pedicure')) return 'foot';
+    if (text.includes('hand') || text.includes('manicure') || text.includes('nail')) return 'hand';
+    return '';
+}
+
+window.bk_getRequiredTherapyTypesForServices = function bk_getRequiredTherapyTypesForServices(services, fallbackDept) {
+    const required = new Set();
+    (services || []).forEach(s => {
+        const dept = bk_assignmentDepartment(s?.dept || s?.department || s?.appliesTo || s?.serviceType || fallbackDept);
+        if (dept === 'both') { required.add('hand'); required.add('foot'); }
+        else if (dept) required.add(dept);
+    });
+    if (!required.size) {
+        const dept = bk_assignmentDepartment(fallbackDept || bk_selectedDept);
+        if (dept === 'both') { required.add('hand'); required.add('foot'); }
+        else if (dept) required.add(dept);
+    }
+    return Array.from(required).sort();
+};
+
+window.bk_getEligibleTechsForServices = function bk_getEligibleTechsForServices(services, fallbackDept) {
+    const required = window.bk_getRequiredTherapyTypesForServices(services, fallbackDept);
+    return (bk_techs || []).filter(tech => {
+        const types = bk_normalizeTherapyTypes(tech?.therapyTypes);
+        return required.every(t => types.includes(t));
+    });
+};
+
+window.bk_sortTechnicianObjectsForAssignment = function bk_sortTechnicianObjectsForAssignment(techs, loadMap = {}) {
+    return (Array.isArray(techs) ? techs.slice() : []).sort((a, b) => {
+        const ae = bk_assignmentNorm(a?.email || a?.uid || a?.id);
+        const be = bk_assignmentNorm(b?.email || b?.uid || b?.id);
+        const loadDiff = Number(loadMap[ae] || loadMap[a?.email] || 0) - Number(loadMap[be] || loadMap[b?.email] || 0);
+        if (loadDiff) return loadDiff;
+        const aRotation = bk_assignmentTimestampMillis(a?.lastAssignedAtMs || a?.lastAssignedAt || a?.lastBookingAssignedAt || a?.lastBookedAt);
+        const bRotation = bk_assignmentTimestampMillis(b?.lastAssignedAtMs || b?.lastAssignedAt || b?.lastBookingAssignedAt || b?.lastBookedAt);
+        if (aRotation !== bRotation) return aRotation - bRotation;
+        return ae.localeCompare(be);
+    });
+};
+
+window.bk_sortTechnicianEmailsForAssignment = function bk_sortTechnicianEmailsForAssignment(emails, loadMap = {}) {
+    const byEmail = new Map((bk_techs || []).map(t => [bk_assignmentNorm(t.email), t]));
+    const techs = [...new Set(emails || [])].map(email => byEmail.get(bk_assignmentNorm(email)) || { email });
+    return window.bk_sortTechnicianObjectsForAssignment(techs, loadMap).map(t => t.email).filter(Boolean);
+};
 
 // ── Technician selection ──────────────────────────────────
 

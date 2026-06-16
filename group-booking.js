@@ -135,6 +135,87 @@ function grp_getFreeTechsAt(techs, bookedSlots, startMins, durationMins) {
     return techs.filter(t => t.email && !busy.has(t.email));
 }
 
+function grp_assignmentNorm(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function grp_assignmentDept(value) {
+    const text = grp_assignmentNorm(value);
+    if (!text) return '';
+    if (text.includes('both')) return 'both';
+    if (text.includes('foot') || text.includes('feet') || text.includes('pedicure')) return 'foot';
+    if (text.includes('hand') || text.includes('manicure') || text.includes('nail')) return 'hand';
+    return '';
+}
+
+function grp_memberRequiredDepartments(index) {
+    const member = grp_members[index] || {};
+    const required = new Set();
+    (member.selectedServices || []).forEach(service => {
+        const dept = grp_assignmentDept(service.department || service.appliesTo || service.dept || member.dept);
+        if (dept === 'both') { required.add('hand'); required.add('foot'); }
+        else if (dept) required.add(dept);
+    });
+    if (!required.size) {
+        const fallback = grp_assignmentDept(member.dept || 'Hand');
+        if (fallback === 'both') { required.add('hand'); required.add('foot'); }
+        else if (fallback) required.add(fallback);
+    }
+    return Array.from(required).sort();
+}
+
+function grp_techEligibleForMember(tech, index) {
+    const required = grp_memberRequiredDepartments(index);
+    if (!required.length) return true;
+    const raw = Array.isArray(tech?.therapyTypes) ? tech.therapyTypes : (tech?.therapyTypes ? [tech.therapyTypes] : ['hand','foot']);
+    const types = new Set();
+    raw.forEach(value => {
+        const text = grp_assignmentNorm(value);
+        if (!text || text.includes('both') || text.includes('hand/foot') || text.includes('hand & foot')) {
+            types.add('hand'); types.add('foot'); return;
+        }
+        if (text.includes('hand')) types.add('hand');
+        if (text.includes('foot') || text.includes('feet')) types.add('foot');
+    });
+    if (!types.size) { types.add('hand'); types.add('foot'); }
+    return required.every(dept => types.has(dept));
+}
+
+async function grp_loadAssignmentMap(dateStr) {
+    if (typeof av_getDailyLoadMap === 'function') {
+        try { return await av_getDailyLoadMap(dateStr); } catch(e) {}
+    }
+    return {};
+}
+
+function grp_rankTechs(techs, loadMap) {
+    const source = Array.isArray(techs) ? techs : [];
+    if (typeof window.bk_sortTechnicianObjectsForAssignment === 'function') {
+        return window.bk_sortTechnicianObjectsForAssignment(source, loadMap || {});
+    }
+    return source.slice().sort((a, b) => {
+        const ae = grp_assignmentNorm(a?.email);
+        const be = grp_assignmentNorm(b?.email);
+        const loadDiff = Number(loadMap?.[ae] || 0) - Number(loadMap?.[be] || 0);
+        if (loadDiff) return loadDiff;
+        return ae.localeCompare(be);
+    });
+}
+
+window.grpPickRankedTechsForMembers = function grpPickRankedTechsForMembers(memberIndexes, freeTechs, loadMap = {}) {
+    const picked = [];
+    const used = new Set();
+    for (const memberIndex of (memberIndexes || [])) {
+        const candidates = (freeTechs || []).filter(tech => tech?.email && !used.has(grp_assignmentNorm(tech.email)) && grp_techEligibleForMember(tech, memberIndex));
+        const ranked = grp_rankTechs(candidates, loadMap);
+        const choice = ranked[0];
+        if (!choice) return null;
+        used.add(grp_assignmentNorm(choice.email));
+        picked.push(choice);
+    }
+    return picked;
+};
+
 function grp_candidateSlots() {
     const slots = [];
     const open = 8 * 60;
@@ -181,6 +262,7 @@ function grp_allocateMembersBySplit(split) {
 async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks = []) {
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
+    const loadMap = await grp_loadAssignmentMap(dateStr);
     const close = 20 * 60;
     const duration = Math.max(60, ...memberIndexes.map(i => grp_memberTotals(grp_members[i]).totalMins || 60));
     const needed = memberIndexes.length;
@@ -193,8 +275,9 @@ async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks 
         // avoid double-using the same tech at same time within generated split plan
         const lockAtThisTime = new Set(excludedTechLocks.filter(x => x.dateStr === dateStr && x.timeStr === grp_minsToTime(start)).map(x => x.email));
         free = free.filter(t => !lockAtThisTime.has(t.email));
-        if (free.length >= needed) {
-            return { dateStr, timeStr: grp_minsToTime(start), techs: free.slice(0, needed), duration };
+        const picked = window.grpPickRankedTechsForMembers(memberIndexes, free, loadMap);
+        if (picked && picked.length >= needed) {
+            return { dateStr, timeStr: grp_minsToTime(start), techs: picked, duration };
         }
     }
     return null;
@@ -483,11 +566,11 @@ window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, n
         });
         input.checked = true;
         card.classList.add('selected');
-        member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
+        member.selectedServices.push({ id, type, price, dur, name, qty: 1, dept, department: dept });
     } else {
         input.checked = !input.checked;
         card.classList.toggle('selected', input.checked);
-        if (input.checked) member.selectedServices.push({ id, type, price, dur, name, qty: 1 });
+        if (input.checked) member.selectedServices.push({ id, type, price, dur, name, qty: 1, dept, department: dept });
         else member.selectedServices = member.selectedServices.filter(s => s.id !== id);
     }
     grp_renderTabs();
@@ -501,7 +584,7 @@ window.grp_updateCounter = function(id, price, dur, name, delta) {
     const val = Math.max(0, (parseInt(input.value, 10) || 0) + delta);
     input.value = val;
     member.selectedServices = member.selectedServices.filter(s => s.id !== id);
-    if (val > 0) member.selectedServices.push({ id, type: 'counter', price, dur, name, qty: val });
+    if (val > 0) member.selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept, department: dept });
     grp_renderTabs();
     grp_updateProgress();
 };
@@ -564,9 +647,11 @@ window.grp_generateSlots = async function() {
     await grp_ensureTechs();
     const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
     const booked = await grp_getBookedSlots(dateStr);
+    const loadMap = await grp_loadAssignmentMap(dateStr);
     const group = grp_groupTotals();
     const duration = Math.max(60, group.totalMinsMax || 60);
     const needed = grp_members.length;
+    const memberIndexes = grp_members.map((_, i) => i);
     const close = 20 * 60;
     const slotMap = {};
     let maxFreeOnDay = 0;
@@ -576,7 +661,8 @@ window.grp_generateSlots = async function() {
         if (start + duration > close) return;
         const free = grp_getFreeTechsAt(techs, booked, start, duration);
         maxFreeOnDay = Math.max(maxFreeOnDay, free.length);
-        if (free.length >= needed) slotMap[start] = free.slice(0, needed);
+        const picked = window.grpPickRankedTechsForMembers(memberIndexes, free, loadMap);
+        if (picked && picked.length >= needed) slotMap[start] = picked;
     });
 
     const sameSlots = Object.keys(slotMap).map(Number).sort((a,b) => a-b);
@@ -598,11 +684,19 @@ window.grp_selectSameSlot = async function(timeStr, btn) {
     document.getElementById('grp_time').value = timeStr;
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
+    const loadMap = await grp_loadAssignmentMap(dateStr);
     const duration = Math.max(60, grp_groupTotals().totalMinsMax || 60);
-    const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration).slice(0, grp_members.length);
+    const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration);
+    const picked = window.grpPickRankedTechsForMembers(grp_members.map((_, i) => i), free, loadMap) || [];
+    if (picked.length < grp_members.length) {
+        toast('That time is no longer available for every selected service department. Please choose another.', 'warning');
+        const confirmBtn = document.getElementById('grp_toConfirmBtn');
+        if (confirmBtn) confirmBtn.disabled = true;
+        return;
+    }
     grp_members.forEach((m, i) => {
-        m.assignedTechEmail = free[i]?.email || '';
-        m.assignedTechName = free[i]?.name || 'To be assigned';
+        m.assignedTechEmail = picked[i]?.email || '';
+        m.assignedTechName = picked[i]?.name || 'To be assigned';
         m.splitDateStr = '';
         m.splitTimeStr = '';
         m.subGroupIndex = null;
@@ -746,11 +840,20 @@ async function grp_preAssignSameTimeIfNeeded() {
     if (!dateStr || !timeStr) return;
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
+    const loadMap = await grp_loadAssignmentMap(dateStr);
     const duration = Math.max(60, grp_groupTotals().totalMinsMax || 60);
-    const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration).slice(0, grp_members.length);
+    const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration);
+    const picked = window.grpPickRankedTechsForMembers(grp_members.map((_, i) => i), free, loadMap) || [];
+    if (picked.length < grp_members.length) {
+        grp_members.forEach(m => {
+            m.assignedTechEmail = '';
+            m.assignedTechName = 'To be assigned';
+        });
+        return;
+    }
     grp_members.forEach((m, i) => {
-        m.assignedTechEmail = free[i]?.email || m.assignedTechEmail || '';
-        m.assignedTechName = free[i]?.name || m.assignedTechName || 'To be assigned';
+        m.assignedTechEmail = picked[i]?.email || m.assignedTechEmail || '';
+        m.assignedTechName = picked[i]?.name || m.assignedTechName || 'To be assigned';
     });
 }
 
@@ -935,10 +1038,12 @@ window.grp_generateSlots = async function() {
 
         const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
         const booked = await grp_getBookedSlots(dateStr);
+        const loadMap = await grp_loadAssignmentMap(dateStr);
         const group = grp_groupTotals();
 
         const duration = Math.max(60, group.totalMinsMax || 60);
         const needed = Math.max(2, grp_members.length || grp_groupSize || 2);
+        const memberIndexes = grp_members.map((_, i) => i);
         const close = 20 * 60;
         const slotMap = {};
         let maxFreeOnDay = 0;
@@ -950,9 +1055,8 @@ window.grp_generateSlots = async function() {
             const free = grp_getFreeTechsAt(techs, booked, start, duration);
             maxFreeOnDay = Math.max(maxFreeOnDay, free.length);
 
-            if (free.length >= needed) {
-                slotMap[start] = free.slice(0, needed);
-            }
+            const picked = window.grpPickRankedTechsForMembers(memberIndexes, free, loadMap);
+            if (picked && picked.length >= needed) slotMap[start] = picked;
         });
 
         const sameSlots = Object.keys(slotMap).map(Number).sort((a, b) => a - b);
@@ -1061,6 +1165,7 @@ async function grp_getAvailableSlotsForSubgroup(index, dateStr) {
 
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
+    const loadMap = await grp_loadAssignmentMap(dateStr);
     const duration = grp_durationForSubgroup(sg);
     const close = 20 * 60;
     const out = [];
@@ -1070,12 +1175,13 @@ async function grp_getAvailableSlotsForSubgroup(index, dateStr) {
         if (start + duration > close) return;
 
         const free = grp_freeTechsRespectingManualLocks(techs, booked, dateStr, start, duration, index);
-        if (free.length >= sg.size) {
+        const picked = window.grpPickRankedTechsForMembers(sg.memberIndexes || [], free, loadMap);
+        if (picked && picked.length >= sg.size) {
             out.push({
                 timeStr: grp_minsToTime(start),
                 startMins: start,
                 duration,
-                techs: free.slice(0, sg.size)
+                techs: picked
             });
         }
     });
@@ -1086,6 +1192,7 @@ async function grp_getAvailableSlotsForSubgroup(index, dateStr) {
 async function grp_findBestManualPlan(dateStr, split) {
     const plan = grp_allocateMembersBySplit(split);
     const chosen = [];
+    const loadMap = await grp_loadAssignmentMap(dateStr);
 
     for (let i = 0; i < plan.length; i++) {
         const sg = plan[i];
@@ -1110,11 +1217,12 @@ async function grp_findBestManualPlan(dateStr, split) {
             });
             free = free.filter(t => !lockedAtSameTime.has(t.email));
 
-            if (free.length >= sg.size) {
+            const picked = window.grpPickRankedTechsForMembers(sg.memberIndexes || [], free, loadMap);
+            if (picked && picked.length >= sg.size) {
                 best = {
                     dateStr,
                     timeStr,
-                    techs: free.slice(0, sg.size),
+                    techs: picked,
                     startMins: start,
                     duration
                 };
@@ -1246,10 +1354,12 @@ window.grp_selectManualSubgroupTime = async function(index, timeStr, btn) {
     const start = grp_timeToMins(timeStr);
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
+    const loadMap = await grp_loadAssignmentMap(dateStr);
     const duration = grp_durationForSubgroup(sg);
     const free = grp_freeTechsRespectingManualLocks(techs, booked, dateStr, start, duration, index);
+    const picked = window.grpPickRankedTechsForMembers(sg.memberIndexes || [], free, loadMap) || [];
 
-    if (free.length < sg.size) {
+    if (picked.length < sg.size) {
         toast('That time is no longer available. Please choose another.', 'warning');
         await grp_loadManualSubgroupSlots(index, dateStr);
         return;
@@ -1257,7 +1367,7 @@ window.grp_selectManualSubgroupTime = async function(index, timeStr, btn) {
 
     sg.dateStr = dateStr;
     sg.timeStr = timeStr;
-    sg.techs = free.slice(0, sg.size);
+    sg.techs = picked;
 
     (sg.memberIndexes || []).forEach((mi, idx) => {
         const m = grp_members[mi];
