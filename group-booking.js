@@ -540,6 +540,24 @@ function grp_escapeJs(str) {
     return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
 }
 
+function grp_resolveSelectedServiceDept(member, card, name) {
+    const candidates = [
+        member?.dept,
+        card?.dataset?.department,
+        card?.dataset?.dept,
+        name
+    ];
+    for (const value of candidates) {
+        const normalized = typeof grp_assignmentDept === 'function'
+            ? grp_assignmentDept(value)
+            : String(value || '').trim().toLowerCase();
+        if (normalized === 'foot') return 'Foot';
+        if (normalized === 'hand') return 'Hand';
+        if (normalized === 'both') return 'Both';
+    }
+    return 'Hand';
+}
+
 function grp_buildCard(s, dept, sel) {
     const type = s.inputType || 'radio';
     const name = s.name || 'Service';
@@ -566,7 +584,7 @@ function grp_buildCard(s, dept, sel) {
     const inputEl = type === 'radio'
         ? `<input type="radio" name="${groupName}" id="grp_cb_${s.id}" ${selected ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`
         : `<input type="checkbox" id="grp_cb_${s.id}" ${selected ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex-shrink:0;pointer-events:none;accent-color:var(--gold);margin-top:2px;">`;
-    return `<div class="service-card ${selected ? 'selected' : ''}" onclick="grp_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${safeName}')">${inputEl}<div class="service-card-body"><div class="service-card-name">${name} ${tagHtml}</div>${descHtml}${priceTag}</div></div>`;
+    return `<div class="service-card ${selected ? 'selected' : ''}" data-dept="${dept}" data-department="${dept}" onclick="grp_toggleCard(event,this,'${s.id}','${type}','${groupName}',${price},${dur},'${safeName}')">${inputEl}<div class="service-card-body"><div class="service-card-name">${name} ${tagHtml}</div>${descHtml}${priceTag}</div></div>`;
 }
 
 window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, name) {
@@ -574,6 +592,7 @@ window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, n
     const member = grp_members[grp_activeMember];
     const input = document.getElementById('grp_cb_' + id);
     if (!input || !member) return;
+    const resolvedDept = grp_resolveSelectedServiceDept(member, card, name);
     if (type === 'radio') {
         document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
             r.checked = false;
@@ -585,11 +604,11 @@ window.grp_toggleCard = function(event, card, id, type, groupName, price, dur, n
         });
         input.checked = true;
         card.classList.add('selected');
-        member.selectedServices.push({ id, type, price, dur, name, qty: 1, dept, department: dept });
+        member.selectedServices.push({ id, type, price, dur, name, qty: 1, dept: resolvedDept, department: resolvedDept });
     } else {
         input.checked = !input.checked;
         card.classList.toggle('selected', input.checked);
-        if (input.checked) member.selectedServices.push({ id, type, price, dur, name, qty: 1, dept, department: dept });
+        if (input.checked) member.selectedServices.push({ id, type, price, dur, name, qty: 1, dept: resolvedDept, department: resolvedDept });
         else member.selectedServices = member.selectedServices.filter(s => s.id !== id);
     }
     grp_renderTabs();
@@ -600,10 +619,11 @@ window.grp_updateCounter = function(id, price, dur, name, delta) {
     const input = document.getElementById('grp_qty_' + id);
     const member = grp_members[grp_activeMember];
     if (!input || !member) return;
+    const resolvedDept = grp_resolveSelectedServiceDept(member, input?.closest('.service-card'), name);
     const val = Math.max(0, (parseInt(input.value, 10) || 0) + delta);
     input.value = val;
     member.selectedServices = member.selectedServices.filter(s => s.id !== id);
-    if (val > 0) member.selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept, department: dept });
+    if (val > 0) member.selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept: resolvedDept, department: resolvedDept });
     grp_renderTabs();
     grp_updateProgress();
 };
