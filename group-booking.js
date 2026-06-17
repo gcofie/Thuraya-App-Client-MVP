@@ -259,6 +259,15 @@ function grp_allocateMembersBySplit(split) {
     });
 }
 
+function grp_lockOverlaps(lock, dateStr, startMins, duration) {
+    if (!lock || lock.dateStr !== dateStr) return false;
+    const lockedStart = Number.isFinite(lock.startMins) ? lock.startMins : grp_timeToMins(lock.timeStr || '00:00');
+    const lockedDuration = Number.isFinite(lock.duration) ? lock.duration : Math.max(60, Number(lock.duration || 60));
+    const lockedEnd = Number.isFinite(lock.endMins) ? lock.endMins : lockedStart + lockedDuration;
+    const endMins = startMins + Math.max(15, Number(duration || 15));
+    return startMins < lockedEnd && endMins > lockedStart;
+}
+
 async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks = []) {
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
@@ -272,9 +281,7 @@ async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks 
         if (grp_isPastSlot(dateStr, start)) continue;
         if (start + duration > close) continue;
         let free = grp_getFreeTechsAt(techs, booked, start, duration);
-        // avoid double-using the same tech at same time within generated split plan
-        const lockAtThisTime = new Set(excludedTechLocks.filter(x => x.dateStr === dateStr && x.timeStr === grp_minsToTime(start)).map(x => x.email));
-        free = free.filter(t => !lockAtThisTime.has(t.email));
+        free = free.filter(t => !excludedTechLocks.some(lock => lock.email === t.email && grp_lockOverlaps(lock, dateStr, start, duration)));
         const picked = window.grpPickRankedTechsForMembers(memberIndexes, free, loadMap);
         if (picked && picked.length >= needed) {
             return { dateStr, timeStr: grp_minsToTime(start), techs: picked, duration };
@@ -292,7 +299,14 @@ async function grp_buildPlanForSplit(dateStr, split) {
         sg.dateStr = slot.dateStr;
         sg.timeStr = slot.timeStr;
         sg.techs = slot.techs;
-        slot.techs.forEach(t => locks.push({ dateStr: slot.dateStr, timeStr: slot.timeStr, email: t.email }));
+        slot.techs.forEach(t => locks.push({
+            dateStr: slot.dateStr,
+            timeStr: slot.timeStr,
+            email: t.email,
+            startMins: grp_timeToMins(slot.timeStr),
+            duration: slot.duration,
+            endMins: grp_timeToMins(slot.timeStr) + Math.max(15, Number(slot.duration || 15))
+        }));
     }
     return subgroups;
 }
@@ -719,17 +733,19 @@ function grp_renderCapacityOptions(dateStr, maxFreeOnDay, totalTechs) {
     }).join('');
 
     grid.innerHTML = `<div class="group-capacity-panel warn" style="grid-column:1/-1;">
-        <h3>Not enough technicians for one shared time</h3>
-        <p>Your group has <strong>${grp_members.length}</strong> people. On this date, the highest same-time capacity found is <strong>${maxFreeOnDay || 0}</strong> technician(s). Choose one of the options below.</p>
+        <h3>No same-time slot at the requested time</h3>
+        <p>Your group has <strong>${grp_members.length}</strong> people. On this date, the highest same-time capacity found is <strong>${maxFreeOnDay || 0}</strong> technician(s). Choose one of the recovery options below.</p>
         <div class="group-option-list">
             <button type="button" class="group-option-card" onclick="grp_findFullGroupAlternative('${dateStr}')">
-                <div class="group-option-icon">📅</div>
-                <div class="group-option-body"><strong>Find earliest time for the whole group</strong><span>Search the next 21 days for a time where everyone can be served together.</span></div>
+                <div class="group-option-icon">A</div>
+                <div class="group-option-body"><strong>Nearest same-time slot</strong><span>Search later today first, then future dates, for a time where everyone can be served together.</span></div>
             </button>
-            ${splitHtml ? `<div class="group-split-panel"><h3>Or split your group</h3><p>Choose how you want the group divided. Example: 3 + 2 means three people first, then two people at another available time.</p><div class="group-option-list">${splitHtml}</div><div id="grp_splitPreview" style="margin-top:12px;"></div></div>` : '<p style="color:var(--error);">No split option could be generated. Please try another date.</p>'}
+            ${splitHtml ? `<div class="group-split-panel"><h3>Option B: Nearest split-wave plan</h3><p>Choose how you want the group divided. Example: 3 + 2 means three people first, then two people at the next valid non-overlapping time.</p><div class="group-option-list">${splitHtml}</div><div id="grp_splitPreview" style="margin-top:12px;"></div></div>` : '<p style="color:var(--error);">No split-wave option could be generated. Please try another date.</p>'}
         </div>
     </div>`;
 }
+
+window.grp_renderCapacityOptions = grp_renderCapacityOptions;
 
 window.grp_findFullGroupAlternative = async function(dateStr) {
     const preview = document.getElementById('grp_splitPreview') || document.getElementById('grp_slots');
@@ -1134,6 +1150,9 @@ function grp_getManualLocks(exceptIndex = -1) {
                     dateStr: sg.dateStr,
                     timeStr: sg.timeStr,
                     email: t.email,
+                    startMins: grp_timeToMins(sg.timeStr),
+                    duration: grp_durationForSubgroup(sg),
+                    endMins: grp_timeToMins(sg.timeStr) + grp_durationForSubgroup(sg),
                     subGroupIndex: sg.index || (idx + 1)
                 });
             }
@@ -1149,14 +1168,8 @@ function grp_durationForSubgroup(sg) {
 
 function grp_freeTechsRespectingManualLocks(techs, booked, dateStr, startMins, duration, exceptIndex = -1) {
     let free = grp_getFreeTechsAt(techs, booked, startMins, duration);
-    const timeStr = grp_minsToTime(startMins);
     const locks = grp_getManualLocks(exceptIndex);
-    const lockedAtSameTime = new Set(
-        locks
-            .filter(l => l.dateStr === dateStr && l.timeStr === timeStr)
-            .map(l => l.email)
-    );
-    return free.filter(t => !lockedAtSameTime.has(t.email));
+    return free.filter(t => !locks.some(lock => lock.email === t.email && grp_lockOverlaps(lock, dateStr, startMins, duration)));
 }
 
 async function grp_getAvailableSlotsForSubgroup(index, dateStr) {
@@ -1208,14 +1221,7 @@ async function grp_findBestManualPlan(dateStr, split) {
 
             let free = grp_getFreeTechsAt(techs, booked, start, duration);
 
-            const timeStr = grp_minsToTime(start);
-            const lockedAtSameTime = new Set();
-            chosen.forEach(prev => {
-                if (prev.dateStr === dateStr && prev.timeStr === timeStr) {
-                    (prev.techs || []).forEach(t => lockedAtSameTime.add(t.email));
-                }
-            });
-            free = free.filter(t => !lockedAtSameTime.has(t.email));
+            free = free.filter(t => !chosen.some(prev => (prev.techs || []).some(prevTech => prevTech.email === t.email) && grp_lockOverlaps(prev, dateStr, start, duration)));
 
             const picked = window.grpPickRankedTechsForMembers(sg.memberIndexes || [], free, loadMap);
             if (picked && picked.length >= sg.size) {
@@ -1235,7 +1241,7 @@ async function grp_findBestManualPlan(dateStr, split) {
         sg.dateStr = best.dateStr;
         sg.timeStr = best.timeStr;
         sg.techs = best.techs;
-        chosen.push({ ...best, index: sg.index });
+        chosen.push({ ...best, endMins: best.startMins + Math.max(15, Number(best.duration || 15)), index: sg.index });
     }
 
     return plan;

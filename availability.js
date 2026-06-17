@@ -318,6 +318,69 @@ function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
     }).join('');
 }
 
+function av_addDays(dateStr, days) {
+    const d = new Date(`${dateStr}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function av_dateLabel(dateStr) {
+    const d = new Date(`${dateStr}T12:00:00`);
+    const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    return `${day} ${d.getDate()} ${d.toLocaleString('en-US', { month:'short' })}`;
+}
+
+async function av_findNearestSoloSlot(startDate, techEmails, totalMins) {
+    const emails = (techEmails || []).filter(Boolean);
+    if (!emails.length) return null;
+    for (let offset = 0; offset < 21; offset++) {
+        const dateStr = av_addDays(startDate, offset);
+        const chunks = av_chunkArray(emails, 30);
+        const [maps, loadMap] = await Promise.all([
+            Promise.all(chunks.map(chunk => av_getSlotMap(dateStr, chunk, totalMins))),
+            av_getDailyLoadMap(dateStr)
+        ]);
+        const rankedResult = av_rankSlotMap(av_mergeSlotMaps(maps), loadMap);
+        if (rankedResult.ranked && rankedResult.ranked.length) {
+            const earliest = rankedResult.ranked.slice().sort((a, b) => a.mins - b.mins || b.score - a.score)[0];
+            return { dateStr, mins: earliest.mins, techs: earliest.techs || [], loadMap };
+        }
+    }
+    return null;
+}
+
+function av_renderSoloRecovery(slot) {
+    if (!slot) {
+        return '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">No recovery slot found in the next 21 days. Please choose another date or service.</p>';
+    }
+    const t24 = `${String(Math.floor(slot.mins / 60)).padStart(2,'0')}:${String(slot.mins % 60).padStart(2,'0')}`;
+    const techList = av_escapeAttr(JSON.stringify(slot.techs || []));
+    return `<div class="smart-booking-card" style="grid-column:1/-1;border:1px solid rgba(180,132,58,.32);background:#fffaf0;border-radius:16px;padding:14px;">
+        <div style="font-weight:800;color:var(--primary);">Nearest Available: ${av_dateLabel(slot.dateStr)} ${av_formatTimeFromMins(slot.mins)}</div>
+        <div style="color:var(--text-muted);font-size:.82rem;line-height:1.4;margin:6px 0 12px;">Current business day is searched first, then future dates. Technician assignment still uses eligibility and workload ranking.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" class="btn-primary btn-sm" onclick="av_useNearestSoloSlot('${slot.dateStr}','${t24}','${techList}')">Use This Time</button>
+            <button type="button" class="btn-outline btn-sm" onclick="document.getElementById('bk_date')?.focus()">Choose Another Time</button>
+        </div>
+    </div>`;
+}
+
+window.av_useNearestSoloSlot = function(dateStr, timeStr, techListJson) {
+    const dateEl = document.getElementById('bk_date');
+    const timeEl = document.getElementById('bk_time');
+    const slotsEl = document.getElementById('bk_slots');
+    const container = document.getElementById('bk_slotsContainer');
+    const techs = (() => { try { return JSON.parse(techListJson || '[]'); } catch(e) { return []; } })();
+    if (dateEl) dateEl.value = dateStr;
+    if (timeEl) timeEl.value = timeStr;
+    if (container) container.style.display = 'block';
+    if (slotsEl) {
+        slotsEl.innerHTML = `<button class="slot-btn selected smart-recommended" data-time="${timeStr}" data-techs='${av_escapeAttr(JSON.stringify(techs))}' onclick="bk_selectSlot('${timeStr}', this)">${av_formatTimeFromMins(av_toMins(timeStr))}<span class="slot-smart-tag smart-best">Recovery</span></button>`;
+        const btn = slotsEl.querySelector('.slot-btn');
+        if (btn && typeof window.bk_selectSlot === 'function') window.bk_selectSlot(timeStr, btn);
+    }
+};
+
 
 // ============================================================
 //  CORE ENGINE
@@ -602,7 +665,7 @@ window.bk_generateSlots = async function() {
 
     if (!techsToCheck.length) {
         container.style.display = 'none';
-        toast('No eligible technicians available for the selected service department(s).', 'warning');
+        toast('No technician currently qualifies for the selected services.', 'warning');
         return;
     }
 
@@ -620,7 +683,9 @@ window.bk_generateSlots = async function() {
         const rankedResult = av_rankSlotMap(slotMap, loadMap);
 
         if (!Object.keys(rankedResult.normalized).length) {
-            slotsEl.innerHTML = '<p style="color:var(--error);font-size:0.875rem;grid-column:1/-1;">No available times for this date. Try a different date.</p>';
+            slotsEl.innerHTML = '<div class="loading-pulse" style="grid-column:1/-1;">No slot at this date. Searching nearest available time...</div>';
+            const nearest = await av_findNearestSoloSlot(date, techsToCheck, totalMins);
+            slotsEl.innerHTML = av_renderSoloRecovery(nearest);
             return;
         }
 
@@ -687,6 +752,7 @@ window.grp_generateSlots = async function() {
             grid.innerHTML = '<p style="color:var(--error);grid-column:1/-1;">No technicians found.</p>';
             return;
         }
+        const allTechObjects = (bk_techs || []).filter(t => t && t.email);
 
         // Each member needs their own duration window
         const memberDurations = grp_members.map(m =>
@@ -706,23 +772,39 @@ window.grp_generateSlots = async function() {
         // Filter: slot must have at least as many eligible free techs as group members
         const groupSize    = grp_members.length;
         const memberIndexes = (grp_members || []).map((_, i) => i);
+        if (typeof window.grpPickRankedTechsForMembers === 'function') {
+            const noEligibleIndex = memberIndexes.find(i => !window.grpPickRankedTechsForMembers([i], allTechObjects, {}));
+            if (noEligibleIndex >= 0) {
+                grid.innerHTML = '<p style="color:var(--error);grid-column:1/-1;text-align:center;padding:16px 0;">No technician currently qualifies for the selected services. Please choose another service or contact THURAYA.</p>';
+                return;
+            }
+        }
         const techByEmail = new Map((bk_techs || []).map(t => [String(t.email || '').trim().toLowerCase(), t]));
         const filteredMap  = {};
+        let maxFreeOnDay = 0;
         Object.entries(slotMap).forEach(([t, techs]) => {
             if (typeof window.grpPickRankedTechsForMembers === 'function') {
                 const freeTechs = (techs || []).map(email => techByEmail.get(String(email || '').trim().toLowerCase())).filter(Boolean);
                 const picked = window.grpPickRankedTechsForMembers(memberIndexes, freeTechs, loadMap);
+                maxFreeOnDay = Math.max(maxFreeOnDay, picked ? picked.length : freeTechs.length);
                 if (picked && picked.length >= groupSize) filteredMap[t] = picked.map(tech => tech.email);
             } else if (techs.length >= groupSize) {
+                maxFreeOnDay = Math.max(maxFreeOnDay, techs.length);
                 filteredMap[t] = typeof window.bk_sortTechnicianEmailsForAssignment === 'function'
                     ? window.bk_sortTechnicianEmailsForAssignment(techs, loadMap)
                     : techs;
+            } else {
+                maxFreeOnDay = Math.max(maxFreeOnDay, techs.length);
             }
         });
         const rankedResult = av_rankSlotMap(filteredMap, loadMap);
 
         if (!Object.keys(rankedResult.normalized).length) {
-            grid.innerHTML = '<p style="color:var(--error);grid-column:1/-1;text-align:center;padding:16px 0;">No slots available for your group on this date. Try a different date.</p>';
+            if (typeof window.grp_renderCapacityOptions === 'function') {
+                window.grp_renderCapacityOptions(dateStr, maxFreeOnDay, allTechEmails.length);
+            } else {
+                grid.innerHTML = '<p style="color:var(--error);grid-column:1/-1;text-align:center;padding:16px 0;">No same-time slot is available. Choose another date or contact THURAYA.</p>';
+            }
             return;
         }
 
