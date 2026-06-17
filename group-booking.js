@@ -268,7 +268,7 @@ function grp_lockOverlaps(lock, dateStr, startMins, duration) {
     return startMins < lockedEnd && endMins > lockedStart;
 }
 
-async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks = []) {
+async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks = [], earliestStartMins = null) {
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
     const loadMap = await grp_loadAssignmentMap(dateStr);
@@ -277,7 +277,9 @@ async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks 
     const needed = memberIndexes.length;
     const slots = grp_candidateSlots();
 
+    const startFloor = Math.max(0, Number.isFinite(Number(earliestStartMins)) ? Number(earliestStartMins) : 0);
     for (const start of slots) {
+        if (start < startFloor) continue;
         if (grp_isPastSlot(dateStr, start)) continue;
         if (start + duration > close) continue;
         let free = grp_getFreeTechsAt(techs, booked, start, duration);
@@ -293,19 +295,22 @@ async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks 
 async function grp_buildPlanForSplit(dateStr, split) {
     const subgroups = grp_allocateMembersBySplit(split);
     const locks = [];
+    let nextWaveStartMins = 0;
     for (const sg of subgroups) {
-        const slot = await grp_findSlotForMembers(dateStr, sg.memberIndexes, locks);
+        const slot = await grp_findSlotForMembers(dateStr, sg.memberIndexes, locks, nextWaveStartMins);
         if (!slot) return null;
         sg.dateStr = slot.dateStr;
         sg.timeStr = slot.timeStr;
         sg.techs = slot.techs;
+        const slotStart = grp_timeToMins(slot.timeStr);
+        nextWaveStartMins = Math.max(nextWaveStartMins, slotStart + Math.max(15, Number(slot.duration || 15)));
         slot.techs.forEach(t => locks.push({
             dateStr: slot.dateStr,
             timeStr: slot.timeStr,
             email: t.email,
-            startMins: grp_timeToMins(slot.timeStr),
+            startMins: slotStart,
             duration: slot.duration,
-            endMins: grp_timeToMins(slot.timeStr) + Math.max(15, Number(slot.duration || 15))
+            endMins: slotStart + Math.max(15, Number(slot.duration || 15))
         }));
     }
     return subgroups;
