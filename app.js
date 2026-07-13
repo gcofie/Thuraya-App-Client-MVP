@@ -789,7 +789,7 @@ function renderMenuForDeptLegacy(dept) {
 
     // Restore selected state after render, and auto-open sections containing selected services.
     bk_selectedServices.forEach(sel => {
-        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const cb  = bk_findServiceInput(null, sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
         if (cb) {
             cb.checked = true;
@@ -1295,7 +1295,7 @@ function renderFootMenuCustom(dept) {
 
     // Restore selected state after re-render and auto-open selected sections.
     bk_selectedServices.forEach(sel => {
-        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const cb  = bk_findServiceInput(null, sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
         if (cb) {
             cb.checked = true;
@@ -1478,7 +1478,7 @@ function renderHandMenuFootStyle(dept) {
 
     // Restore selected state after re-render and auto-open selected sections.
     bk_selectedServices.forEach(sel => {
-        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const cb  = bk_findServiceInput(null, sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
         if (cb) {
             cb.checked = true;
@@ -1702,7 +1702,7 @@ function th_renderV2MenuForDept(dept) {
     container.innerHTML = groups.map(renderGroup).join('') || `<p style="text-align:center;color:var(--text-muted);padding:32px 0;">No ${dept.toLowerCase()} therapy services available.</p>`;
 
     bk_selectedServices.forEach(sel => {
-        const cb  = document.getElementById('bk_cb_'  + sel.id);
+        const cb  = bk_findServiceInput(null, sel.id);
         const qty = document.getElementById('bk_qty_' + sel.id);
         const input = cb || qty;
         if (cb) { cb.checked = true; cb.closest('.service-card')?.classList.add('selected'); }
@@ -1817,6 +1817,28 @@ function bk_jsString(value) {
     return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
 }
 
+function bk_findServiceInput(card, id) {
+    const wantedId = 'bk_cb_' + id;
+    const cardInputs = card ? Array.from(card.querySelectorAll('input[type="radio"], input[type="checkbox"]')) : [];
+    const cardMatch = cardInputs.find(el => el.id === wantedId);
+    if (cardMatch) return cardMatch;
+    if (cardInputs.length) return cardInputs[0];
+
+    const menu = document.getElementById('bk_serviceMenu');
+    if (menu) {
+        const scopedMatch = Array.from(menu.querySelectorAll('input[type="radio"], input[type="checkbox"]'))
+            .find(el => el.id === wantedId);
+        if (scopedMatch) return scopedMatch;
+    }
+
+    return document.getElementById(wantedId);
+}
+
+function bk_serviceInputsByName(groupName) {
+    const root = document.getElementById('bk_serviceMenu') || document;
+    return Array.from(root.querySelectorAll('input[type="radio"], input[type="checkbox"]'))
+        .filter(el => el.name === groupName);
+}
 function _buildCard(s, dept) {
     const type     = s.inputType || 'radio';
     const name     = s.name      || 'Service';
@@ -1865,37 +1887,36 @@ function _buildCard(s, dept) {
 
 window.bk_toggleCard = function(event, card, id, type, groupName, price, dur, name, dept) {
     event.preventDefault();
-    const input = document.getElementById('bk_cb_' + id);
+    const input = bk_findServiceInput(card, id);
     if (!input) return;
+    const activeGroupName = input.name || groupName;
+    const resolvedDept = dept || bk_selectedDept;
 
     if (type === 'radio') {
-        document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
+        const groupInputs = bk_serviceInputsByName(activeGroupName);
+        const groupIds = new Set(groupInputs.map(el => String(el.id || '').replace(/^bk_cb_/, '')));
+
+        groupInputs.forEach(r => {
             r.checked = false;
             r.closest('.service-card')?.classList.remove('selected');
         });
         bk_selectedServices = bk_selectedServices.filter(s => {
-            const el = document.getElementById('bk_cb_' + s.id);
-            if (!el) return true;
-            return el.getAttribute('name') !== groupName && !(el.type === 'radio' && el.name === groupName);
+            if (s.groupName && s.groupName === activeGroupName) return false;
+            return !groupIds.has(String(s.id));
         });
-        const wasSelected = input.checked;
-        if (!wasSelected) {
-            input.checked = true;
-            card.classList.add('selected');
-            bk_selectedServices.push({ id, type, price, dur, name, qty: 1, dept: dept || bk_selectedDept });
-        }
+        input.checked = true;
+        card.classList.add('selected');
+        bk_selectedServices.push({ id, type, price, dur, name, qty: 1, dept: resolvedDept, department: resolvedDept, groupName: activeGroupName });
     } else {
         input.checked = !input.checked;
         card.classList.toggle('selected', input.checked);
+        bk_selectedServices = bk_selectedServices.filter(s => s.id !== id);
         if (input.checked) {
-            bk_selectedServices.push({ id, type, price, dur, name, qty: 1, dept: dept || bk_selectedDept });
-        } else {
-            bk_selectedServices = bk_selectedServices.filter(s => s.id !== id);
+            bk_selectedServices.push({ id, type, price, dur, name, qty: 1, dept: resolvedDept, department: resolvedDept, groupName: activeGroupName });
         }
     }
     updateBreakdown();
 };
-
 window.bk_updateCounter = function(id, price, dur, name, delta, dept) {
     const input = document.getElementById('bk_qty_' + id);
     if (!input) return;
@@ -1903,7 +1924,7 @@ window.bk_updateCounter = function(id, price, dur, name, delta, dept) {
     input.value = val;
     input.closest('.th-ref-counter-service')?.classList.toggle('selected', val > 0);
     bk_selectedServices = bk_selectedServices.filter(s => s.id !== id);
-    if (val > 0) bk_selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept: dept || bk_selectedDept });
+    if (val > 0) { const resolvedDept = dept || bk_selectedDept; bk_selectedServices.push({ id, type: 'counter', price, dur, name, qty: val, dept: resolvedDept, department: resolvedDept }); }
     updateBreakdown();
 };
 
