@@ -898,6 +898,13 @@ async function grp_preAssignSameTimeIfNeeded() {
     });
 }
 
+function grp_assignmentStillEligible(index) {
+    const email = grp_assignmentNorm(grp_members[index]?.assignedTechEmail || '');
+    if (!email) return false;
+    const tech = (bk_techs || []).find(t => grp_assignmentNorm(t?.email) === email);
+    return !!tech && grp_techEligibleForMember(tech, index);
+}
+
 function grp_computeBillingForMember(memberIndex, memberTotal) {
     const totals = grp_groupTotals();
     const mode = grp_billingMode;
@@ -930,6 +937,11 @@ window.grp_confirmBooking = async function() {
     const dateFallback = document.getElementById('grp_date')?.value || '';
     const timeFallback = document.getElementById('grp_time')?.value || '';
     if (!dateFallback || !timeFallback) { toast('Missing group date or time.', 'warning'); return; }
+    const ineligibleAssignment = grp_members.findIndex((_, i) => !grp_assignmentStillEligible(i));
+    if (ineligibleAssignment >= 0) {
+        toast(`The technician assignment for ${grp_memberLabel(ineligibleAssignment)} no longer qualifies for every selected service. Please pick time again.`, 'warning');
+        return;
+    }
     setBtnLoading(btn, true, 'Confirm Group Booking');
     try {
         grp_groupId = db.collection('Appointments').doc().id;

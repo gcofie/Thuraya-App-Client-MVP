@@ -2224,9 +2224,9 @@ function bk_getRequiredTherapyTypes() {
     const required = new Set();
 
     (bk_selectedServices || []).forEach(s => {
-        const dept = String(s.dept || '').toLowerCase();
-        if (dept.includes('hand')) required.add('hand');
-        if (dept.includes('foot')) required.add('foot');
+        const dept = bk_assignmentDepartment(s?.dept || s?.department || s?.appliesTo || s?.serviceType || bk_selectedDept);
+        if (dept === 'both') { required.add('hand'); required.add('foot'); }
+        else if (dept) required.add(dept);
     });
 
     if (!required.size) {
@@ -2945,6 +2945,20 @@ window.bk_confirmBooking = async function() {
         return;
     }
     if (!bk_selectedServices.length) { toast('Please select at least one service.', 'warning'); return; }
+
+    const eligibleForSelectedServices = typeof window.bk_getEligibleTechsForServices === 'function'
+        ? window.bk_getEligibleTechsForServices(bk_selectedServices, bk_selectedDept)
+        : (typeof bk_getEligibleTechsForSelectedServices === 'function' ? bk_getEligibleTechsForSelectedServices() : (bk_techs || []));
+    const assignedStillEligible = (eligibleForSelectedServices || []).some(t => String(t?.email || '').trim().toLowerCase() === String(techEmail || '').trim().toLowerCase());
+    if (!(eligibleForSelectedServices || []).length) {
+        toast('No technician currently qualifies for the selected services. Please contact THURAYA.', 'warning');
+        return;
+    }
+    if (!techEmail || !assignedStillEligible) {
+        toast('The selected technician is no longer qualified for every selected service. Please choose another available time.', 'warning');
+        try { if (typeof bk_generateSlots === 'function') await bk_generateSlots(); } catch(e) {}
+        return;
+    }
 
     
 if(window.bk_earlyBookFor==='someone_else'){
