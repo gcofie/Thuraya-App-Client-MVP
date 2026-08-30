@@ -43,6 +43,715 @@ const todayStr        = (() => {
     return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 })();
 
+// -- THURAYA Client international phone capture (Staff parity) --
+(function(){
+    const countryList = [
+        { iso2: 'GH', name: 'Ghana', callingCode: '+233', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'NG', name: 'Nigeria', callingCode: '+234', trunkPrefix: '0', minNational: 7, maxNational: 10 },
+        { iso2: 'CI', name: 'Cote d\'Ivoire', callingCode: '+225', trunkPrefix: '', minNational: 8, maxNational: 10 },
+        { iso2: 'KE', name: 'Kenya', callingCode: '+254', trunkPrefix: '0', minNational: 7, maxNational: 9 },
+        { iso2: 'ZA', name: 'South Africa', callingCode: '+27', trunkPrefix: '0', minNational: 9, maxNational: 9 },
+        { iso2: 'GB', name: 'United Kingdom', callingCode: '+44', trunkPrefix: '0', minNational: 9, maxNational: 10 },
+        { iso2: 'US', name: 'United States', callingCode: '+1', trunkPrefix: '', minNational: 10, maxNational: 10 },
+        { iso2: 'CA', name: 'Canada', callingCode: '+1', trunkPrefix: '', minNational: 10, maxNational: 10 },
+        { iso2: 'AF', name: 'Afghanistan', callingCode: '+93', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'AX', name: 'Aland Islands', callingCode: '+358', trunkPrefix: '0', minNational: 5, maxNational: 12 },
+        { iso2: 'AL', name: 'Albania', callingCode: '+355', trunkPrefix: '0', minNational: 6, maxNational: 9 },
+        { iso2: 'DZ', name: 'Algeria', callingCode: '+213', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'AS', name: 'American Samoa', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'AD', name: 'Andorra', callingCode: '+376', trunkPrefix: '', minNational: 6, maxNational: 9 },
+        { iso2: 'AO', name: 'Angola', callingCode: '+244', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'AI', name: 'Anguilla', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'AG', name: 'Antigua and Barbuda', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'AR', name: 'Argentina', callingCode: '+54', trunkPrefix: '0', minNational: 10, maxNational: 11 },
+        { iso2: 'AM', name: 'Armenia', callingCode: '+374', trunkPrefix: '0', nationalLength: 8 },
+        { iso2: 'AW', name: 'Aruba', callingCode: '+297', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'AC', name: 'Ascension Island', callingCode: '+247', trunkPrefix: '', minNational: 5, maxNational: 6 },
+        { iso2: 'AU', name: 'Australia', callingCode: '+61', trunkPrefix: '0', minNational: 5, maxNational: 12 },
+        { iso2: 'AT', name: 'Austria', callingCode: '+43', trunkPrefix: '0', minNational: 4, maxNational: 13 },
+        { iso2: 'AZ', name: 'Azerbaijan', callingCode: '+994', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'BS', name: 'Bahamas', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'BH', name: 'Bahrain', callingCode: '+973', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'BD', name: 'Bangladesh', callingCode: '+880', trunkPrefix: '0', minNational: 6, maxNational: 10 },
+        { iso2: 'BB', name: 'Barbados', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'BY', name: 'Belarus', callingCode: '+375', trunkPrefix: '8', minNational: 6, maxNational: 11 },
+        { iso2: 'BE', name: 'Belgium', callingCode: '+32', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'BZ', name: 'Belize', callingCode: '+501', trunkPrefix: '', minNational: 7, maxNational: 11 },
+        { iso2: 'BJ', name: 'Benin', callingCode: '+229', trunkPrefix: '', minNational: 8, maxNational: 10 },
+        { iso2: 'BM', name: 'Bermuda', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'BT', name: 'Bhutan', callingCode: '+975', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'BO', name: 'Bolivia', callingCode: '+591', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'BA', name: 'Bosnia and Herzegovina', callingCode: '+387', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'BW', name: 'Botswana', callingCode: '+267', trunkPrefix: '', minNational: 7, maxNational: 10 },
+        { iso2: 'BR', name: 'Brazil', callingCode: '+55', trunkPrefix: '0', minNational: 8, maxNational: 11 },
+        { iso2: 'IO', name: 'British Indian Ocean Territory', callingCode: '+246', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'VG', name: 'British Virgin Islands', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'BN', name: 'Brunei', callingCode: '+673', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'BG', name: 'Bulgaria', callingCode: '+359', trunkPrefix: '0', minNational: 6, maxNational: 12 },
+        { iso2: 'BF', name: 'Burkina Faso', callingCode: '+226', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'BI', name: 'Burundi', callingCode: '+257', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'KH', name: 'Cambodia', callingCode: '+855', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'CM', name: 'Cameroon', callingCode: '+237', trunkPrefix: '', minNational: 8, maxNational: 9 },
+        { iso2: 'CV', name: 'Cape Verde', callingCode: '+238', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'BQ', name: 'Caribbean Netherlands', callingCode: '+599', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'KY', name: 'Cayman Islands', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'CF', name: 'Central African Republic', callingCode: '+236', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'TD', name: 'Chad', callingCode: '+235', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'CL', name: 'Chile', callingCode: '+56', trunkPrefix: '', minNational: 9, maxNational: 11 },
+        { iso2: 'CN', name: 'China', callingCode: '+86', trunkPrefix: '0', minNational: 7, maxNational: 12 },
+        { iso2: 'CX', name: 'Christmas Island', callingCode: '+61', trunkPrefix: '0', minNational: 6, maxNational: 12 },
+        { iso2: 'CC', name: 'Cocos (Keeling) Islands', callingCode: '+61', trunkPrefix: '0', minNational: 6, maxNational: 12 },
+        { iso2: 'CO', name: 'Colombia', callingCode: '+57', trunkPrefix: '0', minNational: 8, maxNational: 11 },
+        { iso2: 'KM', name: 'Comoros', callingCode: '+269', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'CK', name: 'Cook Islands', callingCode: '+682', trunkPrefix: '', nationalLength: 5 },
+        { iso2: 'CR', name: 'Costa Rica', callingCode: '+506', trunkPrefix: '', minNational: 8, maxNational: 10 },
+        { iso2: 'HR', name: 'Croatia', callingCode: '+385', trunkPrefix: '0', minNational: 7, maxNational: 9 },
+        { iso2: 'CU', name: 'Cuba', callingCode: '+53', trunkPrefix: '0', minNational: 6, maxNational: 10 },
+        { iso2: 'CW', name: 'Curacao', callingCode: '+599', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'CY', name: 'Cyprus', callingCode: '+357', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'CZ', name: 'Czechia', callingCode: '+420', trunkPrefix: '', minNational: 9, maxNational: 12 },
+        { iso2: 'DK', name: 'Denmark', callingCode: '+45', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'DJ', name: 'Djibouti', callingCode: '+253', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'DM', name: 'Dominica', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'DO', name: 'Dominican Republic', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'CD', name: 'DR Congo', callingCode: '+243', trunkPrefix: '0', minNational: 7, maxNational: 10 },
+        { iso2: 'EC', name: 'Ecuador', callingCode: '+593', trunkPrefix: '0', minNational: 8, maxNational: 11 },
+        { iso2: 'EG', name: 'Egypt', callingCode: '+20', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'SV', name: 'El Salvador', callingCode: '+503', trunkPrefix: '', minNational: 7, maxNational: 11 },
+        { iso2: 'GQ', name: 'Equatorial Guinea', callingCode: '+240', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'ER', name: 'Eritrea', callingCode: '+291', trunkPrefix: '0', nationalLength: 7 },
+        { iso2: 'EE', name: 'Estonia', callingCode: '+372', trunkPrefix: '', minNational: 7, maxNational: 10 },
+        { iso2: 'SZ', name: 'Eswatini', callingCode: '+268', trunkPrefix: '', minNational: 8, maxNational: 9 },
+        { iso2: 'ET', name: 'Ethiopia', callingCode: '+251', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'FK', name: 'Falkland Islands', callingCode: '+500', trunkPrefix: '', nationalLength: 5 },
+        { iso2: 'FO', name: 'Faroe Islands', callingCode: '+298', trunkPrefix: '', nationalLength: 6 },
+        { iso2: 'FJ', name: 'Fiji', callingCode: '+679', trunkPrefix: '', minNational: 7, maxNational: 11 },
+        { iso2: 'FI', name: 'Finland', callingCode: '+358', trunkPrefix: '0', minNational: 5, maxNational: 12 },
+        { iso2: 'FR', name: 'France', callingCode: '+33', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'GF', name: 'French Guiana', callingCode: '+594', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'PF', name: 'French Polynesia', callingCode: '+689', trunkPrefix: '', minNational: 6, maxNational: 9 },
+        { iso2: 'GA', name: 'Gabon', callingCode: '+241', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'GM', name: 'Gambia', callingCode: '+220', trunkPrefix: '', minNational: 7, maxNational: 9 },
+        { iso2: 'GE', name: 'Georgia', callingCode: '+995', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'DE', name: 'Germany', callingCode: '+49', trunkPrefix: '0', minNational: 4, maxNational: 13 },
+        { iso2: 'GI', name: 'Gibraltar', callingCode: '+350', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'GR', name: 'Greece', callingCode: '+30', trunkPrefix: '', minNational: 10, maxNational: 12 },
+        { iso2: 'GL', name: 'Greenland', callingCode: '+299', trunkPrefix: '', nationalLength: 6 },
+        { iso2: 'GD', name: 'Grenada', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'GP', name: 'Guadeloupe', callingCode: '+590', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'GU', name: 'Guam', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'GT', name: 'Guatemala', callingCode: '+502', trunkPrefix: '', minNational: 8, maxNational: 11 },
+        { iso2: 'GG', name: 'Guernsey', callingCode: '+44', trunkPrefix: '0', minNational: 7, maxNational: 10 },
+        { iso2: 'GN', name: 'Guinea', callingCode: '+224', trunkPrefix: '', minNational: 8, maxNational: 9 },
+        { iso2: 'GW', name: 'Guinea-Bissau', callingCode: '+245', trunkPrefix: '', minNational: 7, maxNational: 9 },
+        { iso2: 'GY', name: 'Guyana', callingCode: '+592', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'HT', name: 'Haiti', callingCode: '+509', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'HN', name: 'Honduras', callingCode: '+504', trunkPrefix: '', minNational: 8, maxNational: 11 },
+        { iso2: 'HK', name: 'Hong Kong', callingCode: '+852', trunkPrefix: '', minNational: 5, maxNational: 11 },
+        { iso2: 'HU', name: 'Hungary', callingCode: '+36', trunkPrefix: '06', minNational: 8, maxNational: 9 },
+        { iso2: 'IS', name: 'Iceland', callingCode: '+354', trunkPrefix: '', minNational: 7, maxNational: 9 },
+        { iso2: 'IN', name: 'India', callingCode: '+91', trunkPrefix: '0', minNational: 8, maxNational: 13 },
+        { iso2: 'ID', name: 'Indonesia', callingCode: '+62', trunkPrefix: '0', minNational: 7, maxNational: 13 },
+        { iso2: 'IR', name: 'Iran', callingCode: '+98', trunkPrefix: '0', minNational: 4, maxNational: 10 },
+        { iso2: 'IQ', name: 'Iraq', callingCode: '+964', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'IE', name: 'Ireland', callingCode: '+353', trunkPrefix: '0', minNational: 7, maxNational: 10 },
+        { iso2: 'IM', name: 'Isle of Man', callingCode: '+44', trunkPrefix: '0', nationalLength: 10 },
+        { iso2: 'IL', name: 'Israel', callingCode: '+972', trunkPrefix: '0', minNational: 7, maxNational: 12 },
+        { iso2: 'IT', name: 'Italy', callingCode: '+39', trunkPrefix: '', minNational: 6, maxNational: 12 },
+        { iso2: 'JM', name: 'Jamaica', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'JP', name: 'Japan', callingCode: '+81', trunkPrefix: '0', minNational: 8, maxNational: 13 },
+        { iso2: 'JE', name: 'Jersey', callingCode: '+44', trunkPrefix: '0', nationalLength: 10 },
+        { iso2: 'JO', name: 'Jordan', callingCode: '+962', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'KZ', name: 'Kazakhstan', callingCode: '+7', trunkPrefix: '8', minNational: 10, maxNational: 14 },
+        { iso2: 'KI', name: 'Kiribati', callingCode: '+686', trunkPrefix: '0', minNational: 5, maxNational: 8 },
+        { iso2: 'XK', name: 'Kosovo', callingCode: '+383', trunkPrefix: '0', minNational: 8, maxNational: 12 },
+        { iso2: 'KW', name: 'Kuwait', callingCode: '+965', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'KG', name: 'Kyrgyzstan', callingCode: '+996', trunkPrefix: '0', minNational: 9, maxNational: 10 },
+        { iso2: 'LA', name: 'Laos', callingCode: '+856', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'LV', name: 'Latvia', callingCode: '+371', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'LB', name: 'Lebanon', callingCode: '+961', trunkPrefix: '0', minNational: 7, maxNational: 8 },
+        { iso2: 'LS', name: 'Lesotho', callingCode: '+266', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'LR', name: 'Liberia', callingCode: '+231', trunkPrefix: '0', minNational: 7, maxNational: 9 },
+        { iso2: 'LY', name: 'Libya', callingCode: '+218', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'LI', name: 'Liechtenstein', callingCode: '+423', trunkPrefix: '0', minNational: 7, maxNational: 9 },
+        { iso2: 'LT', name: 'Lithuania', callingCode: '+370', trunkPrefix: '0', nationalLength: 8 },
+        { iso2: 'LU', name: 'Luxembourg', callingCode: '+352', trunkPrefix: '', minNational: 4, maxNational: 11 },
+        { iso2: 'MO', name: 'Macau', callingCode: '+853', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'MG', name: 'Madagascar', callingCode: '+261', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'MW', name: 'Malawi', callingCode: '+265', trunkPrefix: '0', minNational: 7, maxNational: 9 },
+        { iso2: 'MY', name: 'Malaysia', callingCode: '+60', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'MV', name: 'Maldives', callingCode: '+960', trunkPrefix: '', minNational: 7, maxNational: 10 },
+        { iso2: 'ML', name: 'Mali', callingCode: '+223', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'MT', name: 'Malta', callingCode: '+356', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'MH', name: 'Marshall Islands', callingCode: '+692', trunkPrefix: '1', nationalLength: 7 },
+        { iso2: 'MQ', name: 'Martinique', callingCode: '+596', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'MR', name: 'Mauritania', callingCode: '+222', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'MU', name: 'Mauritius', callingCode: '+230', trunkPrefix: '', minNational: 7, maxNational: 10 },
+        { iso2: 'YT', name: 'Mayotte', callingCode: '+262', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'MX', name: 'Mexico', callingCode: '+52', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'FM', name: 'Micronesia', callingCode: '+691', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'MD', name: 'Moldova', callingCode: '+373', trunkPrefix: '0', nationalLength: 8 },
+        { iso2: 'MC', name: 'Monaco', callingCode: '+377', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'MN', name: 'Mongolia', callingCode: '+976', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'ME', name: 'Montenegro', callingCode: '+382', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'MS', name: 'Montserrat', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'MA', name: 'Morocco', callingCode: '+212', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'MZ', name: 'Mozambique', callingCode: '+258', trunkPrefix: '', minNational: 8, maxNational: 9 },
+        { iso2: 'MM', name: 'Myanmar', callingCode: '+95', trunkPrefix: '0', minNational: 6, maxNational: 10 },
+        { iso2: 'NA', name: 'Namibia', callingCode: '+264', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'NR', name: 'Nauru', callingCode: '+674', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'NP', name: 'Nepal', callingCode: '+977', trunkPrefix: '0', minNational: 8, maxNational: 11 },
+        { iso2: 'NL', name: 'Netherlands', callingCode: '+31', trunkPrefix: '0', minNational: 5, maxNational: 11 },
+        { iso2: 'NC', name: 'New Caledonia', callingCode: '+687', trunkPrefix: '', nationalLength: 6 },
+        { iso2: 'NZ', name: 'New Zealand', callingCode: '+64', trunkPrefix: '0', minNational: 5, maxNational: 10 },
+        { iso2: 'NI', name: 'Nicaragua', callingCode: '+505', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'NE', name: 'Niger', callingCode: '+227', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'NU', name: 'Niue', callingCode: '+683', trunkPrefix: '', minNational: 4, maxNational: 7 },
+        { iso2: 'NF', name: 'Norfolk Island', callingCode: '+672', trunkPrefix: '', nationalLength: 6 },
+        { iso2: 'KP', name: 'North Korea', callingCode: '+850', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'MK', name: 'North Macedonia', callingCode: '+389', trunkPrefix: '0', nationalLength: 8 },
+        { iso2: 'MP', name: 'Northern Mariana Islands', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'NO', name: 'Norway', callingCode: '+47', trunkPrefix: '', minNational: 5, maxNational: 8 },
+        { iso2: 'OM', name: 'Oman', callingCode: '+968', trunkPrefix: '', minNational: 7, maxNational: 9 },
+        { iso2: 'PK', name: 'Pakistan', callingCode: '+92', trunkPrefix: '0', minNational: 8, maxNational: 12 },
+        { iso2: 'PW', name: 'Palau', callingCode: '+680', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'PS', name: 'Palestine', callingCode: '+970', trunkPrefix: '0', minNational: 8, maxNational: 10 },
+        { iso2: 'PA', name: 'Panama', callingCode: '+507', trunkPrefix: '', minNational: 7, maxNational: 11 },
+        { iso2: 'PG', name: 'Papua New Guinea', callingCode: '+675', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'PY', name: 'Paraguay', callingCode: '+595', trunkPrefix: '0', minNational: 6, maxNational: 11 },
+        { iso2: 'PE', name: 'Peru', callingCode: '+51', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'PH', name: 'Philippines', callingCode: '+63', trunkPrefix: '0', minNational: 6, maxNational: 13 },
+        { iso2: 'PL', name: 'Poland', callingCode: '+48', trunkPrefix: '', minNational: 6, maxNational: 10 },
+        { iso2: 'PT', name: 'Portugal', callingCode: '+351', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'PR', name: 'Puerto Rico', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'QA', name: 'Qatar', callingCode: '+974', trunkPrefix: '', minNational: 7, maxNational: 11 },
+        { iso2: 'CG', name: 'Republic of the Congo', callingCode: '+242', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'RE', name: 'Reunion', callingCode: '+262', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'RO', name: 'Romania', callingCode: '+40', trunkPrefix: '0', minNational: 6, maxNational: 9 },
+        { iso2: 'RU', name: 'Russia', callingCode: '+7', trunkPrefix: '8', minNational: 10, maxNational: 14 },
+        { iso2: 'RW', name: 'Rwanda', callingCode: '+250', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'BL', name: 'Saint Barthelemy', callingCode: '+590', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'SH', name: 'Saint Helena', callingCode: '+290', trunkPrefix: '', minNational: 4, maxNational: 5 },
+        { iso2: 'KN', name: 'Saint Kitts and Nevis', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'LC', name: 'Saint Lucia', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'MF', name: 'Saint Martin', callingCode: '+590', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'PM', name: 'Saint Pierre and Miquelon', callingCode: '+508', trunkPrefix: '0', minNational: 6, maxNational: 9 },
+        { iso2: 'VC', name: 'Saint Vincent and the Grenadines', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'WS', name: 'Samoa', callingCode: '+685', trunkPrefix: '', minNational: 5, maxNational: 10 },
+        { iso2: 'SM', name: 'San Marino', callingCode: '+378', trunkPrefix: '', minNational: 8, maxNational: 10 },
+        { iso2: 'ST', name: 'Sao Tome and Principe', callingCode: '+239', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'SA', name: 'Saudi Arabia', callingCode: '+966', trunkPrefix: '0', minNational: 9, maxNational: 10 },
+        { iso2: 'SN', name: 'Senegal', callingCode: '+221', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'RS', name: 'Serbia', callingCode: '+381', trunkPrefix: '0', minNational: 6, maxNational: 12 },
+        { iso2: 'SC', name: 'Seychelles', callingCode: '+248', trunkPrefix: '', nationalLength: 7 },
+        { iso2: 'SL', name: 'Sierra Leone', callingCode: '+232', trunkPrefix: '0', nationalLength: 8 },
+        { iso2: 'SG', name: 'Singapore', callingCode: '+65', trunkPrefix: '', minNational: 8, maxNational: 11 },
+        { iso2: 'SX', name: 'Sint Maarten', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'SK', name: 'Slovakia', callingCode: '+421', trunkPrefix: '0', minNational: 6, maxNational: 9 },
+        { iso2: 'SI', name: 'Slovenia', callingCode: '+386', trunkPrefix: '0', minNational: 5, maxNational: 8 },
+        { iso2: 'SB', name: 'Solomon Islands', callingCode: '+677', trunkPrefix: '', minNational: 5, maxNational: 7 },
+        { iso2: 'SO', name: 'Somalia', callingCode: '+252', trunkPrefix: '0', minNational: 6, maxNational: 9 },
+        { iso2: 'KR', name: 'South Korea', callingCode: '+82', trunkPrefix: '0', minNational: 5, maxNational: 13 },
+        { iso2: 'SS', name: 'South Sudan', callingCode: '+211', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'ES', name: 'Spain', callingCode: '+34', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'LK', name: 'Sri Lanka', callingCode: '+94', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'SD', name: 'Sudan', callingCode: '+249', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'SR', name: 'Suriname', callingCode: '+597', trunkPrefix: '', minNational: 6, maxNational: 7 },
+        { iso2: 'SJ', name: 'Svalbard and Jan Mayen', callingCode: '+47', trunkPrefix: '', minNational: 5, maxNational: 8 },
+        { iso2: 'SE', name: 'Sweden', callingCode: '+46', trunkPrefix: '0', minNational: 6, maxNational: 12 },
+        { iso2: 'CH', name: 'Switzerland', callingCode: '+41', trunkPrefix: '0', minNational: 9, maxNational: 12 },
+        { iso2: 'SY', name: 'Syria', callingCode: '+963', trunkPrefix: '0', minNational: 8, maxNational: 9 },
+        { iso2: 'TW', name: 'Taiwan', callingCode: '+886', trunkPrefix: '0', minNational: 7, maxNational: 11 },
+        { iso2: 'TJ', name: 'Tajikistan', callingCode: '+992', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'TZ', name: 'Tanzania', callingCode: '+255', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'TH', name: 'Thailand', callingCode: '+66', trunkPrefix: '0', minNational: 8, maxNational: 13 },
+        { iso2: 'TL', name: 'Timor-Leste', callingCode: '+670', trunkPrefix: '', minNational: 7, maxNational: 8 },
+        { iso2: 'TG', name: 'Togo', callingCode: '+228', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'TK', name: 'Tokelau', callingCode: '+690', trunkPrefix: '', minNational: 4, maxNational: 7 },
+        { iso2: 'TO', name: 'Tonga', callingCode: '+676', trunkPrefix: '', minNational: 5, maxNational: 7 },
+        { iso2: 'TT', name: 'Trinidad and Tobago', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'TA', name: 'Tristan da Cunha', callingCode: '+290', trunkPrefix: '', nationalLength: 4 },
+        { iso2: 'TN', name: 'Tunisia', callingCode: '+216', trunkPrefix: '', nationalLength: 8 },
+        { iso2: 'TR', name: 'Turkiye', callingCode: '+90', trunkPrefix: '0', minNational: 7, maxNational: 13 },
+        { iso2: 'TM', name: 'Turkmenistan', callingCode: '+993', trunkPrefix: '8', nationalLength: 8 },
+        { iso2: 'TC', name: 'Turks and Caicos Islands', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'TV', name: 'Tuvalu', callingCode: '+688', trunkPrefix: '', minNational: 5, maxNational: 7 },
+        { iso2: 'VI', name: 'U.S. Virgin Islands', callingCode: '+1', trunkPrefix: '', nationalLength: 10 },
+        { iso2: 'UG', name: 'Uganda', callingCode: '+256', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'UA', name: 'Ukraine', callingCode: '+380', trunkPrefix: '0', minNational: 9, maxNational: 10 },
+        { iso2: 'AE', name: 'United Arab Emirates', callingCode: '+971', trunkPrefix: '0', minNational: 5, maxNational: 12 },
+        { iso2: 'UY', name: 'Uruguay', callingCode: '+598', trunkPrefix: '0', minNational: 4, maxNational: 12 },
+        { iso2: 'UZ', name: 'Uzbekistan', callingCode: '+998', trunkPrefix: '', nationalLength: 9 },
+        { iso2: 'VU', name: 'Vanuatu', callingCode: '+678', trunkPrefix: '', minNational: 5, maxNational: 7 },
+        { iso2: 'VA', name: 'Vatican City', callingCode: '+39', trunkPrefix: '', minNational: 6, maxNational: 12 },
+        { iso2: 'VE', name: 'Venezuela', callingCode: '+58', trunkPrefix: '0', nationalLength: 10 },
+        { iso2: 'VN', name: 'Vietnam', callingCode: '+84', trunkPrefix: '0', minNational: 7, maxNational: 10 },
+        { iso2: 'WF', name: 'Wallis and Futuna', callingCode: '+681', trunkPrefix: '', minNational: 6, maxNational: 9 },
+        { iso2: 'EH', name: 'Western Sahara', callingCode: '+212', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'YE', name: 'Yemen', callingCode: '+967', trunkPrefix: '0', minNational: 7, maxNational: 9 },
+        { iso2: 'ZM', name: 'Zambia', callingCode: '+260', trunkPrefix: '0', nationalLength: 9 },
+        { iso2: 'ZW', name: 'Zimbabwe', callingCode: '+263', trunkPrefix: '0', minNational: 7, maxNational: 10 }
+    ];
+    const countryByIso = countryList.reduce((acc, item) => {
+        acc[item.iso2] = item;
+        return acc;
+    }, {});
+
+    const phoneState = {
+        acctAltManual: false
+    };
+
+    function compactDigits(value) {
+        return String(value || '').replace(/\D/g, '');
+    }
+
+    function unique(values) {
+        const out = [];
+        const seen = new Set();
+        values.forEach(value => {
+            const clean = String(value || '').trim();
+            if (!clean || seen.has(clean)) return;
+            seen.add(clean);
+            out.push(clean);
+        });
+        return out;
+    }
+
+    function countryForIso(countryIso2) {
+        const iso = String(countryIso2 || 'GH').trim().toUpperCase();
+        return countryByIso[iso] || countryByIso.GH;
+    }
+
+    function countryForPhoneValue(value, fallbackIso2) {
+        const rawDigits = compactDigits(value);
+        const withoutInternationalPrefix = rawDigits.startsWith('00') ? rawDigits.slice(2) : rawDigits;
+        const sorted = countryList.slice().sort((a, b) => compactDigits(b.callingCode).length - compactDigits(a.callingCode).length);
+        const match = sorted.find(country => withoutInternationalPrefix.startsWith(compactDigits(country.callingCode)));
+        return match || countryForIso(fallbackIso2 || 'GH');
+    }
+
+    function legacyPhoneFor(country, national, rawDigits) {
+        if (!national) return '';
+        if (country.trunkPrefix && !national.startsWith(country.trunkPrefix)) return `${country.trunkPrefix}${national}`;
+        return rawDigits || national;
+    }
+
+    function aliasesForParts(country, national, rawDigits) {
+        const callingDigits = compactDigits(country.callingCode);
+        const aliases = [
+            rawDigits,
+            national,
+            `${callingDigits}${national}`,
+            `${country.callingCode}${national}`
+        ];
+        if (country.trunkPrefix) aliases.push(`${country.trunkPrefix}${national}`);
+        return unique(aliases);
+    }
+
+    function maxNationalLength(country) {
+        const callingDigits = compactDigits(country.callingCode);
+        return Math.max(4, 15 - callingDigits.length);
+    }
+
+    function validateNational(country, national) {
+        if (!national) return false;
+        const maxByCallingCode = maxNationalLength(country);
+        if (country.nationalLength) return national.length === country.nationalLength && national.length <= maxByCallingCode;
+        const min = country.minNational || 4;
+        const max = Math.min(country.maxNational || maxByCallingCode, maxByCallingCode);
+        return national.length >= min && national.length <= max;
+    }
+
+    function normalize(countryIso2, input) {
+        const country = countryForIso(countryIso2);
+        const raw = String(input || '').trim();
+        const rawDigits = compactDigits(raw);
+        const callingDigits = compactDigits(country.callingCode);
+        let national = rawDigits;
+
+        if (national.startsWith(`00${callingDigits}`)) {
+            national = national.slice(callingDigits.length + 2);
+        } else if (national.startsWith(callingDigits) && national.length > callingDigits.length) {
+            national = national.slice(callingDigits.length);
+        }
+
+        if (country.trunkPrefix && national.startsWith(country.trunkPrefix) && national.length > country.trunkPrefix.length) {
+            national = national.slice(country.trunkPrefix.length);
+        }
+
+        const valid = validateNational(country, national);
+        const phoneE164 = valid ? `${country.callingCode}${national}` : '';
+        return {
+            countryIso2: country.iso2,
+            countryCallingCode: country.callingCode,
+            phoneNational: national,
+            phoneE164,
+            phoneAliases: aliasesForParts(country, national, rawDigits),
+            legacyPhone: valid ? legacyPhoneFor(country, national, rawDigits) : '',
+            valid,
+            error: valid ? '' : `Enter a valid ${country.name} phone number.`
+        };
+    }
+
+    function normalizeFlexible(input, fallbackIso2) {
+        const raw = String(input || '').trim();
+        const rawDigits = compactDigits(raw);
+        const fallback = countryForIso(fallbackIso2 || 'GH');
+        if (!rawDigits) return normalize(fallback.iso2, raw);
+        const looksInternational = raw.startsWith('+') || rawDigits.startsWith('00');
+        const country = looksInternational ? countryForPhoneValue(raw, fallback.iso2) : fallback;
+        return normalize(country.iso2, raw);
+    }
+
+    function aliasesForValue(value, countryIso2) {
+        const raw = String(value || '').trim();
+        const country = countryForPhoneValue(raw, countryIso2 || 'GH');
+        const normalized = normalize(country.iso2, raw);
+        const compact = raw.toLowerCase().replace(/[\s-]/g, '');
+        const aliases = normalized.phoneAliases.slice();
+        aliases.push(compact, compactDigits(raw));
+        if (compactDigits(raw)) aliases.push(`+${compactDigits(raw)}`);
+        return unique(aliases);
+    }
+
+    function clientAliasSet(client) {
+        const aliases = new Set();
+        const addValue = value => {
+            if (value == null || value === '') return;
+            aliasesForValue(value, client.countryIso2 || 'GH').forEach(alias => aliases.add(String(alias).toLowerCase()));
+        };
+        [
+            client.id,
+            client.Tel_Number,
+            client.clientPhone,
+            client.phone,
+            client.primaryPhone,
+            client.bookedByPhone,
+            client.legacyPhone,
+            client.phoneNational,
+            client.phoneE164
+        ].forEach(addValue);
+        if (Array.isArray(client.phoneAliases)) client.phoneAliases.forEach(addValue);
+        return aliases;
+    }
+
+    function clientMatchesSearch(client, query) {
+        const val = String(query || '').trim().toLowerCase();
+        if (!val) return false;
+        const name = `${client?.Forename || ''} ${client?.Surname || client?.name || ''}`.toLowerCase();
+        if (name.includes(val)) return true;
+        const clientAliases = clientAliasSet(client || {});
+        return aliasesForValue(val, client?.countryIso2 || 'GH').some(alias => clientAliases.has(String(alias).toLowerCase()));
+    }
+
+    async function findDuplicateClient(phoneInfo) {
+        if (!phoneInfo || !phoneInfo.valid || !phoneInfo.legacyPhone || typeof db === 'undefined') return null;
+        const aliases = unique([phoneInfo.legacyPhone, ...(phoneInfo.phoneAliases || [])]);
+        const clientsRef = db.collection('Clients');
+
+        try {
+            const exact = await clientsRef.doc(phoneInfo.legacyPhone).get();
+            if (exact.exists) return { id: exact.id, ...(exact.data() || {}) };
+        } catch (e) {
+            console.warn('Client duplicate exact lookup skipped:', e);
+        }
+
+        const scalarFields = ['Tel_Number', 'legacyPhone', 'phoneE164', 'phoneNational', 'phone', 'clientPhone'];
+        for (const field of scalarFields) {
+            for (const alias of aliases) {
+                try {
+                    const snap = await clientsRef.where(field, '==', alias).limit(1).get();
+                    let found = null;
+                    snap.forEach(doc => { if (!found) found = { id: doc.id, ...(doc.data() || {}) }; });
+                    if (found) return found;
+                } catch (e) {
+                    console.warn(`Client duplicate ${field} lookup skipped:`, e);
+                    break;
+                }
+            }
+        }
+
+        for (const alias of aliases) {
+            try {
+                const snap = await clientsRef.where('phoneAliases', 'array-contains', alias).limit(1).get();
+                let found = null;
+                snap.forEach(doc => { if (!found) found = { id: doc.id, ...(doc.data() || {}) }; });
+                if (found) return found;
+            } catch (e) {
+                console.warn('Client duplicate alias lookup skipped:', e);
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    function duplicateMatchesLegacy(duplicateClient, legacyPhone) {
+        if (!duplicateClient || !legacyPhone) return false;
+        return String(duplicateClient.id || '') === String(legacyPhone || '');
+    }
+
+    function primaryFromClientData(clientData) {
+        clientData = clientData || {};
+        const country = clientData.countryIso2
+            ? countryForIso(clientData.countryIso2)
+            : (clientData.phoneE164 ? countryForPhoneValue(clientData.phoneE164, 'GH') : countryForIso('GH'));
+        const candidates = [
+            clientData.phoneE164,
+            clientData.legacyPhone,
+            clientData.Tel_Number,
+            clientData.phone,
+            clientData.clientPhone,
+            clientData.primaryPhone,
+            clientData.bookedByPhone,
+            clientData.phoneNational
+        ];
+        for (const candidate of candidates) {
+            const raw = String(candidate || '').trim();
+            if (!raw) continue;
+            const normalized = normalize(country.iso2, raw);
+            if (normalized.valid) return { ...normalized, localValue: normalized.legacyPhone || raw };
+        }
+        const blank = normalize(country.iso2, '');
+        return { ...blank, localValue: String(clientData.Tel_Number || clientData.phone || clientData.legacyPhone || '') };
+    }
+
+    function alternativeFromClientData(clientData) {
+        clientData = clientData || {};
+        const primary = primaryFromClientData(clientData);
+        const country = clientData.altCountryIso2
+            ? countryForIso(clientData.altCountryIso2)
+            : (clientData.altPhoneE164 ? countryForPhoneValue(clientData.altPhoneE164, primary.countryIso2 || 'GH') : countryForIso(primary.countryIso2 || 'GH'));
+        const candidates = [
+            clientData.altPhoneE164,
+            clientData.altLegacyPhone,
+            clientData.Tel_Number_Alt,
+            clientData.secondaryPhone,
+            clientData.Secondary_Phone,
+            clientData.altPhoneNational
+        ];
+        for (const candidate of candidates) {
+            const raw = String(candidate || '').trim();
+            if (!raw) continue;
+            const normalized = normalize(country.iso2, raw);
+            if (normalized.valid) return { ...normalized, hasValue: true, localValue: normalized.legacyPhone || raw };
+        }
+        return {
+            hasValue: false,
+            countryIso2: country.iso2,
+            countryCallingCode: country.callingCode,
+            phoneNational: '',
+            phoneE164: '',
+            phoneAliases: [],
+            legacyPhone: '',
+            localValue: '',
+            valid: true,
+            error: ''
+        };
+    }
+
+    function primaryProfileFields(phoneInfo) {
+        return {
+            phone: phoneInfo.legacyPhone,
+            countryIso2: phoneInfo.countryIso2,
+            countryCallingCode: phoneInfo.countryCallingCode,
+            phoneNational: phoneInfo.phoneNational,
+            phoneE164: phoneInfo.phoneE164,
+            phoneAliases: phoneInfo.phoneAliases,
+            legacyPhone: phoneInfo.legacyPhone
+        };
+    }
+
+    function primaryMasterFields(phoneInfo) {
+        return {
+            Tel_Number: phoneInfo.legacyPhone,
+            countryIso2: phoneInfo.countryIso2,
+            countryCallingCode: phoneInfo.countryCallingCode,
+            phoneNational: phoneInfo.phoneNational,
+            phoneE164: phoneInfo.phoneE164,
+            phoneAliases: phoneInfo.phoneAliases,
+            legacyPhone: phoneInfo.legacyPhone
+        };
+    }
+
+    function alternativeProfileFields(altInfo) {
+        if (!altInfo || !altInfo.hasValue) {
+            return {
+                secondaryPhone: '',
+                Secondary_Phone: '',
+                Tel_Number_Alt: '',
+                altCountryIso2: '',
+                altCountryCallingCode: '',
+                altPhoneNational: '',
+                altPhoneE164: '',
+                altPhoneAliases: [],
+                altLegacyPhone: ''
+            };
+        }
+        return {
+            secondaryPhone: altInfo.legacyPhone,
+            Secondary_Phone: altInfo.legacyPhone,
+            Tel_Number_Alt: altInfo.legacyPhone,
+            altCountryIso2: altInfo.countryIso2,
+            altCountryCallingCode: altInfo.countryCallingCode,
+            altPhoneNational: altInfo.phoneNational,
+            altPhoneE164: altInfo.phoneE164,
+            altPhoneAliases: altInfo.phoneAliases,
+            altLegacyPhone: altInfo.legacyPhone
+        };
+    }
+
+    function alternativeFirestoreFields(altInfo) {
+        return alternativeProfileFields(altInfo);
+    }
+
+    function legacyFromClientData(clientData) {
+        const normalized = primaryFromClientData(clientData || {});
+        if (normalized.valid && normalized.legacyPhone) return normalized.legacyPhone;
+        const raw = String(clientData?.phone || clientData?.Tel_Number || clientData?.legacyPhone || clientData?.clientPhone || '').trim();
+        return raw.startsWith('+') ? compactDigits(raw) : raw.replace(/\D/g, '');
+    }
+
+    function hydrateClientProfile(clientData) {
+        const base = { ...(clientData || {}) };
+        const normalized = primaryFromClientData(base);
+        if (!normalized.valid || !normalized.legacyPhone) return base;
+        return { ...base, ...primaryProfileFields(normalized) };
+    }
+
+    function populateCountrySelect(select) {
+        if (!select) return;
+        const selected = select.value || select.getAttribute('data-selected-country') || 'GH';
+        select.innerHTML = countryList.map(country => `<option value="${country.iso2}">${country.name} (${country.callingCode})</option>`).join('');
+        select.value = countryForIso(selected).iso2;
+    }
+
+    function setControlValue(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value || '';
+        el.setAttribute('value', value || '');
+    }
+
+    function syncCallingCode(selectId, codeId) {
+        const country = countryForIso(document.getElementById(selectId)?.value || 'GH');
+        setControlValue(codeId, country.callingCode);
+    }
+
+    function syncPrimaryCallingCode(prefix) {
+        syncCallingCode(`${prefix}_country`, `${prefix}_callingCode`);
+    }
+
+    function syncAccountAlternativeCallingCode() {
+        syncCallingCode('acct_altCountry', 'acct_altCallingCode');
+    }
+
+    function setPrimaryCountry(prefix, countryIso2) {
+        const select = document.getElementById(`${prefix}_country`);
+        if (!select) return;
+        populateCountrySelect(select);
+        select.value = countryForIso(countryIso2 || 'GH').iso2;
+        syncPrimaryCallingCode(prefix);
+        if (prefix === 'acct' && !phoneState.acctAltManual) setAccountAlternativeCountry(select.value, false);
+    }
+
+    function setAccountAlternativeCountry(countryIso2, markManual) {
+        const select = document.getElementById('acct_altCountry');
+        if (!select) return;
+        populateCountrySelect(select);
+        select.value = countryForIso(countryIso2 || document.getElementById('acct_country')?.value || 'GH').iso2;
+        if (markManual) phoneState.acctAltManual = true;
+        syncAccountAlternativeCallingCode();
+    }
+
+    function wirePrimary(prefix) {
+        const select = document.getElementById(`${prefix}_country`);
+        if (!select) return;
+        populateCountrySelect(select);
+        if (!select.value) select.value = 'GH';
+        if (select.dataset.bkPhoneWired !== '1') {
+            select.dataset.bkPhoneWired = '1';
+            select.addEventListener('change', () => {
+                syncPrimaryCallingCode(prefix);
+                if (prefix === 'acct' && !phoneState.acctAltManual) setAccountAlternativeCountry(select.value, false);
+            });
+        }
+        syncPrimaryCallingCode(prefix);
+    }
+
+    function wirePhoneControls() {
+        ['prof', 'guest', 'acct'].forEach(wirePrimary);
+        const altSelect = document.getElementById('acct_altCountry');
+        if (altSelect) {
+            populateCountrySelect(altSelect);
+            if (!altSelect.value) altSelect.value = document.getElementById('acct_country')?.value || 'GH';
+            if (altSelect.dataset.bkPhoneWired !== '1') {
+                altSelect.dataset.bkPhoneWired = '1';
+                altSelect.addEventListener('change', () => {
+                    phoneState.acctAltManual = true;
+                    syncAccountAlternativeCallingCode();
+                });
+            }
+            syncAccountAlternativeCallingCode();
+        }
+    }
+
+    function readPrimary(prefix) {
+        wirePrimary(prefix);
+        const countryIso2 = document.getElementById(`${prefix}_country`)?.value || 'GH';
+        const localValue = document.getElementById(`${prefix}_phone`)?.value || '';
+        return normalize(countryIso2, localValue);
+    }
+
+    function readAccountAlternative() {
+        wirePhoneControls();
+        const countryIso2 = document.getElementById('acct_altCountry')?.value || document.getElementById('acct_country')?.value || 'GH';
+        const localValue = document.getElementById('acct_secondaryPhone')?.value || '';
+        if (!compactDigits(localValue)) return alternativeFromClientData({ altCountryIso2: countryIso2 });
+        return { ...normalize(countryIso2, localValue), hasValue: true };
+    }
+
+    function fillPrimaryForm(prefix, clientData) {
+        const normalized = primaryFromClientData(clientData || {});
+        setPrimaryCountry(prefix, normalized.countryIso2 || 'GH');
+        setControlValue(`${prefix}_phone`, normalized.localValue || normalized.legacyPhone || '');
+    }
+
+    function fillAccountAlternative(clientData) {
+        const alt = alternativeFromClientData(clientData || {});
+        phoneState.acctAltManual = !!(alt.hasValue || clientData?.altCountryIso2 || clientData?.altPhoneE164 || clientData?.altLegacyPhone);
+        setAccountAlternativeCountry(alt.countryIso2 || document.getElementById('acct_country')?.value || 'GH', phoneState.acctAltManual);
+        setControlValue('acct_secondaryPhone', alt.localValue || alt.legacyPhone || '');
+    }
+
+    window.bkPhoneCountries = countryList.slice();
+    window.bkPhoneNormalize = normalize;
+    window.bkPhoneNormalizeFlexible = normalizeFlexible;
+    window.bkPhoneCountryForIso = countryForIso;
+    window.bkPhoneClientMatchesSearch = clientMatchesSearch;
+    window.bkPhoneFindDuplicateClient = findDuplicateClient;
+    window.bkPhoneDuplicateMatchesLegacy = duplicateMatchesLegacy;
+    window.bkPhonePrimaryFromClientData = primaryFromClientData;
+    window.bkPhoneAlternativeFromClientData = alternativeFromClientData;
+    window.bkPhoneLegacyFromClientData = legacyFromClientData;
+    window.bkPhoneHydrateClientProfile = hydrateClientProfile;
+    window.bkPhonePrimaryFields = primaryProfileFields;
+    window.bkPhonePrimaryMasterFields = primaryMasterFields;
+    window.bkPhoneAlternativeProfileFields = alternativeProfileFields;
+    window.bkPhoneAlternativeFirestoreFields = alternativeFirestoreFields;
+    window.bkPhoneWireControls = wirePhoneControls;
+    window.bkPhoneReadPrimary = readPrimary;
+    window.bkPhoneReadAccountAlternative = readAccountAlternative;
+    window.bkPhoneFillPrimaryForm = fillPrimaryForm;
+    window.bkPhoneFillAccountAlternative = fillAccountAlternative;
+    window.bkPhoneSetCountry = setPrimaryCountry;
+    window.bkPhoneSetAccountAlternativeCountry = setAccountAlternativeCountry;
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wirePhoneControls);
+    else wirePhoneControls();
+})();
+// -- END THURAYA Client international phone capture --
+
 // ── Screen navigation ────────────────────────────────────
 
 function showScreen(id) {
@@ -241,12 +950,17 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const doc = await db.collection('Client_Users').doc(user.email.toLowerCase()).get();
                 if (doc.exists) {
-                    bk_clientProfile = doc.data() || {};
+                    bk_clientProfile = window.bkPhoneHydrateClientProfile
+                        ? window.bkPhoneHydrateClientProfile(doc.data() || {})
+                        : (doc.data() || {});
 
-                    const cleanPhone = String(bk_clientProfile.phone || bk_clientProfile.Tel_Number || '').replace(/\D/g, '');
+                    const profilePhone = window.bkPhonePrimaryFromClientData
+                        ? window.bkPhonePrimaryFromClientData(bk_clientProfile)
+                        : null;
+                    const cleanPhone = profilePhone?.legacyPhone || String(bk_clientProfile.phone || bk_clientProfile.Tel_Number || '').replace(/\D/g, '');
                     const hasProfileName = !!String(bk_clientProfile.name || user.displayName || '').trim();
                     const hasProfileDob = !!String(bk_clientProfile.dob || bk_clientProfile.Date_Of_Birth || '').trim();
-                    const profileComplete = hasProfileName && cleanPhone.length === 10 && hasProfileDob;
+                    const profileComplete = hasProfileName && !!cleanPhone && (!profilePhone || profilePhone.valid) && hasProfileDob;
 
                     loadTechs();
                     bk_afterClientEntry();
@@ -259,7 +973,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const dobEl = document.getElementById('prof_dob');
 
                         if (nameEl && !nameEl.value) nameEl.value = bk_clientProfile.name || user.displayName || '';
-                        if (phoneEl && !phoneEl.value) phoneEl.value = bk_clientProfile.phone || bk_clientProfile.Tel_Number || '';
+                        if (window.bkPhoneFillPrimaryForm) window.bkPhoneFillPrimaryForm('prof', bk_clientProfile);
+                        else if (phoneEl && !phoneEl.value) phoneEl.value = bk_clientProfile.phone || bk_clientProfile.Tel_Number || '';
                         if (emailEl) emailEl.value = user.email || bk_clientProfile.email || '';
                         if (genderEl && bk_clientProfile.gender && !genderEl.value) genderEl.value = bk_clientProfile.gender;
                         if (dobEl && !dobEl.value) dobEl.value = bk_clientProfile.dob || bk_clientProfile.Date_Of_Birth || '';
@@ -276,6 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     document.getElementById('prof_email').value = user.email || '';
                     document.getElementById('prof_name').value  = user.displayName || '';
+                    if (window.bkPhoneSetCountry) window.bkPhoneSetCountry('prof', 'GH');
                     goToStep('screen-profile');
                 }
             } catch (e) {
@@ -318,27 +1034,40 @@ window.continueAsGuest = function() {
 async function saveGuestProfile() {
     const btn    = document.getElementById('btnSaveGuest');
     const name   = document.getElementById('guest_name').value.trim();
-    const phone  = document.getElementById('guest_phone').value.replace(/\D/g, '');
+    const phoneInfo = window.bkPhoneReadPrimary ? window.bkPhoneReadPrimary('guest') : null;
+    const phone  = phoneInfo?.legacyPhone || document.getElementById('guest_phone').value.replace(/\D/g, '');
     const gender = document.getElementById('guest_gender').value;
 
-    if (!name)               { toast('Please enter your full name.', 'warning'); return; }
-    if (phone.length !== 10) { toast('Phone number must be 10 digits.', 'warning'); return; }
+    if (!name) { toast('Please enter your full name.', 'warning'); return; }
+    if (!phoneInfo || !phoneInfo.valid || !phone) { toast(phoneInfo?.error || 'Please enter a valid phone number.', 'warning'); return; }
 
     setBtnLoading(btn, true, 'Continue to Book');
     try {
-        bk_clientProfile = { name, phone, gender, email: '', isGuest: true };
+        const duplicateClient = window.bkPhoneFindDuplicateClient ? await window.bkPhoneFindDuplicateClient(phoneInfo) : null;
+        if (duplicateClient && window.bkPhoneDuplicateMatchesLegacy && !window.bkPhoneDuplicateMatchesLegacy(duplicateClient, phone)) {
+            toast('This phone number already belongs to an existing THURAYA client. Please sign in or contact THURAYA.', 'warning');
+            return;
+        }
+
+        bk_clientProfile = {
+            name,
+            gender,
+            email: '',
+            isGuest: true,
+            ...(window.bkPhonePrimaryFields ? window.bkPhonePrimaryFields(phoneInfo) : { phone })
+        };
 
         await db.collection('Clients').doc(phone).set({
             Forename:     name.split(' ')[0] || name,
             Surname:      name.split(' ').slice(1).join(' ') || '',
-            Tel_Number:   phone,
+            ...(window.bkPhonePrimaryMasterFields ? window.bkPhonePrimaryMasterFields(phoneInfo) : { Tel_Number: phone }),
             Gender:       gender,
             Last_Updated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
         loadTechs();
         bk_afterClientEntry();
-        // ── EDIT 2: guests go to mode select after saving details ──
+        // -- EDIT 2: guests go to mode select after saving details --
         goToStep('screen-booking-mode');
         const bar2 = document.getElementById('bk_stickyBar');
         if (bar2) bar2.style.display = 'none';
@@ -354,19 +1083,30 @@ async function saveGuestProfile() {
 async function saveProfile() {
     const btn    = document.getElementById('btnSaveProfile');
     const name   = document.getElementById('prof_name').value.trim();
-    const phone  = document.getElementById('prof_phone').value.replace(/\D/g, '');
+    const phoneInfo = window.bkPhoneReadPrimary ? window.bkPhoneReadPrimary('prof') : null;
+    const phone  = phoneInfo?.legacyPhone || document.getElementById('prof_phone').value.replace(/\D/g, '');
     const gender = document.getElementById('prof_gender').value;
     const dob    = document.getElementById('prof_dob')?.value || '';
     const email  = bk_currentUser?.email?.toLowerCase() || '';
 
-    if (!name)          { toast('Please enter your full name.', 'warning'); return; }
-    if (phone.length !== 10) { toast('Phone number must be 10 digits.', 'warning'); return; }
-    if (!dob)           { toast('Please enter your date of birth.', 'warning'); return; }
+    if (!name) { toast('Please enter your full name.', 'warning'); return; }
+    if (!phoneInfo || !phoneInfo.valid || !phone) { toast(phoneInfo?.error || 'Please enter a valid phone number.', 'warning'); return; }
+    if (!dob) { toast('Please enter your date of birth.', 'warning'); return; }
 
     setBtnLoading(btn, true, 'Save & Continue');
     try {
+        const duplicateClient = window.bkPhoneFindDuplicateClient ? await window.bkPhoneFindDuplicateClient(phoneInfo) : null;
+        if (duplicateClient && window.bkPhoneDuplicateMatchesLegacy && !window.bkPhoneDuplicateMatchesLegacy(duplicateClient, phone)) {
+            toast('This phone number already belongs to an existing THURAYA client. Please contact THURAYA.', 'warning');
+            return;
+        }
+
         const profile = {
-            name, phone, gender, dob, email,
+            name,
+            gender,
+            dob,
+            email,
+            ...(window.bkPhonePrimaryFields ? window.bkPhonePrimaryFields(phoneInfo) : { phone }),
             profileComplete: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -374,7 +1114,7 @@ async function saveProfile() {
         await db.collection('Clients').doc(phone).set({
             Forename:    name.split(' ')[0] || name,
             Surname:     name.split(' ').slice(1).join(' ') || '',
-            Tel_Number:  phone,
+            ...(window.bkPhonePrimaryMasterFields ? window.bkPhonePrimaryMasterFields(phoneInfo) : { Tel_Number: phone }),
             Email:       email,
             Gender:      gender,
             Date_Of_Birth: dob,
@@ -383,7 +1123,7 @@ async function saveProfile() {
         bk_clientProfile = profile;
         loadTechs();
         bk_afterClientEntry();
-        // ── EDIT 3: new users go to mode select after profile save ──
+        // -- EDIT 3: new users go to mode select after profile save --
         goToStep('screen-booking-mode');
     } catch (e) {
         toast('Could not save profile: ' + e.message, 'error');
@@ -2809,6 +3549,9 @@ window.bk_toggleBookForSomeone = function() {
 
 function bk_getBookForDetails() {
     const isSomeoneElse = document.getElementById('bookForSomeone')?.checked === true;
+    const profileLegacyPhone = window.bkPhoneLegacyFromClientData
+        ? window.bkPhoneLegacyFromClientData(bk_clientProfile || {})
+        : (bk_clientProfile?.phone || '');
 
     const base = {
         bookingFor: isSomeoneElse ? 'someone_else' : 'myself',
@@ -2824,25 +3567,31 @@ function bk_getBookForDetails() {
         return {
             ...base,
             recipientName: bk_clientProfile?.name || '',
-            recipientPhone: bk_clientProfile?.phone || '',
+            recipientPhone: profileLegacyPhone,
             recipientNote: '',
             bookedByName: bk_clientProfile?.name || '',
-            bookedByPhone: bk_clientProfile?.phone || '',
+            bookedByPhone: profileLegacyPhone,
             bookedByEmail: bk_isGuest ? '' : (bk_currentUser?.email || '')
         };
     }
 
     const recipientName = (document.getElementById('recipientName')?.value || '').trim();
-    const recipientPhone = (document.getElementById('recipientPhone')?.value || '').trim();
+    const rawRecipientPhone = (document.getElementById('recipientPhone')?.value || '').trim();
+    const recipientPhoneInfo = window.bkPhoneNormalizeFlexible
+        ? window.bkPhoneNormalizeFlexible(rawRecipientPhone, bk_clientProfile?.countryIso2 || 'GH')
+        : null;
+    const recipientPhone = recipientPhoneInfo?.valid ? recipientPhoneInfo.legacyPhone : rawRecipientPhone;
     const recipientNote = (document.getElementById('recipientNote')?.value || '').trim();
 
     return {
         ...base,
         recipientName,
         recipientPhone,
+        recipientPhoneValid: recipientPhoneInfo ? recipientPhoneInfo.valid : String(rawRecipientPhone || '').replace(/\D/g, '').length >= 10,
+        recipientPhoneError: recipientPhoneInfo?.error || '',
         recipientNote,
         bookedByName: bk_clientProfile?.name || '',
-        bookedByPhone: bk_clientProfile?.phone || '',
+        bookedByPhone: profileLegacyPhone,
         bookedByEmail: bk_isGuest ? '' : (bk_currentUser?.email || '')
     };
 }
@@ -2858,16 +3607,14 @@ function bk_validateBookForDetails() {
         return null;
     }
 
-    const phoneDigits = String(details.recipientPhone || '').replace(/\D/g, '');
-    if (phoneDigits.length < 10) {
-        toast('Please enter a valid recipient phone number.', 'warning');
+    if (!details.recipientPhoneValid) {
+        toast(details.recipientPhoneError || 'Please enter a valid recipient phone number.', 'warning');
         document.getElementById('recipientPhone')?.focus();
         return null;
     }
 
     return details;
 }
-
 
 
 // ── Phase 9C: Smart Availability Engine ─────────────────────
@@ -2968,6 +3715,10 @@ const bookForDetails = bk_validateBookForDetails();
 
     if (!bookForDetails) return;
 
+    const clientLegacyPhone = window.bkPhoneLegacyFromClientData
+        ? window.bkPhoneLegacyFromClientData(bk_clientProfile || {})
+        : (bk_clientProfile.phone || '');
+
     const services  = bk_selectedServices.map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
     const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
     const subtotal  = bk_selectedServices.reduce((s, x) => s + (x.price * (x.qty || 1)), 0);
@@ -2992,7 +3743,7 @@ const bookForDetails = bk_validateBookForDetails();
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
-            clientPhone:         bk_clientProfile.phone  || '',
+            clientPhone:         clientLegacyPhone,
             clientName:          bk_clientProfile.name   || '',
             clientEmail:         bk_isGuest ? '' : (bk_currentUser?.email || ''),
             assignedTechEmail:   techEmail,
@@ -3016,7 +3767,7 @@ const bookForDetails = bk_validateBookForDetails();
             timeString:          time,
             status:              'Scheduled',
             source:              'client-booking',
-            bookedBy:            bk_isGuest ? ('guest:' + (bk_clientProfile.phone || '')) : (bk_currentUser?.email || ''),
+            bookedBy:            bk_isGuest ? ('guest:' + clientLegacyPhone) : (bk_currentUser?.email || ''),
             bookingFor:          bookForDetails.bookingFor,
             bookedByName:        bookForDetails.bookedByName,
             bookedByPhone:       bookForDetails.bookedByPhone,
@@ -3583,8 +4334,9 @@ function bk_safeText(value, fallback = '—') {
 function bk_syncAccountSummary() {
     const profile = bk_clientProfile || {};
     const name = bk_safeText(profile.name, bk_isGuest ? 'Guest Client' : 'THURAYA Client');
-    const phone = bk_safeText(profile.phone || profile.Tel_Number, 'Phone not saved');
-    const secondaryPhone = bk_safeText(profile.secondaryPhone || profile.Secondary_Phone, 'Not set');
+    const phone = bk_safeText(window.bkPhoneLegacyFromClientData ? window.bkPhoneLegacyFromClientData(profile) : (profile.phone || profile.Tel_Number), 'Phone not saved');
+    const alternative = window.bkPhoneAlternativeFromClientData ? window.bkPhoneAlternativeFromClientData(profile) : null;
+    const secondaryPhone = bk_safeText(alternative?.legacyPhone || profile.altLegacyPhone || profile.Tel_Number_Alt || profile.secondaryPhone || profile.Secondary_Phone, 'Not set');
     const email = bk_safeText(profile.email || bk_currentUser?.email, bk_isGuest ? 'Guest booking' : 'Email not saved');
     const dob = bk_safeText(profile.dob || profile.Date_Of_Birth, 'Not set');
     const gender = bk_safeText(profile.gender || profile.Gender, 'Not set');
@@ -3640,9 +4392,12 @@ window.bk_prepareAccountProfileEdit = function() {
         if (el) el.value = value || '';
     };
 
+    if (window.bkPhoneWireControls) window.bkPhoneWireControls();
     setVal('acct_name', profile.name || profile.Forename || '');
-    setVal('acct_phone', profile.phone || profile.Tel_Number || '');
-    setVal('acct_secondaryPhone', profile.secondaryPhone || profile.Secondary_Phone || '');
+    if (window.bkPhoneFillPrimaryForm) window.bkPhoneFillPrimaryForm('acct', profile);
+    else setVal('acct_phone', profile.phone || profile.Tel_Number || '');
+    if (window.bkPhoneFillAccountAlternative) window.bkPhoneFillAccountAlternative(profile);
+    else setVal('acct_secondaryPhone', profile.secondaryPhone || profile.Secondary_Phone || '');
     setVal('acct_email', profile.email || bk_currentUser?.email || '');
     setVal('acct_dob', profile.dob || profile.Date_Of_Birth || '');
     setVal('acct_gender', profile.gender || profile.Gender || '');
@@ -3656,29 +4411,40 @@ window.bk_prepareAccountProfileEdit = function() {
 window.bk_saveAccountProfile = async function() {
     const btn = document.getElementById('btnSaveAccountProfile');
     const name = (document.getElementById('acct_name')?.value || '').trim();
-    const phone = (document.getElementById('acct_phone')?.value || '').replace(/\D/g, '');
-    const secondaryPhone = (document.getElementById('acct_secondaryPhone')?.value || '').replace(/\D/g, '');
+    const phoneInfo = window.bkPhoneReadPrimary ? window.bkPhoneReadPrimary('acct') : null;
+    const phone = phoneInfo?.legacyPhone || (document.getElementById('acct_phone')?.value || '').replace(/\D/g, '');
+    const altPhoneInfo = window.bkPhoneReadAccountAlternative ? window.bkPhoneReadAccountAlternative() : null;
+    const secondaryPhone = altPhoneInfo?.hasValue ? altPhoneInfo.legacyPhone : '';
     const dob = document.getElementById('acct_dob')?.value || '';
     const gender = document.getElementById('acct_gender')?.value || '';
     const email = (bk_currentUser?.email || bk_clientProfile?.email || '').toLowerCase();
 
     if (!name) { toast('Please enter your full name.', 'warning'); return; }
-    if (phone.length !== 10) { toast('Primary phone must be 10 digits.', 'warning'); return; }
-    if (secondaryPhone && secondaryPhone.length !== 10) { toast('Secondary phone must be 10 digits, or leave it blank.', 'warning'); return; }
-    if (secondaryPhone && secondaryPhone === phone) { toast('Secondary phone should be different from your primary phone.', 'warning'); return; }
+    if (!phoneInfo || !phoneInfo.valid || !phone) { toast(phoneInfo?.error || 'Please enter a valid primary phone number.', 'warning'); return; }
+    if (altPhoneInfo?.hasValue && !altPhoneInfo.valid) { toast(altPhoneInfo.error || 'Please enter a valid alternative phone number, or leave it blank.', 'warning'); return; }
+    if (secondaryPhone && secondaryPhone === phone) { toast('Alternative phone should be different from your primary phone.', 'warning'); return; }
     if (!dob) { toast('Please enter your date of birth.', 'warning'); return; }
     if (dob > todayStr) { toast('Date of birth cannot be in the future.', 'warning'); return; }
 
     setBtnLoading(btn, true, 'Save Changes');
     try {
+        const duplicateClient = window.bkPhoneFindDuplicateClient ? await window.bkPhoneFindDuplicateClient(phoneInfo) : null;
+        if (duplicateClient && window.bkPhoneDuplicateMatchesLegacy && !window.bkPhoneDuplicateMatchesLegacy(duplicateClient, phone)) {
+            toast('This primary phone number already belongs to another THURAYA client record.', 'warning');
+            return;
+        }
+
+        const primaryFields = window.bkPhonePrimaryFields ? window.bkPhonePrimaryFields(phoneInfo) : { phone };
+        const altProfileFields = window.bkPhoneAlternativeProfileFields ? window.bkPhoneAlternativeProfileFields(altPhoneInfo) : { secondaryPhone };
+        const altFirestoreFields = window.bkPhoneAlternativeFirestoreFields ? window.bkPhoneAlternativeFirestoreFields(altPhoneInfo) : { Secondary_Phone: secondaryPhone };
         const profileUpdate = {
             ...(bk_clientProfile || {}),
             name,
-            phone,
-            secondaryPhone,
             gender,
             dob,
             email: email || (bk_clientProfile?.email || ''),
+            ...primaryFields,
+            ...altProfileFields,
             profileComplete: true,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -3690,8 +4456,8 @@ window.bk_saveAccountProfile = async function() {
         await db.collection('Clients').doc(phone).set({
             Forename: name.split(' ')[0] || name,
             Surname: name.split(' ').slice(1).join(' ') || '',
-            Tel_Number: phone,
-            Secondary_Phone: secondaryPhone,
+            ...(window.bkPhonePrimaryMasterFields ? window.bkPhonePrimaryMasterFields(phoneInfo) : { Tel_Number: phone }),
+            ...altFirestoreFields,
             Email: email || '',
             Gender: gender,
             Date_Of_Birth: dob,
@@ -3719,7 +4485,9 @@ let bk_clientNotifications = [];
 
 function bk_getClientNotificationKey() {
     const email = (bk_currentUser?.email || bk_clientProfile?.email || '').toLowerCase();
-    const phone = (bk_clientProfile?.phone || bk_clientProfile?.Tel_Number || '').replace(/\D/g, '');
+    const phone = window.bkPhoneLegacyFromClientData
+        ? window.bkPhoneLegacyFromClientData(bk_clientProfile || {})
+        : (bk_clientProfile?.phone || bk_clientProfile?.Tel_Number || '').replace(/\D/g, '');
     return email || (phone ? 'guest:' + phone : 'guest:unknown');
 }
 
@@ -3746,7 +4514,7 @@ async function bk_createClientNotificationForBooking(appt) {
     await db.collection('Client_Notifications').add({
         clientKey,
         clientEmail: appt.clientEmail || bk_currentUser?.email || '',
-        clientPhone: appt.clientPhone || bk_clientProfile?.phone || '',
+        clientPhone: appt.clientPhone || (window.bkPhoneLegacyFromClientData ? window.bkPhoneLegacyFromClientData(bk_clientProfile || {}) : (bk_clientProfile?.phone || '')),
         appointmentId: appt.id || '',
         type: 'booking_confirmed',
         title: 'Booking confirmed',
@@ -3841,7 +4609,9 @@ async function bk_loadUpcomingAppointmentPreview() {
     if (!card || !bk_clientProfile) return;
 
     const email = (bk_currentUser?.email || bk_clientProfile?.email || '').toLowerCase();
-    const phone = (bk_clientProfile?.phone || '').replace(/\D/g, '');
+    const phone = window.bkPhoneLegacyFromClientData
+        ? window.bkPhoneLegacyFromClientData(bk_clientProfile || {})
+        : (bk_clientProfile?.phone || '').replace(/\D/g, '');
 
     try {
         let snap = null;
