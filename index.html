@@ -117,6 +117,46 @@
         }
     </style>
 
+    <style id="thurayaClientInternationalPhoneStyles">
+        .th-phone-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 16px;
+            align-items: end;
+            margin-bottom: 18px;
+        }
+
+        .th-phone-grid .form-group {
+            margin-bottom: 0;
+            min-width: 0;
+        }
+
+        .th-phone-grid label {
+            min-height: 22px;
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .th-phone-grid select,
+        .th-phone-grid input {
+            width: 100%;
+        }
+
+        @media (max-width: 720px) {
+            .th-phone-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                align-items: stretch;
+            }
+
+            .th-phone-grid label {
+                white-space: normal;
+            }
+        }
+    </style>
+
     <style id="thurayaInAppDocViewerStyles">
         #screen-doc-viewer {
             position: fixed !important;
@@ -423,9 +463,16 @@
                         <label>Full Name <span class="req">*</span></label>
                         <input type="text" id="prof_name" placeholder="Your full name" autocomplete="name">
                     </div>
-                    <div class="form-group">
-                        <label>Phone Number <span class="req">*</span></label>
-                        <input type="tel" id="prof_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
+                    <div class="th-phone-grid" data-phone-scope="profile-primary">
+                        <div class="form-group">
+                            <label for="prof_country">PRIMARY COUNTRY: <span class="req">*</span></label>
+                            <select id="prof_country" autocomplete="tel-country-code"></select>
+                            <input type="hidden" id="prof_callingCode" value="+233">
+                        </div>
+                        <div class="form-group">
+                            <label for="prof_phone">PRIMARY NUMBER: <span class="req">*</span></label>
+                            <input type="tel" id="prof_phone" placeholder="0241234567 or 241234567" maxlength="20" inputmode="tel" autocomplete="tel-national">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Date of Birth <span class="req">*</span></label>
@@ -470,9 +517,16 @@
                         <label>Full Name <span class="req">*</span></label>
                         <input type="text" id="guest_name" placeholder="Your full name" autocomplete="name">
                     </div>
-                    <div class="form-group">
-                        <label>Phone Number <span class="req">*</span></label>
-                        <input type="tel" id="guest_phone" placeholder="10-digit number" maxlength="10" autocomplete="tel">
+                    <div class="th-phone-grid" data-phone-scope="guest-primary">
+                        <div class="form-group">
+                            <label for="guest_country">PRIMARY COUNTRY: <span class="req">*</span></label>
+                            <select id="guest_country" autocomplete="tel-country-code"></select>
+                            <input type="hidden" id="guest_callingCode" value="+233">
+                        </div>
+                        <div class="form-group">
+                            <label for="guest_phone">PRIMARY NUMBER: <span class="req">*</span></label>
+                            <input type="tel" id="guest_phone" placeholder="0241234567 or 241234567" maxlength="20" inputmode="tel" autocomplete="tel-national">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Gender <span class="optional">(optional)</span></label>
@@ -854,7 +908,7 @@
                 <div class="form-card th-profile-summary-card">
                     <div class="confirm-row"><span class="confirm-label">Name</span><span class="confirm-value" id="thProfileName">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Primary Phone</span><span class="confirm-value" id="thProfilePhone">—</span></div>
-                    <div class="confirm-row"><span class="confirm-label">Secondary Phone</span><span class="confirm-value" id="thProfileSecondaryPhone">—</span></div>
+                    <div class="confirm-row"><span class="confirm-label">Alternative Phone</span><span class="confirm-value" id="thProfileSecondaryPhone">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Email</span><span class="confirm-value" id="thProfileEmail">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Date of Birth</span><span class="confirm-value" id="thProfileDob">—</span></div>
                     <div class="confirm-row"><span class="confirm-label">Gender</span><span class="confirm-value" id="thProfileGender">—</span></div>
@@ -879,14 +933,28 @@
                         <label>Full Name <span class="req">*</span></label>
                         <input type="text" id="acct_name" placeholder="Your full name" autocomplete="name">
                     </div>
-                    <div class="form-group">
-                        <label>Primary Phone <span class="req">*</span></label>
-                        <input type="tel" id="acct_phone" placeholder="10-digit phone number" maxlength="10" inputmode="numeric" autocomplete="tel">
+                    <div class="th-phone-grid" data-phone-scope="account-primary">
+                        <div class="form-group">
+                            <label for="acct_country">PRIMARY COUNTRY: <span class="req">*</span></label>
+                            <select id="acct_country" autocomplete="tel-country-code"></select>
+                            <input type="hidden" id="acct_callingCode" value="+233">
+                        </div>
+                        <div class="form-group">
+                            <label for="acct_phone">PRIMARY NUMBER: <span class="req">*</span></label>
+                            <input type="tel" id="acct_phone" placeholder="0241234567 or 241234567" maxlength="20" inputmode="tel" autocomplete="tel-national">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Secondary Phone <span class="optional">(optional)</span></label>
-                        <input type="tel" id="acct_secondaryPhone" placeholder="Backup phone number" maxlength="10" inputmode="numeric" autocomplete="tel">
-                        <small class="field-hint">Used only if your primary number cannot be reached.</small>
+                    <div class="th-phone-grid" data-phone-scope="account-alternative">
+                        <div class="form-group">
+                            <label for="acct_altCountry">ALTERNATIVE COUNTRY:</label>
+                            <select id="acct_altCountry" autocomplete="tel-country-code"></select>
+                            <input type="hidden" id="acct_altCallingCode" value="+233">
+                        </div>
+                        <div class="form-group">
+                            <label for="acct_secondaryPhone">ALTERNATIVE NUMBER:</label>
+                            <input type="tel" id="acct_secondaryPhone" placeholder="0201234567 or 201234567" maxlength="20" inputmode="tel" autocomplete="tel-national">
+                            <small class="field-hint">Used only if your primary number cannot be reached.</small>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Date of Birth <span class="req">*</span></label>
@@ -1227,7 +1295,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
-<script src="app.js?v=client-past-time-confirm-20260520"></script>
+<script src="app.js?v=rc1-international-phone-client-final-prod-20260830"></script>
     <script src="group-booking.js?v=group-pick-visible-hardfix-20260504"></script>
     <script src="availability.js?v=client-past-time-filter-20260520"></script>
     <script src="phase-9a-soft-login-gate.js?v=phase9a-full-20260428"></script>
