@@ -1,0 +1,25 @@
+{
+  "history": [
+    {"effectiveFrom":"2026-07-12","workingDays":["Sun"],"startTime":"08:00","endTime":"23:00","savedAtMs":1},
+    {"effectiveFrom":"2026-09-23","workingDays":["Mon","Tue","Wed","Thu","Fri","Sat"],"startTime":"10:00","endTime":"21:00","savedAtMs":2},
+    {"effectiveFrom":"2026-09-27","workingDays":["Mon","Tue","Wed","Thu","Fri","Sat"],"startTime":"10:00","endTime":"21:00","savedAtMs":3},
+    {"effectiveFrom":"2026-10-01","workingDays":["Sun"],"startTime":"08:00","endTime":"23:00","savedAtMs":4}
+  ],
+  "cases": [
+    {"name":"incident Sunday OFF","date":"2026-09-27","time":"15:00","duration":120,"available":false,"effective":"2026-09-27"},
+    {"name":"Saturday ON","date":"2026-09-26","time":"10:00","duration":95,"available":true,"effective":"2026-09-23"},
+    {"name":"effective boundary inclusive","date":"2026-09-23","time":"10:00","duration":60,"available":true,"effective":"2026-09-23"},
+    {"name":"day before effective schedule","date":"2026-09-22","time":"10:00","duration":60,"available":false,"effective":"2026-07-12"},
+    {"name":"DD/MM local calendar","date":"27/09/2026","time":"15:00","duration":95,"available":false,"effective":"2026-09-27"},
+    {"name":"future schedule ignored","date":"2026-09-28","time":"10:00","duration":60,"available":true,"effective":"2026-09-27"},
+    {"name":"new Sunday ON","date":"2026-10-04","time":"10:00","duration":60,"available":true,"effective":"2026-10-01"},
+    {"name":"hours before opening","date":"2026-09-26","time":"09:30","duration":60,"available":false,"effective":"2026-09-23"},
+    {"name":"duration beyond close","date":"2026-09-26","time":"20:30","duration":60,"available":false,"effective":"2026-09-23"},
+    {"name":"ends exactly at close","date":"2026-09-26","time":"20:00","duration":60,"available":true,"effective":"2026-09-23"},
+    {"name":"Sunday hours never override OFF","date":"2026-09-27","time":"10:00","duration":60,"available":false,"effective":"2026-09-27"},
+    {"name":"no applicable schedule","date":"2026-07-11","time":"10:00","duration":60,"available":false},
+    {"name":"invalid calendar day","date":"2026-02-30","time":"10:00","duration":60,"available":false},
+    {"name":"invalid time","date":"2026-09-26","time":"24:00","duration":60,"available":false,"effective":"2026-09-23"},
+    {"name":"invalid duration","date":"2026-09-26","time":"10:00","duration":-1,"available":false,"effective":"2026-09-23"}
+  ]
+}

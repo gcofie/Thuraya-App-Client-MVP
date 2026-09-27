@@ -3125,14 +3125,14 @@ function bk_intervalFreeForTech(busyByKey, techEmail, start, end) {
     return intervals.every(b => end <= b.start || start >= b.end);
 }
 
-async function bk_buildBusyByTechForDate(date) {
+async function bk_buildBusyByTechForDate(date, options = {}) {
     const busyByKey = {};
     if (!date) return busyByKey;
 
     // Appointments are the source of truth for future client-facing bookings.
     const snap = await db.collection('Appointments')
         .where('dateString', '==', date)
-        .get();
+        .get(options.requireFresh ? { source: 'server' } : undefined);
 
     snap.forEach(doc => {
         const a = { id: doc.id, ...(doc.data() || {}) };
@@ -3151,7 +3151,7 @@ async function bk_buildBusyByTechForDate(date) {
     try {
         const activeSnap = await db.collection('Active_Jobs')
             .where('dateString', '==', date)
-            .get();
+            .get(options.requireFresh ? { source: 'server' } : undefined);
 
         activeSnap.forEach(doc => {
             const j = { id: doc.id, ...(doc.data() || {}) };
@@ -3165,6 +3165,7 @@ async function bk_buildBusyByTechForDate(date) {
             bk_addBusyInterval(busyByKey, keys, start, start + duration, 'Active_Jobs');
         });
     } catch (e) {
+        if (options.requireFresh) throw new Error('Live availability could not be verified. Please try again.');
         console.warn('Active_Jobs availability read skipped:', e);
     }
 
@@ -3625,6 +3626,8 @@ const bookForDetails = bk_validateBookForDetails();
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
+        if (typeof window.av_validateBookingAssignments !== 'function') throw new Error('Availability could not be verified. Please try again.');
+        await window.av_validateBookingAssignments([{ techEmail, date, time, duration: totalMins }]);
         const conflict = await bk_hasSlotConflict(techEmail, date, time);
         if (conflict) {
             toast('This time slot has just been booked. Please choose another time.', 'error');
@@ -5388,10 +5391,13 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     };
 
     window.bk_hasSlotConflict = async function(techEmail, date, time){
-        // Emergency recovery: do not block a client at confirmation because shared
-        // availability reads are unstable. Exact conflicts are still operationally
-        // visible to Staff App after booking.
-        return false;
+        if (typeof window.av_validateBookingAssignments !== 'function') return true;
+        try {
+            await window.av_validateBookingAssignments([{ techEmail, date, time, duration: selectedDuration() }]);
+            return false;
+        } catch(e) {
+            return true;
+        }
     };
 
     // Re-check slots when returning to the date screen after selecting services/tech.

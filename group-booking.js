@@ -788,6 +788,14 @@ window.grp_confirmBooking = async function() {
     if (!dateFallback || !timeFallback) { toast('Missing group date or time.', 'warning'); return; }
     setBtnLoading(btn, true, 'Confirm Group Booking');
     try {
+        if (typeof window.av_validateBookingAssignments !== 'function') throw new Error('Availability could not be verified. Please try again.');
+        const assignments = grp_members.map(m => ({
+            techEmail: m.assignedTechEmail,
+            date: grp_selectedPlan.type === 'split' ? (m.splitDateStr || dateFallback) : dateFallback,
+            time: grp_selectedPlan.type === 'split' ? (m.splitTimeStr || '') : (grp_selectedPlan.timeStr || timeFallback),
+            duration: grp_memberTotals(m).totalMins
+        }));
+        await window.av_validateBookingAssignments(assignments);
         grp_groupId = db.collection('Appointments').doc().id;
         const batch = db.batch();
         const groupTotals = grp_groupTotals();
@@ -796,8 +804,9 @@ window.grp_confirmBooking = async function() {
             const billing = grp_computeBillingForMember(i, mt);
             const ref = db.collection('Appointments').doc();
             const isSplit = grp_selectedPlan.type === 'split';
-            const dateStr = isSplit ? (m.splitDateStr || dateFallback) : dateFallback;
-            const timeStr = isSplit ? (m.splitTimeStr || '') : (grp_selectedPlan.timeStr || timeFallback);
+            const dateStr = assignments[i].date;
+            const timeStr = assignments[i].time;
+            if (m.assignedTechEmail !== assignments[i].techEmail || mt.totalMins !== assignments[i].duration) throw new Error('Group selection changed. Please check availability again.');
             const serviceLineItems = typeof window.thBuildClientServiceSnapshots === 'function'
                 ? window.thBuildClientServiceSnapshots(mt.services, { snapshotSource: isSplit ? 'client_group_booking_split' : 'client_group_booking' })
                 : [];

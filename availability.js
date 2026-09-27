@@ -33,8 +33,7 @@ function av_currentMins() {
 
 // ── Helper: get day-of-week abbreviation from YYYY-MM-DD ─────
 function av_dayAbbr(dateStr) {
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    return days[new Date(dateStr + 'T12:00:00').getDay()];
+    return window.ThurayaSchedulePolicy.weekday(dateStr);
 }
 
 function av_scheduleDateValue(value) {
@@ -98,39 +97,11 @@ function av_bookingWindowFromSettings(data) {
 }
 
 function av_scheduleRecordsFromData(data) {
-    if (!data) return [];
-    const segments = [];
-    if (Array.isArray(data.scheduleSegments)) {
-        data.scheduleSegments.forEach(segment => {
-            const record = av_scheduleRecord(segment, 3);
-            if (record && record.workingDays.length) segments.push(record);
-        });
-    }
-    if (segments.length) return segments;
-
-    const records = [];
-    const current = av_scheduleRecord(data, 2);
-    if (current && current.workingDays.length) records.push(current);
-    return records;
+    return window.ThurayaSchedulePolicy.records(data);
 }
 
 function av_resolveScheduleFromRecords(records, dateStr) {
-    const dayAbbr = av_dayAbbr(dateStr);
-    const effective = (records || [])
-        .filter(s => !s.effectiveFrom || s.effectiveFrom <= dateStr)
-        .sort(av_compareScheduleRecords);
-
-    if (!effective.length) return av_defaultSchedule();
-
-    const match = effective.find(s => (s.workingDays || []).includes(dayAbbr));
-    if (match) return { worksToday: true, startMins: match.startMins, endMins: match.endMins };
-
-    const latest = effective[0] || {};
-    return {
-        worksToday: false,
-        startMins: Number.isFinite(latest.startMins) ? latest.startMins : 8 * 60,
-        endMins: Number.isFinite(latest.endMins) ? latest.endMins : 20 * 60
-    };
+    return window.ThurayaSchedulePolicy.resolve(records, dateStr);
 }
 
 function av_resolveScheduleFromData(data, dateStr) {
@@ -143,11 +114,11 @@ async function av_scheduleHistoryRecords(email) {
             .collection('history')
             .orderBy('savedAt', 'desc')
             .limit(60)
-            .get();
+            .get({ source: 'server' });
         return snap.docs.flatMap(doc => av_scheduleRecordsFromData(doc.data() || {}));
     } catch(e) {
         console.warn('Availability: schedule history unavailable for', email, e);
-        return [];
+        throw new Error('Working schedule could not be verified. Please try again.');
     }
 }
 
@@ -163,7 +134,7 @@ async function av_buildScheduleMapForDate(schedSnap, techEmails, dateStr) {
     }));
 
     return entries.reduce((map, [email, schedule]) => {
-        map[email] = schedule || av_defaultSchedule();
+        map[email] = schedule || { worksToday: false };
         return map;
     }, {});
 }
@@ -328,6 +299,8 @@ function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
 //  Layer 3 — Appointments:    existing bookings
 // ============================================================
 async function av_getSlotMap(dateStr, techEmails, totalMins) {
+    dateStr = window.ThurayaSchedulePolicy.calendarDate(dateStr);
+    if (!dateStr || !Number.isInteger(Number(totalMins)) || Number(totalMins) <= 0) throw new Error('Invalid appointment date or duration.');
     techEmails = (techEmails || []).filter(Boolean);
     totalMins = parseInt(totalMins || 0, 10);
 
@@ -340,29 +313,25 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         // Layer 0: fetch ALL calendar blocks and filter client-side.
         // This supports full_day, time_range, tech_specific and date_range blocks.
         // Calendar_Blocks is expected to be small; this avoids missing date_range records.
-        db.collection('Calendar_Blocks').get(),
+        db.collection('Calendar_Blocks').get({ source: 'server' }),
 
         // Layer 1: fetch ALL schedules — tiny collection, no index needed
-        db.collection('Staff_Schedules').get(),
+        db.collection('Staff_Schedules').get({ source: 'server' }),
 
         // Layer 2: approved leave — single where, filter dates client-side
         db.collection('Staff_Leave')
             .where('status', '==', 'Approved')
-            .get(),
+            .get({ source: 'server' }),
 
         // Layer 3: existing appointments on this date
         db.collection('Appointments')
             .where('dateString', '==', dateStr)
-            .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress'])
-            .get(),
+            .where('status', 'in', ['Scheduled', 'Arrived', 'In Progress', 'Action Required'])
+            .get({ source: 'server' }),
 
         // Global booking window shared with Staff Operations Timing Rules
         db.collection('Settings').doc('operations_engine')
-            .get()
-            .catch(e => {
-                console.warn('Availability: booking window settings unavailable:', e.message || e);
-                return null;
-            })
+            .get({ source: 'server' })
     ]);
 
     // ── Layer 0: parse calendar blocks ───────────────────────
@@ -400,10 +369,10 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
     const scheduleMap = await av_buildScheduleMapForDate(schedSnap, techEmails, dateStr);
     const bookingWindow = av_bookingWindowFromSettings(opsSnap && opsSnap.exists ? (opsSnap.data() || {}) : {});
 
-    // Fallback for techs with no schedule doc — assume default hours
+    // Missing schedules cannot establish availability.
     techEmails.forEach(email => {
         if (!scheduleMap[email]) {
-            scheduleMap[email] = { worksToday: true, startMins: 8*60, endMins: 20*60 };
+            scheduleMap[email] = { worksToday: false };
         }
     });
 
@@ -777,6 +746,33 @@ function av_mergeSlotMaps(maps) {
     });
     return merged;
 }
+
+// Re-read authoritative availability at confirmation; selection-time results are not a save permit.
+window.av_validateBookingAssignments = async function(assignments) {
+    const policy = window.ThurayaSchedulePolicy;
+    if (!Array.isArray(assignments) || !assignments.length) throw new Error('Please choose a technician and time.');
+    const checked = [];
+    for (const row of assignments) {
+        const date = policy.calendarDate(row.date);
+        const start = policy.minutes(row.time);
+        if (!date || !Number.isInteger(start) || !Number.isInteger(row.duration) || row.duration <= 0 ||
+            !bk_techs.some(tech => tech.email === row.techEmail)) throw new Error('Please choose an available technician and time.');
+        const identity = await db.collection('Users').doc(row.techEmail).get({ source: 'server' });
+        const user = identity.exists ? identity.data() : null;
+        const roles = user && (Array.isArray(user.roles) ? user.roles : [user.role]);
+        if (!user || user.visibleToClients === false || user.active === false || user.disabled === true ||
+            ['inactive','disabled','archived','terminated'].includes(String(user.status || '').toLowerCase()) ||
+            !roles.some(role => /^(tech|technician|test tech)$/i.test(String(role || '').trim()))) throw new Error('This technician is no longer available. Please choose another technician.');
+        const map = await av_getSlotMap(date, [row.techEmail], row.duration);
+        if (!(map[start] || []).includes(row.techEmail)) throw new Error('This technician or time is no longer available. Please choose another technician or time.');
+        const busy = await bk_buildBusyByTechForDate(date, { requireFresh: true });
+        if (!bk_intervalFreeForTech(busy, row.techEmail, start, start + row.duration)) throw new Error('This time has just become unavailable. Please choose another time.');
+        if (checked.some(other => other.date === date && other.techEmail === row.techEmail &&
+            start < other.end && start + row.duration > other.start)) throw new Error('Group members need separate available technician times.');
+        checked.push({ date, techEmail: row.techEmail, start, end: start + row.duration });
+    }
+    return true;
+};
 
 // ── Expose av_getSlotMap globally for future use (Phase 4c) ──
 window.av_getSlotMap   = av_getSlotMap;
