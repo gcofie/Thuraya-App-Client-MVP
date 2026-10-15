@@ -17,6 +17,7 @@ let grp_groupId = null;
 let grp_selectedPlan = { type: 'same', timeStr: '', dateStr: '', subgroups: [] };
 let grp_billingMode = '';
 let grp_bookedCacheByDate = {};
+let grp_confirmedTotals = [];
 
 function grp_todayString() {
     const n = new Date();
@@ -54,21 +55,25 @@ function grp_memberLabel(index) {
 
 function grp_memberTotals(member) {
     const services = member?.selectedServices || [];
-    const totalMins = services.reduce((sum, s) => sum + ((Number(s.dur) || 0) * (Number(s.qty) || 1)), 0);
+    const totalMins = grp_memberDuration(member);
     const listedSubtotal = services.reduce((sum, s) => sum + ((Number(s.price) || 0) * (Number(s.qty) || 1)), 0);
-    const taxResult = typeof applyTaxes === 'function'
-        ? applyTaxes(listedSubtotal)
-        : { basePrice: listedSubtotal, grandTotal: listedSubtotal, taxLines: [] };
+    const taxResult = bk_priceSelection(services);
     const label = services.map(s => `${s.name}${s.qty > 1 ? ' (x' + s.qty + ')' : ''}`).join(', ');
     return {
         services,
         totalMins,
         listedSubtotal,
-        basePrice: taxResult.basePrice,
-        grandTotal: taxResult.grandTotal,
-        taxLines: taxResult.taxLines || [],
+        ...taxResult,
         label
     };
+}
+
+function grp_memberDuration(member) {
+    return (member?.selectedServices || []).reduce((sum, s) => sum + ((Number(s.dur) || 0) * (Number(s.qty) || 1)), 0);
+}
+
+function grp_groupDuration() {
+    return Math.max(0, ...grp_members.map(grp_memberDuration));
 }
 
 function grp_groupTotals() {
@@ -77,7 +82,7 @@ function grp_groupTotals() {
         memberTotals,
         totalMinsMax: Math.max(0, ...memberTotals.map(t => t.totalMins || 0)),
         listedSubtotal: memberTotals.reduce((s, t) => s + t.listedSubtotal, 0),
-        grandTotal: memberTotals.reduce((s, t) => s + t.grandTotal, 0)
+        grandTotal: ThurayaClientTax.sum(memberTotals.map(t => t.grandTotal))
     };
 }
 
@@ -182,7 +187,7 @@ async function grp_findSlotForMembers(dateStr, memberIndexes, excludedTechLocks 
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
     const close = 20 * 60;
-    const duration = Math.max(60, ...memberIndexes.map(i => grp_memberTotals(grp_members[i]).totalMins || 60));
+    const duration = Math.max(60, ...memberIndexes.map(i => grp_memberDuration(grp_members[i]) || 60));
     const needed = memberIndexes.length;
     const slots = grp_candidateSlots();
 
@@ -564,7 +569,7 @@ window.grp_generateSlots = async function() {
     await grp_ensureTechs();
     const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
     const booked = await grp_getBookedSlots(dateStr);
-    const group = grp_groupTotals();
+    const group = { totalMinsMax: grp_groupDuration() };
     const duration = Math.max(60, group.totalMinsMax || 60);
     const needed = grp_members.length;
     const close = 20 * 60;
@@ -598,7 +603,7 @@ window.grp_selectSameSlot = async function(timeStr, btn) {
     document.getElementById('grp_time').value = timeStr;
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
-    const duration = Math.max(60, grp_groupTotals().totalMinsMax || 60);
+    const duration = Math.max(60, grp_groupDuration() || 60);
     const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration).slice(0, grp_members.length);
     grp_members.forEach((m, i) => {
         m.assignedTechEmail = free[i]?.email || '';
@@ -694,7 +699,10 @@ window.grp_selectSplitOption = async function(splitStr, btn) {
 function grp_billingOptionsHtml() {
     const totals = grp_groupTotals();
     const total = totals.grandTotal;
-    const perPerson = grp_members.length ? total / grp_members.length : total;
+    const shares = grp_members.length ? ThurayaClientTax.equalShares(total, grp_members.length) : [total];
+    const shareAmounts = Math.min(...shares) === Math.max(...shares)
+        ? `<span class="amount-pill">${shares[0].toFixed(2)} GHC each</span>`
+        : shares.map((share, index) => `<span class="group-share-amount" style="overflow-wrap:anywhere">${th_refEscape(grp_memberLabel(index))}: ${share.toFixed(2)} GHC</span>`).join('');
     if (grp_selectedPlan.type === 'split') {
         return `<div class="group-billing-panel" id="grp_billingPanel"><h3>Payment options</h3><p>Because your group is split across different times, choose how checkout should be handled.</p>
             <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="subgroup_pays_separately" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Each sub-group pays separately</strong><span>FOH bills each sub-group when they finish.</span></span></label>
@@ -703,7 +711,7 @@ function grp_billingOptionsHtml() {
     }
     return `<div class="group-billing-panel" id="grp_billingPanel"><h3>Payment options</h3><p>Everyone arrives together, so choose how the shared session should be billed.</p>
         <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="lead_pays_all" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>One person pays for all</strong><span>The lead booker pays the full group total.</span><span class="amount-pill">${total.toFixed(2)} GHC</span></span></label>
-        <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="split_equally" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Split equally</strong><span>Total divided by ${grp_members.length} people.</span><span class="amount-pill">${perPerson.toFixed(2)} GHC each</span></span></label>
+        <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="split_equally" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Split equally</strong><span>Total divided by ${grp_members.length} people.</span>${shareAmounts}</span></label>
         <label class="group-billing-card"><input type="radio" name="grp_billingMode" value="each_pays_own" onchange="grp_onBillingChange()"><span class="group-option-body"><strong>Each pays their own</strong><span>Each person pays for their selected services.</span></span></label>
     </div>`;
 }
@@ -717,6 +725,15 @@ window.grp_onBillingChange = function() {
 };
 
 function grp_populateConfirm() {
+    const confirmButton = document.getElementById('grp_btnConfirm');
+    try { grp_groupTotals(); }
+    catch (error) {
+        document.getElementById('grp_conf_members').textContent = 'Pricing unavailable. ' + error.message;
+        document.getElementById('grp_billingPanel')?.remove();
+        if (confirmButton) confirmButton.disabled = true;
+        return;
+    }
+    if (confirmButton) confirmButton.disabled = false;
     const isSplit = grp_selectedPlan.type === 'split';
     const dateLabel = isSplit ? 'Split times' : grp_formatDate(grp_selectedPlan.dateStr || document.getElementById('grp_date')?.value || '');
     const timeLabel = isSplit ? 'See sub-groups below' : grp_formatTime(grp_selectedPlan.timeStr || document.getElementById('grp_time')?.value || '');
@@ -746,7 +763,7 @@ async function grp_preAssignSameTimeIfNeeded() {
     if (!dateStr || !timeStr) return;
     const techs = await grp_ensureTechs();
     const booked = await grp_getBookedSlots(dateStr);
-    const duration = Math.max(60, grp_groupTotals().totalMinsMax || 60);
+    const duration = Math.max(60, grp_groupDuration() || 60);
     const free = grp_getFreeTechsAt(techs, booked, grp_timeToMins(timeStr), duration).slice(0, grp_members.length);
     grp_members.forEach((m, i) => {
         m.assignedTechEmail = free[i]?.email || m.assignedTechEmail || '';
@@ -754,8 +771,7 @@ async function grp_preAssignSameTimeIfNeeded() {
     });
 }
 
-function grp_computeBillingForMember(memberIndex, memberTotal) {
-    const totals = grp_groupTotals();
+function grp_computeBillingForMember(memberIndex, memberTotal, totals = grp_groupTotals()) {
     const mode = grp_billingMode;
     let amountDue = memberTotal.grandTotal;
     let payableBy = 'self';
@@ -763,7 +779,7 @@ function grp_computeBillingForMember(memberIndex, memberTotal) {
         amountDue = memberIndex === 0 ? totals.grandTotal : 0;
         payableBy = memberIndex === 0 ? 'lead_booker' : 'covered_by_lead';
     } else if (mode === 'split_equally') {
-        amountDue = totals.grandTotal / grp_members.length;
+        amountDue = ThurayaClientTax.equalShares(totals.grandTotal, grp_members.length)[memberIndex];
         payableBy = 'split_equal_share';
     } else if (mode === 'each_pays_own') {
         amountDue = memberTotal.grandTotal;
@@ -774,7 +790,7 @@ function grp_computeBillingForMember(memberIndex, memberTotal) {
     } else if (mode === 'subgroup_pays_separately') {
         amountDue = memberTotal.grandTotal;
         payableBy = 'subgroup_or_member_at_completion';
-    }
+    } else throw new Error('Please choose a valid payment responsibility.');
     return { amountDue: Number(amountDue.toFixed(2)), payableBy };
 }
 
@@ -782,38 +798,39 @@ window.grp_confirmBooking = async function() {
     const btn = document.getElementById('grp_btnConfirm');
     grp_billingMode = document.querySelector('input[name="grp_billingMode"]:checked')?.value || '';
     if (!grp_billingMode) { toast('Please choose how payment will be handled.', 'warning'); return; }
-    await grp_preAssignSameTimeIfNeeded();
     const dateFallback = document.getElementById('grp_date')?.value || '';
     const timeFallback = document.getElementById('grp_time')?.value || '';
     if (!dateFallback || !timeFallback) { toast('Missing group date or time.', 'warning'); return; }
     setBtnLoading(btn, true, 'Confirm Group Booking');
     try {
+        const groupTotals = grp_groupTotals();
+        await grp_preAssignSameTimeIfNeeded();
         if (typeof window.av_validateBookingAssignments !== 'function') throw new Error('Availability could not be verified. Please try again.');
         const assignments = grp_members.map(m => ({
             techEmail: m.assignedTechEmail,
             date: grp_selectedPlan.type === 'split' ? (m.splitDateStr || dateFallback) : dateFallback,
             time: grp_selectedPlan.type === 'split' ? (m.splitTimeStr || '') : (grp_selectedPlan.timeStr || timeFallback),
-            duration: grp_memberTotals(m).totalMins
+            duration: grp_memberDuration(m)
         }));
         await window.av_validateBookingAssignments(assignments);
+        if (groupTotals.memberTotals.length !== grp_members.length) throw new Error('Group selection changed. Please review your booking again.');
+        groupTotals.memberTotals.forEach((mt, i) => {
+            const current = grp_memberTotals(grp_members[i]);
+            if (JSON.stringify(current) !== JSON.stringify(mt)) throw new Error('Pricing selection changed. Please review your booking again.');
+            bk_assertTaxPolicy(mt.financialPolicySnapshot);
+        });
         grp_groupId = db.collection('Appointments').doc().id;
         const batch = db.batch();
-        const groupTotals = grp_groupTotals();
         grp_members.forEach((m, i) => {
-            const mt = grp_memberTotals(m);
-            const billing = grp_computeBillingForMember(i, mt);
+            const mt = groupTotals.memberTotals[i];
+            const billing = grp_computeBillingForMember(i, mt, groupTotals);
             const ref = db.collection('Appointments').doc();
             const isSplit = grp_selectedPlan.type === 'split';
             const dateStr = assignments[i].date;
             const timeStr = assignments[i].time;
             if (m.assignedTechEmail !== assignments[i].techEmail || mt.totalMins !== assignments[i].duration) throw new Error('Group selection changed. Please check availability again.');
-            const serviceLineItems = typeof window.thBuildClientServiceSnapshots === 'function'
-                ? window.thBuildClientServiceSnapshots(mt.services, { snapshotSource: isSplit ? 'client_group_booking_split' : 'client_group_booking' })
-                : [];
-            const snapshotTotals = typeof window.thClientServiceSnapshotTotals === 'function'
-                ? window.thClientServiceSnapshotTotals(serviceLineItems)
-                : { serviceSubtotal: Number(mt.basePrice.toFixed(2)), taxTotal: (mt.taxLines || []).reduce((sum, row) => sum + (Number(row.amount) || 0), 0) };
             batch.set(ref, {
+                ...bk_bookingFinancialFields(mt, isSplit ? 'client_group_booking_split' : 'client_group_booking'),
                 groupId: grp_groupId,
                 groupSize: grp_members.length,
                 isGroupBooking: true,
@@ -832,15 +849,9 @@ window.grp_confirmBooking = async function() {
                 assignedTechName: m.assignedTechName || 'To be assigned',
                 bookedService: mt.label,
                 bookedDuration: mt.totalMins,
-                bookedPrice: Number(mt.basePrice.toFixed(2)),
-                grandTotal: billing.amountDue,
                 totalGHC: billing.amountDue,
-                serviceLineItems,
-                serviceSubtotal: snapshotTotals.serviceSubtotal,
-                taxTotal: snapshotTotals.taxTotal,
                 memberServiceTotal: Number(mt.grandTotal.toFixed(2)),
                 payableShare: billing.amountDue,
-                taxBreakdown: JSON.stringify(mt.taxLines.map(l => ({ name:l.name, rate:l.rate, amount:l.amount }))),
                 dateString: dateStr,
                 timeString: timeStr,
                 status: 'Scheduled',
@@ -851,6 +862,7 @@ window.grp_confirmBooking = async function() {
             });
         });
         await batch.commit();
+        grp_confirmedTotals = groupTotals.memberTotals;
         grp_populateSuccess();
         _screenHistory = ['screen-welcome', 'screen-booking-mode'];
         grp_baseGoToStep('screen-group-success');
@@ -871,7 +883,7 @@ function grp_populateSuccess() {
     const membersEl = document.getElementById('grp_suc_members');
     if (membersEl) {
         membersEl.innerHTML = grp_members.map((m, i) => {
-            const mt = grp_memberTotals(m);
+            const mt = grp_confirmedTotals[i];
             const splitLine = isSplit ? `<span style="color:var(--gold-dark);font-size:0.78rem;margin-top:2px;display:block;">🕐 Sub-group ${m.subGroupIndex}: ${grp_formatTime(m.splitTimeStr)} · ${grp_formatDate(m.splitDateStr)}</span>` : '';
             return `<div class="grp-member-card"><div class="grp-member-index">${i+1}</div><div class="grp-member-info"><strong>${grp_memberLabel(i)}</strong><span>${mt.label || '—'} · ${mt.totalMins} mins</span><span style="color:var(--accent);font-size:0.78rem;margin-top:2px;display:block;">👩‍🔧 ${m.assignedTechName || 'To be assigned'}</span>${splitLine}</div></div>`;
         }).join('');
@@ -886,6 +898,7 @@ window.grp_bookAgain = function() {
     grp_selectedPlan = { type: 'same', timeStr: '', dateStr: '', subgroups: [] };
     grp_billingMode = '';
     grp_bookedCacheByDate = {};
+    grp_confirmedTotals = [];
     const n = document.getElementById('grp_sizeNumber');
     if (n) n.textContent = '2';
     _screenHistory = ['screen-welcome'];
@@ -899,7 +912,7 @@ window.goToStep = function(id) {
         grp_preAssignSameTimeIfNeeded().then(() => {
             grp_populateConfirm();
             grp_baseGoToStep(id);
-        });
+        }).catch(error => { toast(error.message, 'error'); });
         return;
     }
     grp_baseGoToStep(id);
@@ -944,7 +957,7 @@ window.grp_generateSlots = async function() {
 
         const techs = (typeof bk_techs !== 'undefined' && Array.isArray(bk_techs)) ? bk_techs : [];
         const booked = await grp_getBookedSlots(dateStr);
-        const group = grp_groupTotals();
+        const group = { totalMinsMax: grp_groupDuration() };
 
         const duration = Math.max(60, group.totalMinsMax || 60);
         const needed = Math.max(2, grp_members.length || grp_groupSize || 2);
@@ -1049,7 +1062,7 @@ function grp_getManualLocks(exceptIndex = -1) {
 }
 
 function grp_durationForSubgroup(sg) {
-    return Math.max(60, ...(sg.memberIndexes || []).map(i => grp_memberTotals(grp_members[i]).totalMins || 60));
+    return Math.max(60, ...(sg.memberIndexes || []).map(i => grp_memberDuration(grp_members[i]) || 60));
 }
 
 function grp_freeTechsRespectingManualLocks(techs, booked, dateStr, startMins, duration, exceptIndex = -1) {

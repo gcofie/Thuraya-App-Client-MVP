@@ -1,0 +1,74 @@
+C1.1 CLIENT TAX/PAYABLE PATH INVENTORY (before repair)
+
+Authority: isolated Client branch codex/rc2-client-shared-tax-parity,
+parent 3f4cd123b8078a42f33d699f80994d5cd304d4b2.
+No hosted reads, sessions, provider calls, writes, or deployments are authorized.
+
+Active scripts: index.html loads firebase-config.js, schedule-policy.js, app.js,
+group-booking.js, availability.js, auth gates, and client-engagement.js.
+app_client_fixed.js is not referenced by index.html and is not an active path.
+
+Tax configuration: app.js loadTaxConfig (baseline line 1137) subscribes to
+Tax_Settings/current_taxes. It reads rates and only inclusive === true.
+The retained read-only project evidence (rc2-client-tax-audit/current-authority.json,
+2026-10-09) has pricingMode/taxPricingMode inclusive, no inclusive boolean, rates
+VAT 15, NHIL 2.5, Getfund 2.5. It also contains compatibility aliases vatMode,
+isVatInclusive, vatInclusive, and update metadata. No dated rule-selection table
+exists in this Client path. effectiveAt/effectiveDate and policyVersion/version
+are metadata in the established Staff financial policy snapshot, not a new rule
+selection mechanism.
+
+Menu selection: app.js renderMenuForDept and service-selection handlers retain
+the listed unit price, quantity, identity, and duration. Cards do not add tax.
+updateBreakdown currently hides the old sticky financial total; it controls CTA
+availability only. Client payment-method UI is a placeholder: no live payment
+adapter is executed. Booking payable/amountDue is payment preparation, not paid
+or externally verified evidence.
+
+Individual summary: populateConfirmScreen -> applyTaxes(sum of selected prices)
+-> promotion deduction -> conf_total. applyTaxes defaults to exclusive and uses
+unrounded binary floating-point component values. Thus 225 * (1 + .20) = 270.
+Individual commit: bk_confirmBooking repeats calculation, validates scheduling,
+then persists Appointments via batch. Service snapshot builder separately reads
+menu price and repeats taxes; baseline lineTotal incorrectly contains net.
+Persistence includes bookedPrice, grandTotal, amountDue, serviceLineItems,
+serviceSubtotal, taxTotal, memberServiceTotal, payableShare, JSON taxBreakdown,
+promo fields, originalGrandTotal, payer details and lifecycle metadata. It lacks
+an explicit booking pricing mode and tax-policy snapshot.
+Success: populateSuccessScreen renders persisted grandTotal. My Bookings uses
+grandTotal || bookedPrice, which loses an authoritative zero. Rebooking selects
+current menu services; it does not authorize reconstruction of old evidence.
+
+Group: grp_memberTotals -> applyTaxes; grp_groupTotals sums member gross;
+grp_billingOptionsHtml/confirmation render it; grp_computeBillingForMember
+assigns payer balances. split_equally independently rounds every share.
+grp_confirmBooking revalidates scheduling and persists one Appointment/member.
+Baseline grandTotal/totalGHC contain payer share while memberServiceTotal contains
+service gross. The shared contract must preserve service gross independently of
+amountDue/payableShare, including covered members with a real zero balance.
+Group success reads selected member state; no payment executes.
+
+Repair contract:
+- Valid explicit pricingMode and taxPricingMode take precedence over legacy
+  inclusive. Conflicting canonical fields, malformed explicit fields, missing
+  authority, invalid components, and read failure block financial commitment.
+- inclusive boolean remains a compatibility fallback only when canonical fields
+  are absent. No hardcoded inclusive policy. Empty explicitly configured rates
+  is valid; missing rates is not implicitly zero tax.
+- HALF_UP per active component in integer minor units; inclusive net is the
+  balancing residual. Component cents are allocated deterministically across
+  lines, preserving aggregate tax and line gross.
+- Summary and new booking payload use the same selection calculator. Persist
+  explicit mode, component evidence, policy snapshot, gross, net, final and payer
+  amounts. Promotion remains a separate gross adjustment, not historical retaxing.
+- Preserve all scheduling/RBAC/auth/provider behavior. Do not mutate historical
+  bookings or modify app_client_fixed.js, Firebase configuration, Staff or Store.
+- Group payer allocation uses integer cents; service gross is not payer balance.
+- A changed/unavailable configuration during scheduling validation blocks commit.
+- Menu/selection/promotion drift during validation also blocks stale commitment.
+  Group duration-only scheduling reads are independent of tax authority; this
+  preserves slot selection while financial commitment remains fail-closed.
+
+Closed Staff reference: 72b897cc24d5515758a81322f2bcc81b0234f59f.
+GHS225 inclusive: gross/payable 225, net 187.49, VAT 28.13, NHIL 4.69,
+GETFund 4.69, levy 9.38, total tax 37.51. No Staff edits or recertification.

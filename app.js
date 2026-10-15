@@ -31,7 +31,8 @@ let bk_clientProfile  = null;
 let bk_isGuest        = false;
 let bk_menuServices   = [];
 let bk_liveTaxes      = [];
-let bk_taxInclusive   = false;
+let bk_taxInclusive   = null;
+let bk_taxPolicy      = null;
 let bk_techs          = [];
 let bk_selectedDept   = 'Hand';
 let bk_selectedServices = [];
@@ -832,16 +833,68 @@ function setBtnLoading(btn, loading, originalText) {
 // ── Tax engine ────────────────────────────────────────────
 
 function applyTaxes(listedTotal) {
-    if (!bk_liveTaxes.length || listedTotal === 0)
-        return { basePrice: listedTotal, grandTotal: listedTotal, taxLines: [] };
-    const combinedRate = bk_liveTaxes.reduce((s, t) => s + t.rate, 0) / 100;
-    const basePrice  = bk_taxInclusive ? listedTotal / (1 + combinedRate) : listedTotal;
-    const grandTotal = bk_taxInclusive ? listedTotal : listedTotal * (1 + combinedRate);
-    const taxLines   = bk_liveTaxes.map(t => ({
-        name: t.name, rate: t.rate,
-        amount: basePrice * (t.rate / 100)
+    return ThurayaClientTax.calculate([{ amount: listedTotal }], bk_requireTaxPolicy());
+}
+
+function bk_requireTaxPolicy() {
+    if (!bk_taxPolicy) throw new Error('Pricing is unavailable. Please try again when tax settings are available.');
+    return bk_taxPolicy;
+}
+
+function bk_assertTaxPolicy(policy) {
+    if (JSON.stringify(bk_requireTaxPolicy()) !== JSON.stringify(policy)) {
+        throw new Error('Pricing settings changed. Please review your booking again.');
+    }
+}
+
+function bk_assertCurrentQuote(quote, services, promo = null) {
+    bk_assertTaxPolicy(quote.financialPolicySnapshot);
+    if (JSON.stringify(bk_priceSelection(services, promo)) !== JSON.stringify(quote)) {
+        throw new Error('Pricing selection changed. Please review your booking again.');
+    }
+}
+
+function bk_selectedUnitPrice(selected) {
+    const menu = bk_findMenuItemForSnapshot(selected);
+    const price = ThurayaClientTax.money(bk_snapshotFirstPresent(menu, ['price', 'priceGHC', 'unitPrice', 'amount'], selected.price));
+    if (selected.price !== undefined && ThurayaClientTax.money(selected.price) !== price) {
+        throw new Error('Service price changed. Please select the service again.');
+    }
+    return price;
+}
+
+function bk_priceSelection(services, promo = null) {
+    const policy = bk_requireTaxPolicy();
+    const lines = services.map((item, index) => {
+        const quantity = Number(item.qty ?? item.quantity ?? 1);
+        if (!Number.isSafeInteger(quantity) || quantity < 1) throw new Error('Invalid service quantity.');
+        return { amount: bk_selectedUnitPrice(item) * quantity, id: item.id || item.serviceId || String(index) };
+    });
+    const quote = ThurayaClientTax.calculate(lines, policy);
+    quote.serviceLineItems = services.map((item, index) => bk_buildServiceSnapshot(item, {
+        financialLine: quote.lines[index], pricingMode: quote.pricingMode
     }));
-    return { basePrice, grandTotal, taxLines };
+    let discount = 0;
+    if (promo) {
+        discount = Math.min(quote.grandTotal, promo.type === 'percent'
+            ? ThurayaClientTax.percentage(quote.grandTotal, promo.value) : ThurayaClientTax.money(promo.value));
+    }
+    return { ...quote, discountAmount: discount,
+        finalTotal: (ThurayaClientTax.minor(quote.grandTotal) - ThurayaClientTax.minor(discount)) / 100 };
+}
+
+function bk_bookingFinancialFields(quote, snapshotSource) {
+    return {
+        pricingMode: quote.pricingMode, taxPricingMode: quote.pricingMode,
+        financialPolicySnapshot: quote.financialPolicySnapshot,
+        grossServiceValue: quote.grandTotal, grandTotal: quote.grandTotal,
+        finalTotal: quote.finalTotal, finalServiceGross: quote.finalTotal,
+        bookedPrice: quote.basePrice, serviceSubtotal: quote.basePrice, taxableSubtotal: quote.basePrice,
+        taxTotal: quote.taxTotal, taxBreakdown: JSON.stringify(quote.taxLines),
+        serviceLineItems: quote.serviceLineItems.map(row => ({ ...row, snapshotSource })),
+        amountDue: quote.finalTotal, totalGHC: quote.finalTotal,
+        memberServiceTotal: quote.finalTotal, payableShare: quote.finalTotal
+    };
 }
 
 function bk_snapshotFirstPresent(source, keys, fallback = '') {
@@ -882,19 +935,13 @@ function bk_findMenuItemForSnapshot(selected = {}) {
 function bk_buildServiceSnapshot(selected = {}, options = {}) {
     const menuItem = bk_findMenuItemForSnapshot(selected);
     const quantity = Math.max(1, parseInt(selected.qty ?? selected.quantity ?? 1, 10) || 1);
-    const unitPrice = bk_snapshotNumber(
-        bk_snapshotFirstPresent(menuItem, ['price', 'priceGHC', 'unitPrice', 'amount'], selected.price),
-        bk_snapshotNumber(selected.price, 0)
-    );
+    const unitPrice = bk_selectedUnitPrice(selected);
     const duration = parseInt(bk_snapshotNumber(
         bk_snapshotFirstPresent(menuItem, ['duration', 'durationMins', 'minutes'], selected.dur),
         bk_snapshotNumber(selected.dur, 0)
     ), 10) || 0;
     const lineListedSubtotal = unitPrice * quantity;
-    const taxResult = typeof applyTaxes === 'function'
-        ? applyTaxes(lineListedSubtotal)
-        : { basePrice: lineListedSubtotal, taxLines: [] };
-    const lineTax = (taxResult.taxLines || []).reduce((sum, row) => sum + bk_snapshotNumber(row?.amount, 0), 0);
+    const financialLine = options.financialLine || applyTaxes(lineListedSubtotal).lines[0];
     const name = String(
         bk_snapshotFirstPresent(menuItem, ['serviceName', 'name', 'displayName', 'Service Name'], selected.name || 'Service')
     ).trim() || 'Service';
@@ -909,19 +956,19 @@ function bk_buildServiceSnapshot(selected = {}, options = {}) {
         durationAtBooking: duration,
         menuUpdatedAtAtBooking: bk_snapshotTimestamp(bk_snapshotFirstPresent(menuItem, ['updatedAt', 'Last_Updated', 'lastUpdated', 'menuUpdatedAt'], '')),
         menuVersionAtBooking: String(bk_snapshotFirstPresent(menuItem, ['menuVersion', 'version', 'schemaVersion'], '')),
-        priceMode: bk_taxInclusive ? 'inclusive' : 'exclusive',
-        lineSubtotal: Number((taxResult.basePrice || lineListedSubtotal).toFixed(2)),
-        taxAmount: Number(lineTax.toFixed(2)),
-        lineTotal: Number((taxResult.basePrice || lineListedSubtotal).toFixed(2)),
+        priceMode: options.pricingMode || bk_requireTaxPolicy().pricingMode,
+        lineSubtotal: financialLine.net,
+        taxAmount: financialLine.tax,
+        lineTotal: financialLine.gross,
+        taxBreakdown: financialLine.taxLines,
         snapshotSource: String(options.snapshotSource || selected.snapshotSource || 'client_app')
     };
 }
 
 window.thBuildClientServiceSnapshot = bk_buildServiceSnapshot;
 window.thBuildClientServiceSnapshots = function thBuildClientServiceSnapshots(selectedServices = [], options = {}) {
-    return (Array.isArray(selectedServices) ? selectedServices : [])
-        .filter(item => item && (item.id || item.name || item.serviceName))
-        .map(item => bk_buildServiceSnapshot(item, options));
+    return bk_priceSelection(selectedServices).serviceLineItems.map(row => ({ ...row,
+        snapshotSource: options.snapshotSource || row.snapshotSource }));
 };
 
 window.thClientServiceSnapshotTotals = function thClientServiceSnapshotTotals(serviceLineItems = []) {
@@ -1135,11 +1182,20 @@ async function saveProfile() {
 // ── Load Tax Config ───────────────────────────────────────
 
 function loadTaxConfig() {
-    db.collection('Tax_Settings').doc('current_taxes').onSnapshot(doc => {
-        const data       = doc.exists ? doc.data() : {};
-        bk_liveTaxes     = data.rates     || [];
-        bk_taxInclusive  = data.inclusive === true;
-    });
+    function accept(data) {
+        bk_taxPolicy = null; bk_liveTaxes = []; bk_taxInclusive = null;
+        try {
+            bk_taxPolicy = ThurayaClientTax.read(data);
+            bk_liveTaxes = bk_taxPolicy.rates;
+            bk_taxInclusive = bk_taxPolicy.pricingMode === 'inclusive';
+        } catch (e) { /* Financial entry points render unavailable and block commit. */ }
+        if (document.getElementById('screen-confirm')?.classList.contains('active')) populateConfirmScreen();
+        if (document.getElementById('screen-group-confirm')?.classList.contains('active') && typeof grp_populateConfirm === 'function') grp_populateConfirm();
+    }
+    try {
+        return db.collection('Tax_Settings').doc('current_taxes').onSnapshot(
+            doc => accept(doc.exists ? doc.data() : null), () => accept(null));
+    } catch (error) { accept(null); return null; }
 }
 
 // ── Load Menu ────────────────────────────────────────────
@@ -3322,8 +3378,17 @@ function populateConfirmScreen() {
     const date      = document.getElementById('bk_date').value;
     const time      = document.getElementById('bk_time').value;
     const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
-    const subtotal  = bk_selectedServices.reduce((s, x) => s + (x.price * (x.qty || 1)), 0);
-    const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
+    let quote;
+    const confirmButton = document.getElementById('btnConfirmBooking');
+    try { quote = bk_priceSelection(bk_selectedServices, bk_activePromo); }
+    catch (error) {
+        document.getElementById('conf_total').textContent = 'Unavailable';
+        document.getElementById('conf_priceBreakdown').textContent = error.message;
+        if (confirmButton) confirmButton.disabled = true;
+        return;
+    }
+    if (confirmButton) confirmButton.disabled = false;
+    const { basePrice, grandTotal, taxLines, finalTotal, discountAmount } = quote;
 
     let dateFormatted = date;
     try { dateFormatted = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); } catch(e) {}
@@ -3345,19 +3410,15 @@ function populateConfirmScreen() {
     if (taxLines.length) {
         priceHtml += `<div class="confirm-row"><span class="confirm-label">Subtotal (ex. tax)</span><span class="confirm-value">${basePrice.toFixed(2)} GHC</span></div>`;
         taxLines.forEach(l => {
-            priceHtml += `<div class="confirm-row"><span class="confirm-label">+ ${l.name} (${l.rate}%)</span><span class="confirm-value">${l.amount.toFixed(2)} GHC</span></div>`;
+            priceHtml += `<div class="confirm-row"><span class="confirm-label">${quote.pricingMode === 'inclusive' ? 'Included:' : '+'} ${th_refEscape(l.name)} (${l.rate}%)</span><span class="confirm-value">${l.amount.toFixed(2)} GHC</span></div>`;
         });
     }
 
-    let finalTotal = grandTotal;
     if (bk_activePromo) {
-        const disc = bk_activePromo.type === 'percent'
-            ? grandTotal * (bk_activePromo.value / 100)
-            : Math.min(bk_activePromo.value, grandTotal);
-        finalTotal = Math.max(0, grandTotal - disc);
+        const disc = discountAmount;
         priceHtml += `<div class="confirm-row"><span class="confirm-label" style="color:var(--success);">🎟 ${bk_activePromo.code}</span><span class="confirm-value" style="color:var(--success);">−${disc.toFixed(2)} GHC</span></div>`;
-        document.getElementById('bk_discountAmount').value = disc.toFixed(2);
     }
+    document.getElementById('bk_discountAmount').value = discountAmount.toFixed(2);
 
     document.getElementById('conf_priceBreakdown').innerHTML = priceHtml;
     document.getElementById('conf_total').textContent = finalTotal.toFixed(2) + ' GHC';
@@ -3613,16 +3674,10 @@ const bookForDetails = bk_validateBookForDetails();
 
     const services  = bk_selectedServices.map(s => `${s.name}${s.qty > 1 ? ' (x'+s.qty+')' : ''}`).join(', ');
     const totalMins = bk_selectedServices.reduce((s, x) => s + (x.dur * (x.qty || 1)), 0);
-    const subtotal  = bk_selectedServices.reduce((s, x) => s + (x.price * (x.qty || 1)), 0);
-    const { basePrice, grandTotal, taxLines } = applyTaxes(subtotal);
-    const discountAmount = parseFloat(document.getElementById('bk_discountAmount').value || 0);
-    const finalTotal = Math.max(0, grandTotal - discountAmount);
-    const serviceLineItems = typeof window.thBuildClientServiceSnapshots === 'function'
-        ? window.thBuildClientServiceSnapshots(bk_selectedServices, { snapshotSource: 'client_booking' })
-        : [];
-    const snapshotTotals = typeof window.thClientServiceSnapshotTotals === 'function'
-        ? window.thClientServiceSnapshotTotals(serviceLineItems)
-        : { serviceSubtotal: basePrice, taxTotal: taxLines.reduce((sum, row) => sum + (Number(row.amount) || 0), 0) };
+    let quote;
+    try { quote = bk_priceSelection(bk_selectedServices, bk_activePromo); }
+    catch (error) { toast(error.message, 'error'); return; }
+    const { grandTotal, discountAmount } = quote;
 
     setBtnLoading(btn, true, 'Confirm Booking');
     try {
@@ -3634,6 +3689,7 @@ const bookForDetails = bk_validateBookForDetails();
             return;
         }
 
+        bk_assertCurrentQuote(quote, bk_selectedServices, bk_activePromo);
         const batch = db.batch();
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
@@ -3644,15 +3700,7 @@ const bookForDetails = bk_validateBookForDetails();
             assignedTechName:    techName,
             bookedService:       services,
             bookedDuration:      totalMins,
-            bookedPrice:         basePrice,
-            grandTotal:          finalTotal,
-            amountDue:           finalTotal,
-            serviceLineItems,
-            serviceSubtotal:     snapshotTotals.serviceSubtotal,
-            taxTotal:            snapshotTotals.taxTotal,
-            memberServiceTotal:  finalTotal,
-            payableShare:        finalTotal,
-            taxBreakdown:        JSON.stringify(taxLines.map(l => ({ name:l.name, rate:l.rate, amount:l.amount }))),
+            ...bk_bookingFinancialFields(quote, 'client_booking'),
             promoCode:           document.getElementById('bk_promoCodeVal').value || '',
             promoId:             document.getElementById('bk_promoId').value      || '',
             discountAmount,
@@ -3722,7 +3770,7 @@ function populateSuccessScreen(appt) {
         timeFormatted = `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
     } catch(e) {}
     document.getElementById('suc_datetime').textContent = `${dateFormatted} at ${timeFormatted}`;
-    document.getElementById('suc_total').textContent    = parseFloat(appt.grandTotal).toFixed(2) + ' GHC';
+    document.getElementById('suc_total').textContent    = Number(appt.finalTotal ?? appt.grandTotal).toFixed(2) + ' GHC';
 }
 
 // ── Add to Calendar ───────────────────────────────────────
@@ -3836,7 +3884,7 @@ window.bk_viewMyBookings = async function() {
             const isGroup = a.isGroupBooking ? '<span class="th-booking-mini-pill">Group</span>' : '';
             const tech = a.assignedTechName || 'To be assigned';
             const service = a.bookedService || 'THURAYA service';
-            const total = money(a.grandTotal || a.bookedPrice || 0);
+            const total = money(a.finalTotal ?? a.grandTotal ?? a.bookedPrice ?? 0);
 
             return `
                 <article class="th-booking-card ${featured ? 'featured' : ''}">

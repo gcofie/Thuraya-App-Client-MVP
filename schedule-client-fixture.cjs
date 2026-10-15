@@ -89,7 +89,7 @@ function confirmSetup() {
     globalThis.bk_currentUser = null;
     globalThis.bk_isPastOrTooSoonSlot = () => false;
     globalThis.bk_validateBookForDetails = () => ({ bookingFor: 'myself', paymentResponsibility: 'booker', paymentStatus: 'unpaid' });
-    globalThis.applyTaxes = value => ({ basePrice: value, grandTotal: value, taxLines: [] });
+    globalThis.bk_activePromo = null;
     globalThis.setBtnLoading = () => {};
     globalThis.bk_hasSlotConflict = async () => false;
     globalThis.firebase = { firestore: { FieldValue: { serverTimestamp: () => 'SYNTHETIC' } } };
@@ -103,7 +103,9 @@ function withConfirmation(context, date = '2026-09-28') {
     const values = { btnConfirmBooking: '', bk_techEmail: context.fixture.email, bk_techName: 'Matilda.HT', bk_date: date, bk_time: '15:00', bk_discountAmount: '0', bk_promoCodeVal: '', bk_promoId: '' };
     for (const [id, value] of Object.entries(values)) context.elements[id] = { value };
     context.document.querySelector = () => null;
-    vm.runInContext('(' + confirmSetup.toString() + ')();\n' + confirm, context);
+    vm.runInContext('(' + confirmSetup.toString() + ')();\n' + read('tax-policy.js') + '\n' +
+        "globalThis.bk_taxPolicy = ThurayaClientTax.read({ inclusive: false, rates: [] });\n" +
+        section(app, 'function applyTaxes(', "document.addEventListener('DOMContentLoaded'") + '\n' + confirm, context);
     return context;
 }
 function withGroup(context, date = '2026-09-27') {
@@ -113,14 +115,14 @@ function withGroup(context, date = '2026-09-27') {
     context.elements.grp_time = { value: '15:00' };
     context.document.querySelector = () => ({ value: 'lead_pays_all' });
     Object.assign(context, {
-        grp_members: [{ name: 'Synthetic lead', assignedTechEmail: context.fixture.email }, { name: 'Synthetic member', assignedTechEmail: context.fixture.other }],
+        grp_members: [{ name: 'Synthetic lead', assignedTechEmail: context.fixture.email, selectedServices: [{ id: 'service-a', name: 'Synthetic service', price: 100, dur: 60 }] },
+            { name: 'Synthetic member', assignedTechEmail: context.fixture.other, selectedServices: [{ id: 'service-a', name: 'Synthetic service', price: 100, dur: 60 }] }],
         grp_selectedPlan: { type: 'same', timeStr: '15:00' },
         grp_preAssignSameTimeIfNeeded: async () => {},
-        grp_memberTotals: () => ({ totalMins: 60, basePrice: 100, grandTotal: 100, taxLines: [], services: [], label: 'Synthetic service' }),
-        grp_groupTotals: () => ({ grandTotal: 200 }), grp_computeBillingForMember: () => ({ amountDue: 100, payableBy: 'self' }),
         grp_populateSuccess() {}, grp_baseGoToStep() {}
     });
-    vm.runInContext(section(read('group-booking.js'), 'window.grp_confirmBooking = async function()', 'function grp_populateSuccess()'), context);
+    vm.runInContext(section(read('group-booking.js'), 'function grp_memberTotals(', 'async function grp_ensureTechs(') + '\n' +
+        section(read('group-booking.js'), 'function grp_computeBillingForMember(', 'function grp_populateSuccess()'), context);
     return context;
 }
 module.exports = { read, section, source, harness, withConfirmation, withGroup, confirm, confirmSetup };
