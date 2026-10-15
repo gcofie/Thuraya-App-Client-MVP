@@ -1,0 +1,18 @@
+ATTENDANCE V2 / CLIENT LOCAL READER FOUNDATION
+Frozen financial reference: 5c0006db02a03d2b6efacf277ff5e36ea95a9281.
+
+schedule-policy.js is byte-identical to the Staff canonical policy.
+availability.js reads explicit legacy plans or immutable V2 weekly versions from
+Staff_Schedules/{email}/versions. Root cutover/index and newest effective whole
+week are resolved before weekday. OFF, malformed, expired or unreadable plans
+fail closed without reviving an older schedule. Business dates/times are UTC.
+Individual/Group confirmation revalidates schedule, identity and conflicts.
+Group split/alternative planners also consume effective plans. Actual lunch is
+a date-scoped overlay only, never a planned schedule or visibility mutation.
+
+No tax-policy, financial snapshot, payer, receipt, payment or persisted booking
+shape changes. Protected-source tests compare the frozen candidate outside exact
+reviewed schedule functions/overlay; existing financial suites remain mandatory.
+This repository has no schedule publication writer. Admin/Manager publication
+and local rules/emulator tests reside in the Staff foundation worktree.
+No hosted activity, migration, deployment, account change or provider call.

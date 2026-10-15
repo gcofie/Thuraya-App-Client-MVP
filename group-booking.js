@@ -20,8 +20,7 @@ let grp_bookedCacheByDate = {};
 let grp_confirmedTotals = [];
 
 function grp_todayString() {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    return window.ThurayaSchedulePolicy.businessDate();
 }
 
 function grp_timeToMins(str) {
@@ -125,8 +124,13 @@ async function grp_getBookedSlots(dateStr) {
                 const dur = parseInt(d.bookedDuration || 60, 10) || 60;
                 booked.push({ techEmail: email, startMins: start, endMins: start + dur });
             });
-        } catch(inner) { console.error('Group availability load failed:', inner); }
+        } catch(inner) { throw new Error('Group availability could not be verified.'); }
     }
+    // Split/alternative planners share the same effective plan as final confirmation.
+    const techs = await grp_ensureTechs();
+    booked.scheduleMap = Object.fromEntries(await Promise.all(techs.map(async tech =>
+        [tech.email, await window.ThurayaSchedulePolicy.loadSchedule(db, tech.email, dateStr)])));
+    booked.businessDate = dateStr;
     grp_bookedCacheByDate[dateStr] = booked;
     return booked;
 }
@@ -137,7 +141,8 @@ function grp_getFreeTechsAt(techs, bookedSlots, startMins, durationMins) {
     bookedSlots.forEach(b => {
         if (b.startMins < endMins && b.endMins > startMins) busy.add(b.techEmail);
     });
-    return techs.filter(t => t.email && !busy.has(t.email));
+    return techs.filter(t => t.email && !busy.has(t.email) &&
+        window.ThurayaSchedulePolicy.check(bookedSlots.scheduleMap?.[t.email], bookedSlots.businessDate, grp_minsToTime(startMins), durationMins).ok);
 }
 
 function grp_candidateSlots() {
@@ -150,9 +155,9 @@ function grp_candidateSlots() {
 }
 
 function grp_isPastSlot(dateStr, startMins) {
+    if (dateStr < grp_todayString()) return true;
     if (dateStr !== grp_todayString()) return false;
-    const n = new Date();
-    return startMins <= (n.getHours() * 60 + n.getMinutes());
+    return startMins <= window.ThurayaSchedulePolicy.businessMinutes();
 }
 
 function grp_generatePartitions(total, maxPart) {
@@ -220,12 +225,12 @@ async function grp_buildPlanForSplit(dateStr, split) {
 }
 
 async function grp_findEarliestFullGroup(startDateStr) {
-    const base = new Date(startDateStr + 'T12:00:00');
+    const base = new Date(startDateStr + 'T12:00:00Z');
     const allIndexes = grp_members.map((_, i) => i);
     for (let d = 0; d < 21; d++) {
         const x = new Date(base);
-        x.setDate(x.getDate() + d);
-        const dateStr = `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+        x.setUTCDate(x.getUTCDate() + d);
+        const dateStr = window.ThurayaSchedulePolicy.businessDate(x);
         const slot = await grp_findSlotForMembers(dateStr, allIndexes, []);
         if (slot) return slot;
     }

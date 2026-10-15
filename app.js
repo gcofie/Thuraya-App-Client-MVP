@@ -3321,13 +3321,11 @@ function timeToMins(str) {
 const BK_SAME_DAY_BOOKING_LEAD_MINS = 10;
 
 function bk_dynamicTodayStr() {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    return window.ThurayaSchedulePolicy.businessDate();
 }
 
 function bk_currentMins() {
-    const n = new Date();
-    return n.getHours() * 60 + n.getMinutes();
+    return window.ThurayaSchedulePolicy.businessMinutes();
 }
 
 function bk_isPastOrTooSoonSlot(date, time) {
@@ -4880,10 +4878,7 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     window.__thurayaClientHF19LunchAvailability = true;
 
     function hf19_norm(value){ return String(value || '').trim().toLowerCase(); }
-    function hf19_today(){
-        const n = new Date();
-        return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-    }
+    function hf19_today(){ return window.ThurayaSchedulePolicy.businessDate(); }
     function hf19_toDate(v){
         if (!v) return null;
         if (v.toDate) return v.toDate();
@@ -4891,7 +4886,7 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
         const d = new Date(v);
         return isNaN(d.getTime()) ? null : d;
     }
-    function hf19_minsFromDate(d){ return d ? (d.getHours() * 60 + d.getMinutes()) : null; }
+    function hf19_minsFromDate(d){ return d ? window.ThurayaSchedulePolicy.businessMinutes(d) : null; }
     function hf19_keysForAttendance(a){
         const keys = new Set();
         [a.email, a.staffEmail, a.userEmail, a.name, a.staffName, a.displayName].forEach(v => {
@@ -4928,7 +4923,7 @@ window.thurayaEngagementAction = window.thurayaEngagementAction || function(acti
     }
 
     async function hf19_addAttendanceBlocks(date, busyByKey){
-        if (!date || !busyByKey) return busyByKey;
+        if (!date || !busyByKey || date !== hf19_today()) return busyByKey;
         const closeTime = 20 * 60;
         const openTime = 8 * 60;
 

@@ -22,13 +22,11 @@ function av_toMins(str) {
 const AV_SAME_DAY_SLOT_LEAD_MINS = 10;
 
 function av_todayStr() {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    return window.ThurayaSchedulePolicy.businessDate();
 }
 
 function av_currentMins() {
-    const n = new Date();
-    return n.getHours() * 60 + n.getMinutes();
+    return window.ThurayaSchedulePolicy.businessMinutes();
 }
 
 // ── Helper: get day-of-week abbreviation from YYYY-MM-DD ─────
@@ -127,10 +125,7 @@ async function av_buildScheduleMapForDate(schedSnap, techEmails, dateStr) {
     schedSnap.forEach(doc => { current[doc.id] = doc.data() || {}; });
 
     const entries = await Promise.all((techEmails || []).map(async email => {
-        const records = [];
-        if (current[email]) records.push(...av_scheduleRecordsFromData(current[email]));
-        records.push(...await av_scheduleHistoryRecords(email));
-        return [email, av_resolveScheduleFromRecords(records, dateStr)];
+        return [email, await window.ThurayaSchedulePolicy.loadSchedule(db, email, dateStr, current[email] || null)];
     }));
 
     return entries.reduce((map, [email, schedule]) => {

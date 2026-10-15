@@ -2,15 +2,18 @@
 const test = require('node:test'), assert = require('node:assert/strict'), cp = require('node:child_process'), vm = require('node:vm');
 const { read, section, harness, withConfirmation, withGroup } = require('./schedule-client-fixture.cjs');
 const baseline = '3f4cd123b8078a42f33d699f80994d5cd304d4b2';
+const { stripScheduling } = require('./attendance-v2-protected.cjs');
 const prior = file => cp.execFileSync('git', ['show', baseline + ':' + file], { cwd: __dirname, encoding: 'utf8', maxBuffer: 16e6 }).replace(/\r\n/g, '\n');
 test('Client source outside reviewed pricing, summary and booking financial paths is unchanged', () => {
     function strip(text) {
+        text = stripScheduling(text);
         text = text.replace('let bk_taxInclusive   = null;\nlet bk_taxPolicy      = null;', 'let bk_taxInclusive   = false;');
         for (const [start, end] of [
             ['function applyTaxes(', "document.addEventListener('DOMContentLoaded'"],
             ['function loadTaxConfig()', 'const CATEGORY_ALIASES'],
             ['function populateConfirmScreen()', '// ── Promo code'],
-            ['window.bk_confirmBooking = async function()', 'function populateSuccessScreen(']
+            ['window.bk_confirmBooking = async function()', 'function populateSuccessScreen('],
+            ['(function thurayaClientHF19LunchAvailability()', '// END HF19 Lunch Break Availability Alignment']
         ]) text = text.replace(section(text, start, end), '<reviewed-financial>\n');
         return text.replace('Number(appt.finalTotal ?? appt.grandTotal)', 'parseFloat(appt.grandTotal)')
             .replace('a.finalTotal ?? a.grandTotal ?? a.bookedPrice ?? 0', 'a.grandTotal || a.bookedPrice || 0');
@@ -19,6 +22,7 @@ test('Client source outside reviewed pricing, summary and booking financial path
 });
 test('group source outside reviewed financial functions and committed-summary retention is unchanged', () => {
     function strip(text) {
+        text = stripScheduling(text);
         text = text.replace('let grp_confirmedTotals = [];\n', '').replace('    grp_confirmedTotals = [];\n', '');
         text = text.replaceAll('grp_memberDuration(grp_members[i])', 'grp_memberTotals(grp_members[i]).totalMins')
             .replaceAll('grp_groupDuration() || 60', 'grp_groupTotals().totalMinsMax || 60')
@@ -34,10 +38,10 @@ test('group source outside reviewed financial functions and committed-summary re
     }
     assert.equal(strip(read('group-booking.js')), strip(prior('group-booking.js')));
 });
-test('Client configuration, auth, scheduling, engagement and inactive alternate script are untouched', () => {
+test('Client configuration, auth, engagement and inactive alternate script are untouched', () => {
     const files = cp.execFileSync('git', ['ls-tree', '-r', '--name-only', baseline], { cwd: __dirname, encoding: 'utf8' })
-        .trim().split('\n').filter(file => file.endsWith('.js') && !['app.js', 'group-booking.js'].includes(file));
-    assert.ok(files.includes('firebase-config.js')); assert.ok(files.includes('availability.js')); assert.ok(files.includes('app_client_fixed.js'));
+        .trim().split('\n').filter(file => file.endsWith('.js') && !['app.js', 'group-booking.js', 'availability.js', 'schedule-policy.js'].includes(file));
+    assert.ok(files.includes('firebase-config.js')); assert.ok(files.includes('app_client_fixed.js'));
     for (const file of files) assert.equal(read(file), prior(file), file);
 });
 test('Client HTML adds only tax policy prerequisite with existing script order retained', () => {
