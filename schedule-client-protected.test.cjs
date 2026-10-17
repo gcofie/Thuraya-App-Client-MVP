@@ -2,11 +2,11 @@
 const test = require('node:test'), assert = require('node:assert/strict'), cp = require('node:child_process'), vm = require('node:vm');
 const { read, section, harness, withConfirmation, withGroup } = require('./schedule-client-fixture.cjs');
 const baseline = '3f4cd123b8078a42f33d699f80994d5cd304d4b2';
-const { stripScheduling } = require('./attendance-v2-protected.cjs');
+const { stripScheduling, stripLifecycle } = require('./attendance-v2-protected.cjs');
 const prior = file => cp.execFileSync('git', ['show', baseline + ':' + file], { cwd: __dirname, encoding: 'utf8', maxBuffer: 16e6 }).replace(/\r\n/g, '\n');
 test('Client source outside reviewed pricing, summary and booking financial paths is unchanged', () => {
     function strip(text) {
-        text = stripScheduling(text);
+        text = stripScheduling(stripLifecycle(text));
         text = text.replace('let bk_taxInclusive   = null;\nlet bk_taxPolicy      = null;', 'let bk_taxInclusive   = false;');
         for (const [start, end] of [
             ['function applyTaxes(', "document.addEventListener('DOMContentLoaded'"],
@@ -45,7 +45,9 @@ test('Client configuration, auth, engagement and inactive alternate script are u
     for (const file of files) assert.equal(read(file), prior(file), file);
 });
 test('Client HTML adds only tax policy prerequisite with existing script order retained', () => {
-    assert.equal(read('index.html').replace('<script src="tax-policy.js?v=rc2-client-tax-parity-1"></script>\n', ''), prior('index.html'));
+    assert.equal(read('index.html').replace('<script src="tax-policy.js?v=rc2-client-tax-parity-1"></script>\n', '')
+        .replace('<script src="technician-eligibility.js?v=issue2b-1"></script>\n',''), prior('index.html'));
+    assert.ok(read('index.html').indexOf('technician-eligibility.js') < read('index.html').indexOf('src="app.js'));
     assert.ok(read('index.html').indexOf('tax-policy.js') < read('index.html').indexOf('src="app.js'));
 });
 const financialKeys = new Set(['bookedPrice', 'grandTotal', 'amountDue', 'serviceLineItems', 'serviceSubtotal', 'taxTotal',

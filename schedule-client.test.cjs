@@ -68,7 +68,9 @@ test('single and group confirmation bind the same guard before batch creation', 
     const group = section(read('group-booking.js'), 'window.grp_confirmBooking = async function()', '//');
     for (const body of [app, group]) {
         assert.ok(body.includes('await window.av_validateBookingAssignments('));
-        assert.ok(body.indexOf('await window.av_validateBookingAssignments(') < body.indexOf('db.batch()'));
+        const boundary = body.indexOf('window.ThurayaTechnicianEligibility.bookingBatch(db, { client:true })');
+        assert.ok(boundary >= 0);
+        assert.ok(body.indexOf('await window.av_validateBookingAssignments(') < boundary);
     }
     assert.doesNotMatch(read('app.js'), /bk_hasSlotConflict\s*=\s*async\s*function\(\)\s*\{\s*return false/);
     assert.ok(read('index.html').indexOf('schedule-policy.js') < read('index.html').indexOf('src="app.js'));

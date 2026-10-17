@@ -296,7 +296,7 @@ function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
 async function av_getSlotMap(dateStr, techEmails, totalMins) {
     dateStr = window.ThurayaSchedulePolicy.calendarDate(dateStr);
     if (!dateStr || !Number.isInteger(Number(totalMins)) || Number(totalMins) <= 0) throw new Error('Invalid appointment date or duration.');
-    techEmails = (techEmails || []).filter(Boolean);
+    techEmails = await window.ThurayaTechnicianEligibility.availableParents(db, (techEmails || []).filter(Boolean), { client:true });
     totalMins = parseInt(totalMins || 0, 10);
 
     const dayAbbr  = av_dayAbbr(dateStr);
@@ -754,6 +754,7 @@ window.av_validateBookingAssignments = async function(assignments) {
             !bk_techs.some(tech => tech.email === row.techEmail)) throw new Error('Please choose an available technician and time.');
         const identity = await db.collection('Users').doc(row.techEmail).get({ source: 'server' });
         const user = identity.exists ? identity.data() : null;
+        window.ThurayaTechnicianEligibility.assertEligible(user, { client:true });
         const roles = user && (Array.isArray(user.roles) ? user.roles : [user.role]);
         if (!user || user.visibleToClients === false || user.active === false || user.disabled === true ||
             ['inactive','disabled','archived','terminated'].includes(String(user.status || '').toLowerCase()) ||

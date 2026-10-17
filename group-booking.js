@@ -825,7 +825,7 @@ window.grp_confirmBooking = async function() {
             bk_assertTaxPolicy(mt.financialPolicySnapshot);
         });
         grp_groupId = db.collection('Appointments').doc().id;
-        const batch = db.batch();
+        const batch = window.ThurayaTechnicianEligibility.bookingBatch(db, { client:true });
         grp_members.forEach((m, i) => {
             const mt = groupTotals.memberTotals[i];
             const billing = grp_computeBillingForMember(i, mt, groupTotals);

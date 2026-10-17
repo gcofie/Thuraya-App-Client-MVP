@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),cp=require('node:child_process');
 const {harness,withConfirmation,withGroup,read,section}=require('./schedule-client-fixture.cjs');
-const {stripScheduling}=require('./attendance-v2-protected.cjs');
+const {stripScheduling,stripLifecycle}=require('./attendance-v2-protected.cjs');
 function seed(h,off=false) {
     for(const email of [h.fixture.email,h.fixture.other]) {
         const root=h.fixture.tables.Staff_Schedules.find(r=>r.id===email);
@@ -27,8 +27,8 @@ test('V2 version read failure prevents Client persistence',async()=>{
 test('frozen Client Issue 1 source unchanged outside reviewed scheduling overlay',()=>{
     const prior=file=>cp.execFileSync('git',['show','5c0006db02a03d2b6efacf277ff5e36ea95a9281:'+file],{cwd:__dirname,encoding:'utf8',maxBuffer:16e6}).replace(/\r\n/g,'\n');
     assert.equal(read('tax-policy.js'),prior('tax-policy.js'));
-    assert.equal(stripScheduling(read('group-booking.js')),stripScheduling(prior('group-booking.js')));
-    const strip=s=>{s=stripScheduling(s);return s.replace(section(s,'(function thurayaClientHF19LunchAvailability()','// END HF19 Lunch Break Availability Alignment'),'<attendance-overlay>');};
+    assert.equal(stripScheduling(stripLifecycle(read('group-booking.js'))),stripScheduling(prior('group-booking.js')));
+    const strip=s=>{s=stripScheduling(stripLifecycle(s));return s.replace(section(s,'(function thurayaClientHF19LunchAvailability()','// END HF19 Lunch Break Availability Alignment'),'<attendance-overlay>');};
     assert.equal(strip(read('app.js')),strip(prior('app.js')));
 });
 test('Group alternative planner excludes OFF and outside-shift Technicians without changing amounts',async()=>{

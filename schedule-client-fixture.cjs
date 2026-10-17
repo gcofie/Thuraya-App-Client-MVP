@@ -26,7 +26,7 @@ function fixtureRuntime() {
     };
     function reference(path, filters = [], single = false) {
         return {
-            id: path.split('/').at(-1),
+            id: path.split('/').at(-1), path,
             doc(id = 'synthetic-booking') { return reference(path + '/' + id, [], true); },
             collection(name) { return reference(path + '/' + name); },
             where(key, operator, value) { return reference(path, [...filters, { key, operator, value }]); },
@@ -49,6 +49,18 @@ function fixtureRuntime() {
     }
     globalThis.db = {
         collection: name => reference(name),
+        async runTransaction(callback) {
+            state.batches++;
+            if(state.beforeTransaction)state.beforeTransaction();
+            const pending = [];
+            const result = await callback({
+                get: ref => ref.get({ source:'server' }),
+                set: (ref, data) => pending.push({ path:ref.id, data }),
+                update: (ref, data) => pending.push({ path:ref.id, data })
+            });
+            state.commits++; state.writes.push(...pending);
+            return result;
+        },
         batch() {
             state.batches++;
             const pending = [];
@@ -68,6 +80,7 @@ const app = read('app.js');
 const source = [
     '(' + fixtureRuntime.toString() + ')();',
     read('schedule-policy.js'),
+    read('technician-eligibility.js'),
     section(app, 'function bk_normAvailKey(', 'window.bk_generateSlots ='),
     read('availability.js'),
     "av_todayStr = () => '2026-09-01';"

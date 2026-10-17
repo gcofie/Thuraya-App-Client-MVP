@@ -15,4 +15,20 @@ function stripScheduling(source) {
     for (const node of spans.sort((a,b) => b.start-a.start)) source = source.slice(0,node.start) + '<scheduling:'+node.id.name+'>' + source.slice(node.end);
     return source;
 }
-module.exports = { stripScheduling };
+// Reverse only the reviewed lifecycle adapters before comparing the original
+// financial source. Exact matches are mandatory; arbitrary edits still fail.
+function stripLifecycle(source) {
+    const pairs = [
+        ["const batch = window.ThurayaTechnicianEligibility.bookingBatch(db, { client:true });", "const batch = db.batch();"],
+        ["if (!window.ThurayaTechnicianEligibility.eligible(d, { client:true })) return;", "if (d.visibleToClients === false) return;"],
+        ["                roles: d.roles || [d.role], active: d.active, disabled: d.disabled, status: d.status,\n                ...(Object.prototype.hasOwnProperty.call(d, 'technicianOperational') ? { technicianOperational:d.technicianOperational } : {}),\n", ""],
+        ["return (bk_techs || []).filter(t => window.ThurayaTechnicianEligibility.eligible(t, { client:true })).filter(bk_techMatchesSelectedTherapy);", "return (bk_techs || []).filter(bk_techMatchesSelectedTherapy);"]
+    ];
+    for (const [after,before] of pairs) {
+        if (!source.includes(after)) continue;
+        if (source.indexOf(after) !== source.lastIndexOf(after)) throw Error('Duplicate lifecycle adapter');
+        source = source.replace(after,before);
+    }
+    return source;
+}
+module.exports = { stripScheduling, stripLifecycle };

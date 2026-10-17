@@ -2946,9 +2946,11 @@ async function loadTechs() {
             if (!isTech) return;
 
             // Hide techs marked invisible to clients.
-            if (d.visibleToClients === false) return;
+            if (!window.ThurayaTechnicianEligibility.eligible(d, { client:true })) return;
 
             bk_techs.push({
+                roles: d.roles || [d.role], active: d.active, disabled: d.disabled, status: d.status,
+                ...(Object.prototype.hasOwnProperty.call(d, 'technicianOperational') ? { technicianOperational:d.technicianOperational } : {}),
                 email: doc.id,
                 name: d.name || doc.id,
                 // Therapy assignment comes from Staff App.
@@ -3018,7 +3020,7 @@ function bk_techMatchesSelectedTherapy(tech) {
 }
 
 function bk_getEligibleTechsForSelectedServices() {
-    return (bk_techs || []).filter(bk_techMatchesSelectedTherapy);
+    return (bk_techs || []).filter(t => window.ThurayaTechnicianEligibility.eligible(t, { client:true })).filter(bk_techMatchesSelectedTherapy);
 }
 
 // ── Technician selection ──────────────────────────────────
@@ -3688,7 +3690,7 @@ const bookForDetails = bk_validateBookForDetails();
         }
 
         bk_assertCurrentQuote(quote, bk_selectedServices, bk_activePromo);
-        const batch = db.batch();
+        const batch = window.ThurayaTechnicianEligibility.bookingBatch(db, { client:true });
         const apptRef = db.collection('Appointments').doc();
         const apptData = {
             clientPhone:         clientLegacyPhone,
