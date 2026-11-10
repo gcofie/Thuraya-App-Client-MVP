@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "kind": "STATIC_PREVIEW_ONLY",
+  "siteId": "67278e0e-2924-4556-ba05-be91e505ec36",
+  "productionOrigin": "https://book.thurayanailbar.com",
+  "repository": "gcofie/Thuraya-App-Client-MVP",
+  "channel": "client",
+  "publishDirectory": "qualification-preview",
+  "functionsDirectory": "qualification-empty-functions",
+  "netlifyConfigSha256": "d85b3dfedd2bf1ec872247b376b976ce8dde006556ca9a8352e4fe228218547c",
+  "sourceTarget": "PRODUCTION",
+  "sourceKind": "LOCAL_QUALIFIED_RELEASE_PACKAGE",
+  "sourceCandidate": "84d15b780a2fa92435cacb852a983002d4006b50",
+  "sourcePackageSha256": "5b93a904a8b5c1f477c838d976655317d9bd2e5fef6a6249b31dfc86883db2e5",
+  "sourceBase": "5c0006db02a03d2b6efacf277ff5e36ea95a9281",
+  "sourcePublicSubdirectory": "client",
+  "branch": "codex/availability-prod-client-publication-20261111",
+  "remoteAuthorization": "NOT_GRANTED_METHOD_AMENDMENT_REQUIRED",
+  "publicationAuthorization": "NOT_GRANTED_METHOD_AMENDMENT_REQUIRED",
+  "previewApplicationExecution": "FORBIDDEN_HASH_ONLY_PRODUCTION_BINDING",
+  "scannerExceptionProvenance": {
+    "sourceCommit": "0dd4516c4c1b5cf76d329caaaf7d4805346c9b24",
+    "sourcePath": "netlify.toml",
+    "scope": "Same exact two public browser identifiers; deploy-preview only; no broad scanner disable."
+  },
+  "files": [
+    {
+      "path": "app.js",
+      "sha256": "597e77b21a6ff632efd364bfdafdf105acd38687e4be8d03d567015439f437a5"
+    },
+    {
+      "path": "availability-schedule-policy.js",
+      "sha256": "366bfaeb04622c602af9443ab773ec8de4b68f99d039d80344f160671cd0de04"
+    },
+    {
+      "path": "availability.js",
+      "sha256": "455248e46ea7001a29c49499962c78f03f2a299d2a12ae9f3b2be362bc610a83"
+    },
+    {
+      "path": "booking-allocation-transport.js",
+      "sha256": "70be443e27c82cf512e457e41b57ba5d7ca8c02ea36908c39e90178c9ea8e944"
+    },
+    {
+      "path": "client-engagement.js",
+      "sha256": "751653d54b82592d90b01e878364f818bdb60e2d39bdf9474da8b06617281876"
+    },
+    {
+      "path": "firebase-config.js",
+      "sha256": "1a2e723fc272ef8dde2c2b1e704b43dff7d9d2f8cb44e1f7a61b12563b6ebf6f"
+    },
+    {
+      "path": "group-booking.js",
+      "sha256": "66563667fff8129150871b1f90160a2973969e11a573e5892bf13f0dff2202b2"
+    },
+    {
+      "path": "index.html",
+      "sha256": "af3da8186159c023d201e90b88fb9a76bea424d53dc523fe7e5674e159cc5112"
+    },
+    {
+      "path": "phase-9a-soft-login-gate.js",
+      "sha256": "b01d70d6cfce5c0a00e63eae22bfb7b4053e81a47e2a0d1d22c316b030f75b94"
+    },
+    {
+      "path": "phase-9b-email-password-auth.js",
+      "sha256": "535139f0b71938017156cd43b64579f4c58e71844b46a0236ba69d2b79889262"
+    },
+    {
+      "path": "schedule-policy.js",
+      "sha256": "f2695e9534c5a49416ce858b059409bb328d8b20a76deea1013f2d770fb26fd4"
+    },
+    {
+      "path": "tax-policy.js",
+      "sha256": "7bd2c37e85c3ec6116d2c6f13073cdd077a9fd1a09d2f57ac95c84d98e925e66"
+    }
+  ]
+}

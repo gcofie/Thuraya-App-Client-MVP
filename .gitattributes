@@ -1,0 +1,7 @@
+
+# Preserve the reviewed public-only publication bytes on all checkouts.
+/qualification-preview/** -text
+/qualification-empty-functions/** -text
+/verify-preview.cjs -text
+/netlify.toml -text
+/preview-deployment-manifest.json -text
