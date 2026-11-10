@@ -1,0 +1,9 @@
+[build]
+  command = "node verify-preview.cjs"
+  publish = "qualification-preview"
+  functions = "qualification-empty-functions"
+[build.processing]
+  skip_processing = true
+# Exact existing public Firebase browser identifiers; no authentication credentials.
+[context.deploy-preview.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyBTZOVjppINaVyYslRnAkC04EjJyMt40j8,AIzaSyDuQtIiyWmLSOYrjRwuxG7XBWBT4OCsHPc"
