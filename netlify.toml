@@ -1,0 +1,11 @@
+[build]
+  command = "node static-delivery-guard.cjs"
+  publish = "hotfix-public"
+  functions = "qualification-empty-functions"
+
+[build.processing]
+  skip_processing = true
+
+# Exact already-public Firebase browser identifiers; other secret scans remain enabled.
+[context.deploy-preview.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyBTZOVjppINaVyYslRnAkC04EjJyMt40j8,AIzaSyDuQtIiyWmLSOYrjRwuxG7XBWBT4OCsHPc"

@@ -1,0 +1,127 @@
+{
+  "kind": "EXACT_INTEGRATED_STATIC_PREVIEW_WHITELIST",
+  "sourceCandidate": "52c68e3d19aa5567d35ff9ffec49aa277d91ed12",
+  "candidateCommitBinding": "EXACT_ROOT_CONSOLIDATED_CANDIDATE",
+  "sourceFrontendReport": {
+    "path": "C:\\Users\\Admin\\Documents\\Codex\\2026-11-09\\thuraya-rc2-mcp-api-workflow-readiness-2\\work\\track-a-quick-edit-integrated-20261112\\FRONTEND-QUALIFICATION.json",
+    "sha256": "0b0e93d6dbfa5dc965babbb2fe14a63a23a3983f2bd335186d74d1ebd42ffca9",
+    "bytes": 11679
+  },
+  "channel": "client-production",
+  "siteId": "67278e0e-2924-4556-ba05-be91e505ec36",
+  "siteName": "thuraya-client",
+  "publishDirectory": "hotfix-public",
+  "functionsDirectory": "qualification-empty-functions",
+  "publicFiles": 16,
+  "files": [
+    {
+      "path": "app.js",
+      "bytes": 259381,
+      "sha256": "597e77b21a6ff632efd364bfdafdf105acd38687e4be8d03d567015439f437a5"
+    },
+    {
+      "path": "availability-effective-schedule.js",
+      "bytes": 1148,
+      "sha256": "bf0aecf951c15ccfd03c57cccc72ba32658a53bd49c1553593b6f63be92285e3"
+    },
+    {
+      "path": "availability-schedule-policy.js",
+      "bytes": 5839,
+      "sha256": "366bfaeb04622c602af9443ab773ec8de4b68f99d039d80344f160671cd0de04"
+    },
+    {
+      "path": "availability.js",
+      "bytes": 36140,
+      "sha256": "b517db60f054776f9f250f608dd9b30691fb732ce1d249779afecab14a0b391b"
+    },
+    {
+      "path": "booking-allocation-transport.js",
+      "bytes": 6750,
+      "sha256": "70be443e27c82cf512e457e41b57ba5d7ca8c02ea36908c39e90178c9ea8e944"
+    },
+    {
+      "path": "brand.css",
+      "bytes": 173953,
+      "sha256": "7a267868d67e78e68fd48bf49f152233a8d433b41d01a67b83036473b35af690"
+    },
+    {
+      "path": "client-engagement.js",
+      "bytes": 1107,
+      "sha256": "751653d54b82592d90b01e878364f818bdb60e2d39bdf9474da8b06617281876"
+    },
+    {
+      "path": "firebase-config.js",
+      "bytes": 2529,
+      "sha256": "1a2e723fc272ef8dde2c2b1e704b43dff7d9d2f8cb44e1f7a61b12563b6ebf6f"
+    },
+    {
+      "path": "group-booking.js",
+      "bytes": 128654,
+      "sha256": "66563667fff8129150871b1f90160a2973969e11a573e5892bf13f0dff2202b2"
+    },
+    {
+      "path": "index.html",
+      "bytes": 71224,
+      "sha256": "bf9729db97518a37edd6d05fc388a0d16b706fd5b0043bffe5f924d911c158eb"
+    },
+    {
+      "path": "phase-9a-soft-login-gate.js",
+      "bytes": 13318,
+      "sha256": "b01d70d6cfce5c0a00e63eae22bfb7b4053e81a47e2a0d1d22c316b030f75b94"
+    },
+    {
+      "path": "phase-9b-email-password-auth.js",
+      "bytes": 13105,
+      "sha256": "535139f0b71938017156cd43b64579f4c58e71844b46a0236ba69d2b79889262"
+    },
+    {
+      "path": "schedule-policy.js",
+      "bytes": 14531,
+      "sha256": "0db4de010243a3b03b63ca0f50272a5286a91fe1951576543cb19980e5b87611"
+    },
+    {
+      "path": "styles.css",
+      "bytes": 13880,
+      "sha256": "105bef79005e769bd2a40106da92c9f1a155ee4126d6f9f67def0acd54baaf59"
+    },
+    {
+      "path": "tax-policy.js",
+      "bytes": 7393,
+      "sha256": "7bd2c37e85c3ec6116d2c6f13073cdd077a9fd1a09d2f57ac95c84d98e925e66"
+    },
+    {
+      "path": "thuraya-monogram.jpg",
+      "bytes": 27836,
+      "sha256": "0556eb99cde6591215a4ce16e625e5005601f5900233edb9c982eed51f484dcc"
+    }
+  ],
+  "authorization": "LOCAL_PACKAGE_ONLY_NO_DEPLOYMENT_GO",
+  "exactLiveClientBaseline": {
+    "sourceBase": "5c0006db02a03d2b6efacf277ff5e36ea95a9281",
+    "proof": {
+      "path": "C:\\Users\\Admin\\Documents\\Codex\\2026-11-09\\thuraya-rc2-mcp-api-workflow-readiness-2\\work\\track-a-quick-edit-integrated-20261112\\CURRENT-LIVE-CLIENT-BASELINE.json",
+      "sha256": "d8a8a5d97026f42932323d0cc05ef4a42d1acfe73b41983aedbcfe6dca758a14",
+      "bytes": 3936
+    },
+    "preservedStaticDependencies": [
+      {
+        "file": "styles.css",
+        "bytes": 13880,
+        "sha256": "105bef79005e769bd2a40106da92c9f1a155ee4126d6f9f67def0acd54baaf59",
+        "source": "git:5c0006db02a03d2b6efacf277ff5e36ea95a9281:styles.css"
+      },
+      {
+        "file": "brand.css",
+        "bytes": 173953,
+        "sha256": "7a267868d67e78e68fd48bf49f152233a8d433b41d01a67b83036473b35af690",
+        "source": "git:5c0006db02a03d2b6efacf277ff5e36ea95a9281:brand.css"
+      },
+      {
+        "file": "thuraya-monogram.jpg",
+        "bytes": 27836,
+        "sha256": "0556eb99cde6591215a4ce16e625e5005601f5900233edb9c982eed51f484dcc",
+        "source": "git:5c0006db02a03d2b6efacf277ff5e36ea95a9281:thuraya-monogram.jpg"
+      }
+    ]
+  }
+}
