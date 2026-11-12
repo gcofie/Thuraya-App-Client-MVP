@@ -1,0 +1,5 @@
+* text=auto
+/hotfix-public/** -text
+/static-public-manifest.json -text
+/static-delivery-guard.cjs -text
+/netlify.toml -text
