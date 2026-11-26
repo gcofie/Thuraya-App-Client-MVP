@@ -1,0 +1,28 @@
+--- /mnt/data/staff_current/booking-hf85f-core.js	2026-05-13 02:48:58.000000000 +0000
++++ /mnt/data/HF90B_v4_REAL_UI_changes/booking-hf85f-core.js	2026-05-13 03:01:19.295944779 +0000
+@@ -245,11 +245,10 @@
+     if (!shell) {
+       view.innerHTML = `
+         <div id="thHF84Shell" class="th-hf84-shell">
+-          <div class="th-hf84-hero th-hf90b-entry-hero">
++          <div class="th-hf84-hero th-hf90b-entry-hero th-hf90b-entry-hero-compact">
+             <div class="th-hf90b-entry-copy">
+               <div class="th-hf84-kicker">THURAYA STAFF BOOKING</div>
+               <h2>Start a Booking</h2>
+-              <p>Choose the correct booking path before continuing. Individual booking continues through the standard concierge workflow; group booking opens the dedicated group module.</p>
+             </div>
+           </div>
+           <div class="th-hf90b-booking-choice" id="thHF90BBookingChoice" aria-label="Booking type selection">
+@@ -259,10 +258,10 @@
+               <small>One client, one appointment record</small>
+               <span class="th-hf90b-cta">Continue Individual →</span>
+             </button>
+-            <button type="button" class="th-hf90b-choice-card th-hf90b-choice-group" onclick="window.thHF87OpenGroup ? window.thHF87OpenGroup() : thHF84SetMode('group');">
++            <button type="button" class="th-hf90b-choice-card th-hf90b-choice-group th-hf90b-choice-primary-group" onclick="window.thHF87OpenGroup ? window.thHF87OpenGroup() : thHF84SetMode('group');">
+               <span class="th-hf90b-icon" aria-hidden="true">👥</span>
+               <strong>Group Booking</strong>
+-              <small>Multiple clients with per-member services</small>
++              <small>Multiple clients · per-member services</small>
+               <span class="th-hf90b-cta">Open Group Module →</span>
+             </button>
+           </div>

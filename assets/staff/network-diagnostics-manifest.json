@@ -1,0 +1,13 @@
+{
+  "parent": "48a614bd370956420a145792f57da2f6a7d6bced",
+  "runtimeSha256": {
+    "hubtel-diagnostics.js": "57359dfe9a70ee7cced34884447e4c83989404ca6f601704afa5004868b5714d",
+    "hubtel-diagnostics.css": "4b886a6ca3ea492b3ece25dceb6702f9d5467554f748d2e9787db3e6c657e32e",
+    "hubtel-diagnostics-backend/index.js": "a66180b525ddfbcba73e4fdc535c6d8668c9764d6ba6f1750c914b3d86ebe6fe",
+    "hubtel-diagnostics-backend/network.js": "f22e419b405a8fbf928608403030e2139baecc27f1b96b857f390a6f9a0ae173",
+    "hubtel-diagnostics-backend/network-engine.js": "a4f539d7cbbc055f962be012998a64bd8478774a64b17320a1083d614287da55",
+    "hubtel-diagnostics-backend/target-policy.js": "6fe7f49c9f8d0006ac7340d2097ec2154ea3c2b7c962aada3498f30813373a52",
+    "hubtel-diagnostics-backend/profiles.js": "a827f7f571423bc08f9a6a5c3ef0a14c89a6c99ebcb2380e4e087276762af001",
+    "hubtel-diagnostics-backend/service.js": "3003eeeb4ba360bd41b32f54ddba1e1a161a4027814c8b9ded1ee8349b38f766"
+  }
+}

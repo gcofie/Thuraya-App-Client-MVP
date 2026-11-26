@@ -1,0 +1,51 @@
+    // Gift credentials, private ledgers and command receipts are server-only.
+    match /Gift_Cards/{document=**} { allow read, write: if false; }
+    match /Gift_Card_Redemptions/{document=**} { allow read, write: if false; }
+    match /Gift_Checkouts/{document=**} { allow read, write: if false; }
+
+    function giftMethod(method) {
+      return method is string && method.lower().matches('.*(gift|voucher).*');
+    }
+    function nongiftSplit(rows, index) {
+      return rows.size() <= index || (!giftMethod(rows[index].get('method', ''))
+        && rows[index].get('giftCardCode', '') == '' && rows[index].get('code', '') == ''
+        && rows[index].get('redemptionId', '') == '');
+    }
+    function noGiftSplits(rows) {
+      return rows is list && rows.size() <= 20
+        && nongiftSplit(rows, 0) && nongiftSplit(rows, 1) && nongiftSplit(rows, 2) && nongiftSplit(rows, 3)
+        && nongiftSplit(rows, 4) && nongiftSplit(rows, 5) && nongiftSplit(rows, 6) && nongiftSplit(rows, 7)
+        && nongiftSplit(rows, 8) && nongiftSplit(rows, 9) && nongiftSplit(rows, 10) && nongiftSplit(rows, 11)
+        && nongiftSplit(rows, 12) && nongiftSplit(rows, 13) && nongiftSplit(rows, 14) && nongiftSplit(rows, 15)
+        && nongiftSplit(rows, 16) && nongiftSplit(rows, 17) && nongiftSplit(rows, 18) && nongiftSplit(rows, 19);
+    }
+    function hasGiftEvidence(data) {
+      return data.get('hasGiftCardApplied', false) == true || data.get('giftCheckoutId', '') != ''
+        || data.get('giftCheckoutVersion', 0) != 0 || data.get('giftCardCode', '') != ''
+        || data.get('giftCardCodes', []).size() > 0 || data.get('giftCardAppliedAmount', 0) != 0
+        || data.get('giftCardRedemptionId', '') != '' || data.get('giftCardRedemptionIds', []).size() > 0
+        || data.get('giftCardRedemptions', []).size() > 0 || giftMethod(data.get('paymentMethod', ''))
+        || !noGiftSplits(data.get('paymentSplits', []));
+    }
+    function giftEvidenceUnchanged() {
+      // Settled Gift evidence cannot gain a new competing financial field later.
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes', 'internalNotes', 'updatedAt']);
+    }
+    function giftSafeUpdate() {
+      return hasGiftEvidence(resource.data) ? giftEvidenceUnchanged() : !hasGiftEvidence(request.resource.data);
+    }
+    match /Active_Jobs/{docId} {
+      allow read: if true;
+      allow create: if request.auth != null && !hasGiftEvidence(request.resource.data);
+      allow update: if request.auth != null && giftSafeUpdate();
+      allow delete: if request.auth != null && !hasGiftEvidence(resource.data);
+    }
+    // Preserve unrelated nested access without reopening root settlement documents.
+    match /Active_Jobs/{docId}/{subcollection}/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /Appointments/{docId}/{subcollection}/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }

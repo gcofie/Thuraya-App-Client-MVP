@@ -1,0 +1,8 @@
+[build]
+  command = "node production-renderer.cjs . client PRODUCTION-BROWSER.ADMITTED.json f574064a0ac427653fc9b982210a6f4a85d517e61458cab76955769357750ee3 7a415599abce5cb86e5b60bca2b6547ed417cb2f75f54ea44425f234276e914a public"
+  publish = "public"
+  functions = "empty-functions"
+[build.environment]
+  NODE_VERSION = "22"
+[build.processing]
+  skip_processing = true
