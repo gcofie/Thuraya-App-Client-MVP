@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "rules": "firestore.production-commission.rules",
+    "predeploy": ["node commission-deployment-check.cjs production"]
+  }
+}
