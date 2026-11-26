@@ -1,0 +1,1551 @@
+
+/* =========================================================
+   THURAYA BRAND.CSS v1
+   Shared premium UI layer for Client App + Staff App
+   ---------------------------------------------------------
+   Deployment principle:
+   - Additive CSS only
+   - Do not rename IDs/classes
+   - Do not change Firebase, booking, auth, or staff logic
+   ========================================================= */
+
+/* ---------- Brand Tokens ---------- */
+:root{
+  --th-black:#0A0A0A;
+  --th-ink:#111111;
+  --th-text:#1A1A1A;
+  --th-secondary:#2A2A2A;
+  --th-muted:#6B6B6B;
+  --th-line:#D8D5D0;
+  --th-soft-line:rgba(10,10,10,.10);
+  --th-cream:#F0EDE8;
+  --th-warm:#FAFAF8;
+  --th-card:#FFFFFF;
+  --th-soft-card:#F7F6F3;
+  --th-shadow:0 14px 30px rgba(10,10,10,.10);
+  --th-shadow-soft:0 10px 22px rgba(10,10,10,.06);
+  --th-radius-sm:10px;
+  --th-radius-md:14px;
+  --th-radius-lg:18px;
+  --th-radius-xl:24px;
+  --th-font-serif:"Cormorant Garamond", Georgia, serif;
+  --th-font-sans:"Montserrat", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ---------- Optional Font Import ---------- */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap");
+
+/* ---------- Global Base ---------- */
+html,
+body{
+  font-family:var(--th-font-sans);
+  color:var(--th-text);
+  background:var(--th-cream);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+*{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ---------- Typography Hierarchy ---------- */
+h1,h2,h3,
+.logo-wordmark,
+.brand-name,
+.confirm-title{
+  font-family:var(--th-font-serif);
+  color:var(--th-ink);
+  letter-spacing:.02em;
+}
+
+p,
+.field-hint,
+.confirm-note,
+.sticky-empty,
+.grp-info-box,
+.cx-help,
+.att-sub,
+.myatt-sub,
+.perf-empty,
+.cx-empty{
+  color:var(--th-secondary);
+  line-height:1.65;
+}
+
+.sec-label,
+.book-section-title,
+.slots-label,
+.confirm-label,
+.sticky-total-label,
+.field-label,
+.form-group label,
+.cip-metric-lbl,
+.metric-card small,
+.my-profile-section-title{
+  color:var(--th-muted);
+  font-weight:500;
+  letter-spacing:1.35px;
+  text-transform:uppercase;
+}
+
+/* ---------- Cards / Surfaces ---------- */
+.form-card,
+.confirm-card,
+.book-for-card,
+.book-for-panel,
+.mode-card,
+.promo-block,
+.sticky-bar,
+.card,
+.metric-card,
+.module-box,
+.login-card,
+.perf-card,
+.cx-card,
+.cx-shell,
+.cx-hero,
+.intel54c-card,
+.intel54c-shell,
+.my-profile-hero,
+.my-profile-details-card,
+.my-profile-photo-card,
+.my-profile-attendance-card{
+  background:var(--th-card);
+  border:1px solid var(--th-line);
+  border-radius:var(--th-radius-lg);
+  box-shadow:var(--th-shadow-soft);
+}
+
+.screen-inner,
+.container{
+  color:var(--th-text);
+}
+
+/* ---------- Buttons ---------- */
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-outline,
+.btn-ghost,
+.btn-google,
+.btn-logout,
+.btn-auto,
+.btn-sm,
+.btn-text,
+#btnToTech,
+#btnToDateTime,
+#btnToConfirm,
+#btnConfirmBooking,
+#grp_toDateTimeBtn,
+#grp_toConfirmBtn,
+#grp_btnConfirm,
+#btnGoogleSignIn,
+#btnGuestSignIn,
+#btnSaveGuest,
+#btnSaveProfile,
+#btnViewBookings,
+#btnAddToCalendar,
+#btnApplyBkPromo,
+#btnTogglePromo{
+  font-family:var(--th-font-sans);
+  border-radius:var(--th-radius-md);
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    opacity .16s ease,
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease;
+}
+
+.btn-primary,
+#btnToTech,
+#btnToDateTime,
+#btnToConfirm,
+#btnConfirmBooking,
+#grp_toDateTimeBtn,
+#grp_toConfirmBtn,
+#grp_btnConfirm,
+#btnSaveGuest,
+#btnSaveProfile{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border:1px solid var(--th-black) !important;
+  min-height:48px;
+  font-weight:600;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  box-shadow:0 12px 26px rgba(10,10,10,.16);
+}
+
+.btn-secondary,
+.btn-outline,
+#btnGuestSignIn,
+#btnViewBookings,
+#btnAddToCalendar,
+#btnApplyBkPromo,
+#btnTogglePromo{
+  background:var(--th-card) !important;
+  color:var(--th-ink) !important;
+  border:1px solid var(--th-line) !important;
+}
+
+.btn-google,
+#btnGoogleSignIn{
+  background:#FFFFFF !important;
+  color:var(--th-ink) !important;
+  border:1px solid var(--th-line) !important;
+  box-shadow:var(--th-shadow-soft);
+}
+
+button:not(:disabled):active,
+.btn:not(:disabled):active,
+.btn-primary:not(:disabled):active,
+.btn-secondary:not(:disabled):active,
+.btn-outline:not(:disabled):active,
+.btn-google:not(:disabled):active,
+.book-for-option:active,
+.mode-card:active,
+.service-card:active,
+.tech-card:active,
+.slot-btn:active,
+.grp-size-btn:active{
+  transform:scale(.985);
+}
+
+button:disabled,
+.btn:disabled,
+.btn-primary:disabled{
+  opacity:1 !important;
+  background:#CFCBC4 !important;
+  color:#7A756D !important;
+  border-color:#CFCBC4 !important;
+  box-shadow:none !important;
+  cursor:not-allowed !important;
+}
+
+/* ---------- Inputs / Forms ---------- */
+input,
+select,
+textarea,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.cx-field,
+#guest_name,
+#guest_phone,
+#guest_gender,
+#bk_date,
+#bk_promoCode,
+#grp_date{
+  font-family:var(--th-font-sans);
+  color:var(--th-text);
+  background:#FFFFFF;
+  border:1px solid var(--th-line);
+  border-radius:var(--th-radius-md);
+  min-height:44px;
+  transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.cx-field:focus{
+  outline:none;
+  border-color:rgba(10,10,10,.42);
+  box-shadow:0 0 0 3px rgba(10,10,10,.06);
+}
+
+/* ---------- Client Booking Selection States ---------- */
+.book-for-option,
+.mode-card,
+.service-card,
+.tech-card,
+.slot-btn,
+.grp-size-btn,
+.dept-btn,
+.cx-client-tab,
+.promo-toggle-btn{
+  border-radius:var(--th-radius-md);
+  transition:
+    transform .16s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    color .18s ease;
+}
+
+.book-for-option.selected,
+.mode-card.selected,
+.service-card.selected,
+.tech-card.selected,
+.slot-btn.selected,
+.grp-size-btn.selected,
+.dept-btn.active,
+.cx-client-tab.active,
+.promo-toggle-btn.active{
+  background:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+  box-shadow:var(--th-shadow) !important;
+  transform:translateY(-1px);
+}
+
+.service-card.selected,
+.tech-card.selected,
+.mode-card.selected,
+.book-for-option.selected{
+  position:relative;
+}
+
+.service-card.selected::before,
+.tech-card.selected::before,
+.mode-card.selected::before,
+.book-for-option.selected::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:12px;
+  bottom:12px;
+  width:3px;
+  border-radius:0 6px 6px 0;
+  background:var(--th-black);
+}
+
+.slot-btn.selected,
+.slot-btn.active{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+}
+
+/* ---------- Sticky Summary / Booking Footer ---------- */
+.sticky-actions,
+.sticky-footer,
+.step-footer{
+  background:rgba(250,250,248,.96);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--th-line);
+}
+
+.sticky-total-line,
+.sticky-line-items,
+.confirm-row,
+.promo-row{
+  color:var(--th-text);
+}
+
+.sticky-total-unit,
+.confirm-value{
+  color:var(--th-ink);
+  font-weight:600;
+}
+
+/* ---------- Booking Progress ---------- */
+.step-badge,
+.grp-progress-row{
+  border-radius:999px;
+}
+
+.step-badge.active,
+.step-badge.done{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+}
+
+/* ---------- Success / Confirmation ---------- */
+.confirm-card{
+  overflow:hidden;
+}
+
+.confirm-note{
+  color:var(--th-secondary);
+}
+
+/* ---------- Staff App Navigation / Utility ---------- */
+.nav-tab,
+.cip-tab,
+.category-tabs button,
+.dept-tabs button{
+  border-radius:999px;
+  transition:background .16s ease, color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.nav-tab.active,
+.cip-tab--active,
+.category-tabs button.active,
+.dept-tabs button.active{
+  background:var(--th-black) !important;
+  color:#FFFFFF !important;
+  border-color:var(--th-black) !important;
+}
+
+/* ---------- Staff App Data Cards ---------- */
+.metric-value,
+.cip-metric-val,
+.perf-kpi,
+.intel54c-kpi,
+.my-profile-name{
+  color:var(--th-ink);
+  font-weight:600;
+}
+
+.table,
+.breakdown-table{
+  border-color:var(--th-line);
+}
+
+/* ---------- Login / Auth Surfaces ---------- */
+.login-card{
+  border-radius:var(--th-radius-xl);
+}
+
+.logo-tagline,
+.logo-block p{
+  color:var(--th-muted);
+}
+
+/* ---------- Accessibility ---------- */
+button:focus-visible,
+.btn:focus-visible,
+.book-for-option:focus-visible,
+.mode-card:focus-visible,
+.service-card:focus-visible,
+.tech-card:focus-visible,
+.slot-btn:focus-visible,
+.nav-tab:focus-visible{
+  outline:2px solid rgba(10,10,10,.45);
+  outline-offset:3px;
+}
+
+/* ---------- Mobile Polish ---------- */
+@media (max-width: 640px){
+  .form-card,
+  .confirm-card,
+  .book-for-card,
+  .book-for-panel,
+  .mode-card,
+  .promo-block,
+  .card,
+  .metric-card,
+  .module-box{
+    border-radius:var(--th-radius-md);
+  }
+
+  .sticky-actions,
+  .sticky-footer,
+  .step-footer{
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+
+/* =========================================================
+   THURAYA STAFF APP — THERAPY ASSIGNMENT
+   Safe UI layer for Admin > Staff Matrix.
+   ========================================================= */
+.th-therapy-assignment-panel{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  margin-top:12px;
+}
+.th-therapy-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:8px;
+}
+.th-therapy-option{
+  min-height:46px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#fafafa;
+  padding:10px 13px;
+  cursor:pointer;
+  font-weight:700!important;
+  color:var(--primary);
+}
+.th-therapy-option input{
+  width:18px!important;
+  height:18px!important;
+  min-height:18px!important;
+  accent-color:var(--primary);
+}
+.th-therapy-help{
+  margin-top:9px;
+  color:#666;
+  font-size:.82rem;
+  line-height:1.4;
+}
+.therapy-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:62px;
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  border:1px solid rgba(0,0,0,.08);
+}
+.therapy-badge-hand{background:#fff7ed;color:#9a3412;}
+.therapy-badge-foot{background:#eef2ff;color:#3730a3;}
+.therapy-badge-both{background:#ecfdf5;color:#047857;}
+.therapy-badge-—{background:#f3f4f6;color:#6b7280;}
+@media(max-width:720px){.th-therapy-grid{grid-template-columns:1fr;}}
+/* === END THURAYA STAFF APP — THERAPY ASSIGNMENT === */
+
+
+/* =========================================================
+   THURAYA STAFF — RECEIPT GENERATOR UI
+   Safe checkout-only polish. Logic remains in app.js.
+   ========================================================= */
+.receipt-action-row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.receipt-preview-btn{
+  background:#111 !important;
+  color:#fff !important;
+  border-color:#111 !important;
+}
+@media(min-width:720px){
+  .receipt-action-row{grid-template-columns:1fr 1fr;}
+}
+
+
+/* =========================================================
+   THURAYA STAFF — RECEIPT REPRINT UI
+   ========================================================= */
+.th-receipt-history-box h3{
+  margin:0 0 4px !important;
+  color:#111 !important;
+  border-bottom:0 !important;
+}
+.th-receipt-history-head{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+.th-receipt-history-head p{
+  margin:4px 0 0;
+  color:#666;
+  font-size:.84rem;
+  line-height:1.45;
+}
+.th-receipt-refresh{
+  width:auto !important;
+  padding:8px 12px !important;
+  font-size:.78rem !important;
+  background:#111 !important;
+  color:#fff !important;
+}
+#thReceiptHistoryList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.th-receipt-history-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:14px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:14px;
+  background:#fffdf9;
+  box-shadow:0 8px 22px rgba(0,0,0,.04);
+}
+.th-receipt-history-main{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.th-receipt-ref{
+  width:max-content;
+  max-width:100%;
+  border-radius:999px;
+  padding:4px 9px;
+  background:#111;
+  color:#fff;
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.10em;
+}
+.th-receipt-history-main strong{color:#111;font-size:.95rem;}
+.th-receipt-history-main span{color:#555;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.th-receipt-history-main small{color:#777;font-size:.76rem;}
+.th-receipt-history-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  justify-content:flex-end;
+}
+.th-receipt-history-actions button{
+  border:1px solid rgba(0,0,0,.10);
+  border-radius:999px;
+  padding:8px 10px;
+  background:#111;
+  color:#fff;
+  font-size:.74rem;
+  font-weight:800;
+  cursor:pointer;
+}
+.th-receipt-history-actions button:nth-child(2){background:#25D366;color:#07140b;border-color:#25D366;}
+.th-receipt-history-actions button:nth-child(3){background:#fff;color:#111;}
+@media(max-width:720px){
+  .th-receipt-history-head{flex-direction:column;}
+  .th-receipt-history-card{grid-template-columns:1fr;}
+  .th-receipt-history-actions{justify-content:flex-start;}
+}
+/* === END THURAYA STAFF — RECEIPT REPRINT UI === */
+
+
+/* =========================================================
+   THURAYA STAFF — COMPLETED JOBS TAB UI
+   ========================================================= */
+.th-billing-tabs{
+  display:flex;
+  gap:10px;
+  margin:0 0 18px;
+  padding:8px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  background:#fffdf9;
+  box-shadow:0 10px 26px rgba(0,0,0,.04);
+}
+.th-billing-tab{
+  flex:1;
+  min-height:46px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:14px;
+  background:#fff;
+  color:#222;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  font-size:.78rem;
+  cursor:pointer;
+}
+.th-billing-tab.active{
+  background:#111;
+  color:#fff;
+  border-color:#111;
+  box-shadow:0 12px 28px rgba(0,0,0,.16);
+}
+.th-billing-pane{
+  width:100%;
+}
+#thBillingCompletedPane .th-receipt-history-box{
+  margin-top:0 !important;
+}
+#thBillingCompletedPane #thReceiptHistoryList{
+  max-height:65vh;
+  overflow:auto;
+  padding-right:4px;
+}
+@media(max-width:720px){
+  .th-billing-tabs{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(255,253,249,.96);
+    backdrop-filter:blur(12px);
+  }
+  .th-billing-tab{font-size:.70rem;}
+}
+/* === END THURAYA STAFF — COMPLETED JOBS TAB UI === */
+
+
+/* =========================================================
+   THURAYA STAFF — RBAC DENIED STATE
+   ========================================================= */
+.th-rbac-denied{
+  border:1px dashed rgba(0,0,0,.18);
+  border-radius:18px;
+  background:#fffdf9;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  color:#222;
+}
+.th-rbac-denied strong{
+  font-size:.95rem;
+  font-weight:900;
+}
+.th-rbac-denied span{
+  color:#6f665c;
+  font-size:.84rem;
+  line-height:1.45;
+}
+/* === END THURAYA STAFF — RBAC DENIED STATE === */
+
+
+/* =========================================================
+   THURAYA STAFF — COMPLETED JOBS MAIN TAB POLISH
+   ========================================================= */
+#tabCompletedJobsMain label{
+  border-color: rgba(17,17,17,.18) !important;
+}
+#tabCompletedJobsMain input:checked + label{
+  background:#111 !important;
+  color:#fff !important;
+  border-color:#111 !important;
+}
+.th-completed-main-view{
+  max-width:1100px;
+  margin:0 auto 28px;
+}
+.thReceiptHistoryList{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+
+/* THURAYA STAFF FIX — FOH client DOB field: single clean native calendar field */
+.th-date-field input[type="date"] {
+    cursor: text !important;
+    min-height: 46px;
+}
+.th-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+}
+
+/* =========================================================
+   THURAYA STAFF + CLIENT MENU SYNC POLISH
+   Matches final simulated ritual menu structure
+   ========================================================= */
+.th-ritual-menu{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.th-ritual-reference-note{
+  background:rgba(181,158,75,.08);
+  border:1px solid rgba(181,158,75,.24);
+  border-radius:18px;
+  padding:12px 14px;
+  color:#685d39;
+  font-size:12.5px;
+  line-height:1.45;
+}
+.th-ritual-reference-note strong{display:block;color:var(--th-ink);font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;}
+.th-ritual-reference-note span{display:block;color:#685d39;}
+.th-ritual-main{
+  background:#fff;
+  border:1px solid var(--th-line);
+  border-radius:22px;
+  box-shadow:0 12px 30px rgba(10,10,10,.055);
+  overflow:hidden;
+}
+.th-ritual-main summary{
+  list-style:none;
+  cursor:pointer;
+  padding:18px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+.th-ritual-main summary::-webkit-details-marker{display:none;}
+.th-ritual-title-block strong{display:block;font-size:16px;line-height:1.25;letter-spacing:.01em;color:var(--th-ink);}
+.th-ritual-title-block span{display:block;margin-top:6px;color:var(--th-muted);font-size:12.5px;line-height:1.45;}
+.th-ritual-chev{
+  width:28px;height:28px;border-radius:50%;border:1px solid var(--th-line);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  transition:.2s ease;color:#B59E4B;font-weight:900;
+}
+.th-ritual-main[open] > summary .th-ritual-chev{transform:rotate(45deg);background:#111;color:#fff;border-color:#111;}
+.th-ritual-content{padding:0 14px 16px;}
+.th-ritual-menu-card{border-top:1px solid rgba(0,0,0,.06);padding:16px 4px 4px;}
+.th-ritual-badge{display:inline-flex;align-items:center;border:1px solid rgba(181,158,75,.35);color:#B59E4B;border-radius:999px;padding:5px 9px;font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;margin-bottom:10px;}
+.th-ritual-submenu{background:#FAF8F4;border:1px solid rgba(181,158,75,.24);border-radius:20px;padding:16px;margin:14px 0;}
+.th-ritual-submenu h3{margin:0 0 5px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--th-ink);font-family:var(--th-font-sans);}
+.th-ritual-subdesc{margin:0 0 14px;color:var(--th-muted);font-size:13px;line-height:1.55;}
+.th-ritual-submenu.is-system{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:15px;margin-top:13px;}
+.th-ritual-system-head{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;}
+.th-ritual-icon{width:30px;height:30px;border-radius:50%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto;font-weight:800;}
+.th-ritual-system-head h4{margin:0 0 4px;font-size:15px;color:var(--th-ink);}
+.th-ritual-system-head p{margin:0;color:var(--th-muted);font-size:12.5px;line-height:1.45;}
+.th-ritual-service.service-card,
+.th-ritual-service{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:16px;
+  padding:14px;
+  margin-top:10px;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  cursor:pointer;
+  box-shadow:none;
+}
+.th-ritual-submenu.is-system .th-ritual-service{border-width:0;border-top:1px solid rgba(0,0,0,.07);border-radius:0;margin-top:0;padding:12px 0;}
+.th-ritual-submenu.is-system .th-ritual-service:first-of-type{border-top:0;}
+.th-ritual-service input[type="radio"],
+.th-ritual-service input[type="checkbox"]{margin-top:2px;accent-color:#111;flex:0 0 auto;}
+.th-ritual-service label{flex:1;margin:0;pointer-events:none;}
+.th-ritual-row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;width:100%;}
+.th-ritual-name{font-weight:800;font-size:14px;line-height:1.3;color:var(--th-ink);}
+.th-ritual-price{font-weight:900;color:#B59E4B;white-space:nowrap;font-size:13px;text-align:right;}
+.th-ritual-desc{margin-top:5px;color:var(--th-muted);font-size:12.5px;line-height:1.45;}
+.th-ritual-service.selected{border-color:#111 !important;background:#fff !important;box-shadow:0 10px 22px rgba(10,10,10,.08) !important;}
+.th-ritual-counter{flex-direction:column;cursor:default;}
+.th-ritual-counter-box{align-self:flex-end;margin-top:8px;}
+.th-ritual-counter-box.counter-box{width:auto;min-width:178px;}
+.th-ritual-counter-box .sched-service-counter{box-sizing:border-box;flex:0 0 54px;width:54px;min-width:54px;text-align:center;color:#111;background:#fff;}
+@media(max-width:430px){
+  .th-ritual-main summary{padding:16px;}
+  .th-ritual-content{padding:0 10px 14px;}
+  .th-ritual-submenu{padding:14px;}
+  .th-ritual-price{font-size:12px;}
+  .th-ritual-row{gap:10px;}
+}
+
+
+/* =========================================================
+   THURAYA STAFF GO-LIVE MENU POLISH — SAFE CSS ONLY
+   Purpose: reduce duplicate header weight, improve selection clarity,
+   spacing, touch feedback, and premium card feel.
+   No booking logic changed.
+   ========================================================= */
+
+/* Softer top menu banner to avoid duplicate heavy headings */
+#sched_serviceMenu .th-ritual-reference-note,
+#menuViewReadOnly .th-ritual-reference-note {
+  background: rgba(181,158,75,.045) !important;
+  border-color: rgba(181,158,75,.18) !important;
+  border-radius: 20px !important;
+  padding: 14px 18px !important;
+  margin-bottom: 18px !important;
+  box-shadow: none !important;
+}
+
+#sched_serviceMenu .th-ritual-reference-note strong,
+#menuViewReadOnly .th-ritual-reference-note strong {
+  font-size: 12px !important;
+  letter-spacing: .18em !important;
+  color: #111 !important;
+}
+
+#sched_serviceMenu .th-ritual-reference-note span,
+#menuViewReadOnly .th-ritual-reference-note span {
+  font-size: 13px !important;
+  color: #5f5a52 !important;
+}
+
+/* Cleaner section spacing */
+#sched_serviceMenu .th-ritual-menu,
+#menuViewReadOnly .th-ritual-menu {
+  gap: 18px !important;
+}
+
+#sched_serviceMenu .th-ritual-main,
+#menuViewReadOnly .th-ritual-main {
+  border-radius: 24px !important;
+  border-color: rgba(0,0,0,.12) !important;
+  box-shadow: 0 16px 38px rgba(10,10,10,.055) !important;
+}
+
+#sched_serviceMenu .th-ritual-main summary,
+#menuViewReadOnly .th-ritual-main summary {
+  padding: 22px 24px 18px !important;
+}
+
+#sched_serviceMenu .th-ritual-content,
+#menuViewReadOnly .th-ritual-content {
+  padding: 0 24px 24px !important;
+}
+
+/* Premium service cards */
+#sched_serviceMenu .th-ritual-service.service-card,
+#sched_serviceMenu .th-ritual-service,
+#menuViewReadOnly .th-ritual-service.service-card,
+#menuViewReadOnly .th-ritual-service {
+  border-radius: 18px !important;
+  border: 1px solid rgba(0,0,0,.09) !important;
+  background: #fff !important;
+  padding: 18px 20px !important;
+  margin-top: 12px !important;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease !important;
+}
+
+#sched_serviceMenu .th-ritual-service:hover,
+#menuViewReadOnly .th-ritual-service:hover {
+  border-color: rgba(181,158,75,.55) !important;
+  box-shadow: 0 12px 26px rgba(10,10,10,.065) !important;
+}
+
+/* Stronger selected state for staff speed */
+#sched_serviceMenu .th-ritual-service.selected,
+#menuViewReadOnly .th-ritual-service.selected {
+  border: 2px solid #B59E4B !important;
+  background: rgba(181,158,75,.075) !important;
+  box-shadow: 0 18px 36px rgba(10,10,10,.10) !important;
+  transform: translateY(-1px) !important;
+}
+
+#sched_serviceMenu .th-ritual-service.selected .th-ritual-name,
+#menuViewReadOnly .th-ritual-service.selected .th-ritual-name {
+  color: #111 !important;
+}
+
+#sched_serviceMenu .th-ritual-service input[type="radio"],
+#sched_serviceMenu .th-ritual-service input[type="checkbox"],
+#menuViewReadOnly .th-ritual-service input[type="radio"],
+#menuViewReadOnly .th-ritual-service input[type="checkbox"] {
+  width: 22px !important;
+  height: 22px !important;
+  margin-top: 3px !important;
+  accent-color: #B59E4B !important;
+}
+
+/* Typography clarity */
+#sched_serviceMenu .th-ritual-name,
+#menuViewReadOnly .th-ritual-name {
+  font-size: 15px !important;
+  letter-spacing: .01em !important;
+}
+
+#sched_serviceMenu .th-ritual-desc,
+#menuViewReadOnly .th-ritual-desc {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  color: #5f5a52 !important;
+}
+
+#sched_serviceMenu .th-ritual-price,
+#menuViewReadOnly .th-ritual-price {
+  font-size: 14px !important;
+  color: #B59E4B !important;
+}
+
+/* Tap feedback */
+#sched_serviceMenu .th-ritual-service:active,
+#menuViewReadOnly .th-ritual-service:active {
+  transform: scale(.992) !important;
+}
+
+/* Mobile polish */
+@media (max-width: 640px) {
+  #sched_serviceMenu .th-ritual-reference-note,
+  #menuViewReadOnly .th-ritual-reference-note {
+    padding: 12px 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  #sched_serviceMenu .th-ritual-main summary,
+  #menuViewReadOnly .th-ritual-main summary {
+    padding: 18px 16px 14px !important;
+  }
+
+  #sched_serviceMenu .th-ritual-content,
+  #menuViewReadOnly .th-ritual-content {
+    padding: 0 14px 18px !important;
+  }
+
+  #sched_serviceMenu .th-ritual-service.service-card,
+  #sched_serviceMenu .th-ritual-service,
+  #menuViewReadOnly .th-ritual-service.service-card,
+  #menuViewReadOnly .th-ritual-service {
+    padding: 16px 14px !important;
+    gap: 10px !important;
+  }
+
+  #sched_serviceMenu .th-ritual-row,
+  #menuViewReadOnly .th-ritual-row {
+    gap: 10px !important;
+  }
+
+  #sched_serviceMenu .th-ritual-name,
+  #menuViewReadOnly .th-ritual-name {
+    font-size: 14px !important;
+  }
+}
+
+/* ============================================================
+   THURAYA STAFF — PHASE B.1.1 GUIDED BOOKING MOUNT FIX
+   Changed file only: brand.css
+   ============================================================ */
+#tabNewBooking{display:none;}
+#bookingWizardView{max-width:1180px;margin:0 auto 28px;}
+#thB11BookingMount{display:block;width:100%;}
+.th-b11-header{display:block;margin:0 0 18px;}
+.th-b11-hero{border-top:4px solid #111;background:#fff;border-radius:24px;padding:22px 24px;box-shadow:0 16px 36px rgba(10,10,10,.06);display:flex;justify-content:space-between;gap:18px;align-items:flex-start;}
+.th-b11-kicker{font-size:.72rem;font-weight:900;letter-spacing:.20em;text-transform:uppercase;color:#9a8742;margin-bottom:8px;}
+.th-b11-hero h2{margin:0;color:#111;font-family:var(--th-font-serif,Georgia,serif);font-size:clamp(2.2rem,5vw,4.6rem);line-height:.92;letter-spacing:.01em;}
+.th-b11-hero p{margin:14px 0 0;color:#555;font-size:.94rem;line-height:1.55;}
+#thB11StatusPill{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(181,158,75,.32);border-radius:999px;padding:12px 16px;background:#fffdf9;color:#111;font-weight:900;white-space:nowrap;}
+.th-b11-stepper{margin:14px 0 0;padding:12px;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:22px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;box-shadow:0 12px 28px rgba(10,10,10,.045);}
+.th-b11-stepper button{min-height:52px;border:1px solid rgba(0,0,0,.10);border-radius:18px;background:#fff;color:#111;font-weight:900;letter-spacing:.02em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;}
+.th-b11-stepper button span{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#f2f1ee;color:#111;font-weight:900;}
+.th-b11-stepper button.active{background:#111!important;color:#fff!important;border-color:#111!important;box-shadow:0 12px 26px rgba(10,10,10,.16);}
+.th-b11-stepper button.active span{background:#fff;color:#111;}
+.th-b11-schedule{display:block!important;}
+.th-b11-flow-grid{display:block!important;grid-template-columns:1fr!important;}
+.th-b11-pane{max-width:100%;margin:0 0 18px!important;border-radius:22px!important;animation:thB11In .16s ease both;}
+@keyframes thB11In{from{opacity:.45;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.th-b11-side-pane{display:none!important;}
+.th-b11-original-confirm-row{display:none!important;}
+.th-b11-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px;padding-top:18px;border-top:1px dashed rgba(0,0,0,.12);}
+.th-b11-actions .btn{width:auto!important;min-width:190px;padding:13px 18px!important;border-radius:999px!important;font-weight:900!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
+.th-b11-primary{background:#111!important;color:#fff!important;border-color:#111!important;}
+.th-b11-muted{color:#666;margin-top:0;}
+.th-b11-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0;}
+.th-b11-review-grid>div,.th-b11-review-services{border:1px solid rgba(0,0,0,.08);border-radius:16px;background:#fafafa;padding:14px;}
+.th-b11-review-grid span,.th-b11-review-services span{display:block;color:#777;font-size:.68rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.th-b11-review-grid strong{display:block;color:#111;font-size:1rem;}
+.th-b11-review-grid small{display:block;color:#666;margin-top:3px;}
+.th-b11-review-services p{margin:6px 0;color:#222;font-weight:700;}
+.th-b11-review-total{margin-top:12px;border-radius:18px;background:#111;color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.th-b11-review-total span{color:#ddd;font-weight:800;}
+.th-b11-review-total strong{font-size:1.25rem;}
+#clientsView .category-tabs label:has(#tab_toggle_schedule){display:none!important;}
+@media(max-width:760px){.th-b11-hero{flex-direction:column;padding:18px}.th-b11-stepper{grid-template-columns:1fr 1fr}.th-b11-review-grid{grid-template-columns:1fr}.th-b11-actions{justify-content:stretch}.th-b11-actions .btn{width:100%!important}.th-b11-hero h2{font-size:3rem;}}
+
+/* ============================================================
+   THURAYA STAFF — PHASE B.1.2 NAV REBIND VISIBILITY GUARD
+   Changed file: brand.css
+   ============================================================ */
+#tabNewBooking{display:flex!important;}
+#tabNewBooking[aria-hidden="true"]{display:flex!important;}
+#bookingWizardView{display:none;max-width:1180px;margin:0 auto 28px;}
+body:not(.logged-out) #topNavMenu #tabNewBooking{display:flex!important;}
+#clientsView .category-tabs label:has(#tab_toggle_schedule){display:none!important;}
+
+/* ============================================================
+   THURAYA STAFF — GO-LIVE POLISH PHASE 3
+   Changed file: brand.css
+   Purpose: selected-client summary and CTA clarity only.
+   ============================================================ */
+.th-gp3-assist-copy{
+  margin-top:8px;
+  color:#6b6258;
+  font-size:.82rem;
+  line-height:1.45;
+}
+.th-gp3-legacy-selected{
+  display:none!important;
+}
+.th-gp3-selected-card{
+  margin:14px 0 16px;
+  border:1px solid rgba(0,0,0,.10);
+  border-radius:22px;
+  background:linear-gradient(180deg,#fff 0%,#fffdf8 100%);
+  box-shadow:0 14px 34px rgba(10,10,10,.075);
+  overflow:hidden;
+}
+.th-gp3-selected-top{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:16px 18px;
+}
+.th-gp3-avatar{
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  background:#111;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--th-font-serif,Georgia,serif);
+  font-size:1.35rem;
+  font-weight:700;
+  box-shadow:0 10px 24px rgba(10,10,10,.16);
+}
+.th-gp3-selected-main{min-width:0;}
+.th-gp3-kicker{
+  color:#8a7a35;
+  font-size:.66rem;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.th-gp3-selected-main strong{
+  display:block;
+  color:#111;
+  font-size:1.04rem;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.th-gp3-selected-main span{
+  display:block;
+  color:#5f5a52;
+  font-size:.84rem;
+  margin-top:4px;
+}
+.th-gp3-clear{
+  border:1px solid rgba(0,0,0,.12)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#111!important;
+  width:auto!important;
+  min-height:38px!important;
+  padding:8px 13px!important;
+  font-size:.74rem!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  box-shadow:none!important;
+}
+.th-gp3-selected-foot{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px 18px;
+  border-top:1px solid rgba(0,0,0,.07);
+  background:#faf8f2;
+}
+.th-gp3-selected-foot span{
+  color:#4d463f;
+  font-size:.76rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.th-gp3-walkin-cta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin:14px 0 0;
+  padding:14px 16px;
+  border:1px dashed rgba(0,0,0,.18);
+  border-radius:18px;
+  background:#fff;
+}
+.th-gp3-walkin-cta strong{
+  display:block;
+  color:#111;
+  font-size:.92rem;
+}
+.th-gp3-walkin-cta span{
+  display:block;
+  color:#6f665c;
+  font-size:.80rem;
+  line-height:1.4;
+  margin-top:3px;
+}
+.th-gp3-walkin-cta button{
+  width:auto!important;
+  min-width:160px;
+  border:1px solid #111!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#111!important;
+  padding:10px 14px!important;
+  font-size:.74rem!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  box-shadow:none!important;
+}
+.th-gp3-ready-cta{
+  box-shadow:0 16px 34px rgba(10,10,10,.20)!important;
+}
+@media(max-width:760px){
+  .th-gp3-selected-top{grid-template-columns:auto minmax(0,1fr);}
+  .th-gp3-clear{grid-column:1 / -1;width:100%!important;}
+  .th-gp3-walkin-cta{align-items:stretch;flex-direction:column;}
+  .th-gp3-walkin-cta button{width:100%!important;}
+}
+
+/* ============================================================
+   THURAYA STAFF — GO-LIVE AVAILABILITY HOTFIX UI
+   ============================================================ */
+.th-avail-empty{
+  margin:0;
+  padding:18px 16px;
+  border:1px dashed rgba(0,0,0,.14);
+  border-radius:16px;
+  background:#fffdf9;
+  color:#6f665c;
+  font-size:.88rem;
+  line-height:1.45;
+}
+.th-avail-error{color:#9f1d1d;background:#fff7f7;border-color:rgba(159,29,29,.22);}
+.th-avail-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.th-avail-head strong{font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:#111;}
+.th-avail-head span{font-size:.8rem;color:#777;}
+.th-avail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.th-avail-slot{border:1px solid rgba(0,0,0,.10);background:#fff;border-radius:16px;min-height:64px;padding:10px 12px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;cursor:pointer;box-shadow:0 8px 18px rgba(10,10,10,.04);}
+.th-avail-slot strong{color:#111;font-size:.95rem;}
+.th-avail-slot span{color:#6f665c;font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
+.th-avail-slot:hover{border-color:#111;box-shadow:0 12px 26px rgba(10,10,10,.08);}
+.th-avail-slot.selected{background:#111!important;color:#fff!important;border-color:#111!important;box-shadow:0 14px 30px rgba(10,10,10,.16)!important;}
+.th-avail-slot.selected strong,.th-avail-slot.selected span{color:#fff!important;}
+.th-available-tech-cards{margin-top:10px;}
+.th-avail-tech-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;font-weight:900;color:#8a7a35;margin:0 0 8px;}
+.th-avail-tech-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.th-avail-tech-card{border:1px solid rgba(0,0,0,.10);background:#fff;border-radius:14px;min-height:58px;padding:9px 10px;display:grid;grid-template-columns:24px 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;text-align:left;cursor:pointer;}
+.th-avail-tech-card span{grid-row:1/3;width:22px;height:22px;border-radius:50%;background:#edf7ef;color:#047857;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.72rem;}
+.th-avail-tech-card strong{font-size:.84rem;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.th-avail-tech-card small{font-size:.68rem;color:#777;text-transform:uppercase;letter-spacing:.06em;font-weight:800;}
+.th-avail-tech-card.active{background:#111;border-color:#111;box-shadow:0 12px 26px rgba(10,10,10,.14);}
+.th-avail-tech-card.active strong,.th-avail-tech-card.active small{color:#fff;}
+.th-avail-tech-card.muted{opacity:.62;}
+.th-avail-note{padding:10px 12px;border-radius:14px;border:1px dashed rgba(0,0,0,.12);background:#fffdf9;color:#777;font-size:.78rem;}
+@media(max-width:900px){.th-avail-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.th-avail-tech-grid{grid-template-columns:1fr;}}
+@media(max-width:560px){.th-avail-grid{grid-template-columns:1fr;}}
+
+/* ============================================================
+   THURAYA STAFF — GO-LIVE HOTFIX 4 SUCCESS PROMPT
+   Safe CSS only. Prevents Step 4 dead-end after booking confirm.
+   ============================================================ */
+.th-success-prompt-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(10,10,10,.46);
+  backdrop-filter:blur(10px);
+}
+.th-success-prompt-card{
+  width:min(620px,100%);
+  background:#fff;
+  border:1px solid rgba(216,213,208,.95);
+  border-radius:28px;
+  padding:34px 34px 30px;
+  box-shadow:0 28px 70px rgba(0,0,0,.28);
+  text-align:center;
+  animation:thSuccessPromptIn .18s ease both;
+}
+@keyframes thSuccessPromptIn{
+  from{opacity:0;transform:translateY(8px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.th-success-mark{
+  width:58px;
+  height:58px;
+  margin:0 auto 14px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#111;
+  color:#fff;
+  font-weight:900;
+  font-size:1.55rem;
+  box-shadow:0 14px 30px rgba(10,10,10,.18);
+}
+.th-success-kicker{
+  color:#8a7a35;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.th-success-prompt-card h3{
+  margin:0;
+  color:#111;
+  font-family:var(--th-font-serif, Georgia, serif);
+  font-size:clamp(2rem,4vw,3.1rem);
+  line-height:1;
+}
+.th-success-copy{
+  margin:14px auto 0;
+  max-width:480px;
+  color:#555;
+  line-height:1.55;
+  font-size:.96rem;
+}
+.th-success-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:26px;
+}
+.th-success-actions .btn{
+  width:100%!important;
+  min-height:52px;
+  border-radius:999px!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+.th-success-primary{
+  background:#111!important;
+  color:#fff!important;
+  border:1px solid #111!important;
+}
+.th-success-secondary{
+  background:#fff!important;
+  color:#111!important;
+  border:1px solid #d8d5d0!important;
+}
+@media(max-width:640px){
+  .th-success-prompt-card{padding:28px 20px 22px;border-radius:24px;}
+  .th-success-actions{grid-template-columns:1fr;}
+}
+/* === END THURAYA STAFF — GO-LIVE HOTFIX 4 SUCCESS PROMPT === */
+
+/* =========================================================
+   THURAYA STAFF — HF63 Simplified Schema Purge UI
+   Final menu hierarchy: Department → Ritual Group → Service
+   ========================================================= */
+.th-simplified-menu-tree{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.th-simplified-group{
+  border-radius:22px!important;
+  overflow:hidden;
+}
+.th-simplified-group > summary strong{
+  font-family:var(--th-font-serif, Georgia, serif)!important;
+  font-size:clamp(1.25rem,2vw,1.65rem)!important;
+  font-weight:500!important;
+  text-transform:none!important;
+  letter-spacing:.035em!important;
+}
+.th-simplified-service-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  padding:16px 18px 20px!important;
+}
+.th-booking-service{
+  cursor:pointer;
+}
+.th-booking-service-main strong{
+  display:block;
+  color:#111;
+  font-weight:900;
+  font-size:.95rem;
+}
+.th-booking-service-main p{
+  margin:6px 0 0;
+  color:#666;
+  font-size:.82rem;
+  line-height:1.45;
+}
+.th-menu-pill{
+  display:inline-flex;
+  border-radius:999px;
+  padding:4px 8px;
+  margin:8px 5px 0 0;
+  background:#f3f4f6;
+  color:#555;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.th-counter-service{
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+}
+#seedMenuBtnContainer{
+  gap:10px;
+  flex-wrap:wrap;
+}
+#seedMenuBtnContainer .btn{
+  width:auto!important;
+  border-radius:999px!important;
+  padding:10px 14px!important;
+  font-size:.72rem!important;
+}
+@media(max-width:780px){
+  .th-simplified-service-grid{grid-template-columns:1fr!important;padding:14px 12px 16px!important;}
+  #seedMenuBtnContainer .btn{width:100%!important;}
+}
+/* === END THURAYA STAFF — HF63 Simplified Schema Purge UI === */
+
+
+/* HF73 Production Wizard Body Restore marker — keeps HF70 category pipeline and hides legacy group dropdown visually. */
+
+/* ============================================================
+   THURAYA STAFF — HF74 BOOKING WIZARD SAFETY + ANY TECH RESTORE
+   Hides the legacy direct confirm control inside the guided wizard.
+   The guided Step 4 review button remains visible.
+   ============================================================ */
+#bookingWizardView #btnConfirmBooking,
+#bookingWizardView button[onclick="bookAppointment()"]#btnConfirmBooking{
+  display:none!important;
+}
+.th-available-tech-cards{margin-top:10px;display:block;}
+.th-avail-tech-title{font-size:.68rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#8a7a35;margin:4px 0 8px;}
+.th-avail-tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;}
+.th-avail-tech-card{border:1px solid rgba(0,0,0,.10)!important;border-radius:14px!important;background:#fff!important;color:#111!important;min-height:54px!important;padding:10px 12px!important;display:flex!important;align-items:center!important;gap:8px!important;box-shadow:none!important;text-align:left!important;letter-spacing:0!important;text-transform:none!important;}
+.th-avail-tech-card span{width:22px;height:22px;border-radius:50%;background:#111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;}
+.th-avail-tech-card strong{display:block;font-size:.86rem;line-height:1.1;}
+.th-avail-tech-card small{display:block;color:#666;font-size:.70rem;margin-top:2px;}
+.th-avail-tech-card.active{border-color:#111!important;background:#fffdf8!important;}
+.th-avail-tech-card.muted{opacity:.55;}
+#sched_techSelect option[value="__ANY_AVAILABLE_TECH__"]{font-weight:900;}
+/* === END THURAYA STAFF — HF74 BOOKING WIZARD SAFETY + ANY TECH RESTORE === */
+
+/* ============================================================
+   THURAYA STAFF — HF75 LEGACY BOOKING UI RETIREMENT
+   Purpose: keep sched_* runtime hidden as engine only; guided wizard is the only visible booking UI.
+   ============================================================ */
+body.th-hf75-booking-retired #bookingWizardView #btnConfirmBooking,
+body.th-hf75-booking-retired #bookingWizardView #sched_groupSize,
+body.th-hf75-booking-retired #bookingWizardView #groupSizeNote,
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-hidden-legacy,
+body.th-hf75-booking-retired #bookingWizardView .th-b2-hidden-legacy-group{
+  display:none!important;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-b11-client-pane,
+body.th-hf75-booking-retired #bookingWizardView .th-b11-services-pane,
+body.th-hf75-booking-retired #bookingWizardView .th-b11-time-pane,
+body.th-hf75-booking-retired #bookingWizardView .th-b11-review-pane{
+  border-top:4px solid #111!important;
+  border-radius:24px!important;
+  padding:28px!important;
+  background:#fff!important;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-b11-client-pane h3,
+body.th-hf75-booking-retired #bookingWizardView .th-b11-services-pane h3,
+body.th-hf75-booking-retired #bookingWizardView .th-b11-time-pane h3,
+body.th-hf75-booking-retired #bookingWizardView .th-b11-review-pane h3{
+  font-family:var(--th-font-serif,Georgia,serif)!important;
+  color:#2f3b4f!important;
+  letter-spacing:.04em!important;
+  border-bottom:2px solid #b59e4b!important;
+  padding-bottom:12px!important;
+  margin-bottom:18px!important;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-b11-side-pane{
+  display:none!important;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-b11-actions{
+  display:flex!important;
+  justify-content:flex-end!important;
+  gap:12px!important;
+  margin-top:24px!important;
+  padding-top:18px!important;
+  border-top:1px dashed rgba(0,0,0,.12)!important;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-b11-actions .btn{
+  width:auto!important;
+  min-height:52px!important;
+  border-radius:999px!important;
+  padding:12px 24px!important;
+  font-weight:900!important;
+  letter-spacing:.10em!important;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-engine-note{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 12px;
+  border:1px solid rgba(181,158,75,.30);
+  border-radius:999px;
+  padding:7px 11px;
+  color:#8a7a35;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-visit-shell{margin-top:18px;border:1px solid rgba(181,158,75,.24);background:#fffdf8;border-radius:20px;padding:16px;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-visit-kicker{color:#8a7a35;font-size:.72rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-visit-title{font-size:1rem;font-weight:900;color:#111;margin:0 0 12px;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-visit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice{border:1px solid rgba(0,0,0,.10);border-radius:18px;background:#fff;min-height:88px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;transition:.16s ease;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice.active{background:#111;color:#fff;border-color:#111;box-shadow:0 16px 34px rgba(10,10,10,.16);}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f3f1ea;font-size:1.15rem;flex:0 0 auto;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice.active .th-hf75-choice-icon{background:rgba(255,255,255,.12);}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice strong{display:block;font-size:1rem;line-height:1.2;color:inherit;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice span{display:block;font-size:.82rem;line-height:1.35;color:#6f665c;margin-top:4px;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-choice.active span{color:rgba(255,255,255,.78);}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-group-panel{display:none;margin-top:14px;border:1px dashed rgba(181,158,75,.45);border-radius:18px;padding:14px;background:#fff;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-group-panel.active{display:block;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-counter-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-counter{display:flex;align-items:center;gap:10px;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-count-btn{width:42px;height:42px;border-radius:50%;border:1px solid rgba(0,0,0,.14);background:#fff;color:#111;font-size:1.25rem;font-weight:900;cursor:pointer;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-count-badge{min-width:88px;height:48px;border-radius:999px;border:1px solid rgba(181,158,75,.45);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.05rem;color:#111;background:#fffdf8;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-client-status{margin-top:14px;border-radius:16px;padding:12px 14px;font-size:.86rem;font-weight:800;background:#fff8e1;border:1px solid rgba(181,158,75,.35);color:#7c5a00;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-client-status.ready{background:rgba(39,174,96,.10);border-color:rgba(39,174,96,.25);color:#047857;}
+body.th-hf75-booking-retired #bookingWizardView .th-hf75-disabled{opacity:.45!important;pointer-events:none!important;filter:grayscale(.25);}
+@media(max-width:780px){
+  body.th-hf75-booking-retired #bookingWizardView .th-hf75-visit-grid{grid-template-columns:1fr;}
+  body.th-hf75-booking-retired #bookingWizardView .th-b11-actions{justify-content:stretch!important;flex-direction:column!important;}
+  body.th-hf75-booking-retired #bookingWizardView .th-b11-actions .btn{width:100%!important;}
+}
+/* === END THURAYA STAFF — HF75 LEGACY BOOKING UI RETIREMENT === */
+
+/* ============================================================
+   THURAYA STAFF — HF76 SINGLE WIZARD MOUNT GUARD
+   Ensures only HF75 visit selector is visible.
+   ============================================================ */
+#thB2VisitChoice,
+.th-b2-visit-shell{
+  display:none!important;
+  visibility:hidden!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+#thHF75VisitChoice{display:block!important;visibility:visible!important;}
+/* === END THURAYA STAFF — HF76 SINGLE WIZARD MOUNT GUARD === */
+
+
+/* ============================================================
+   THURAYA STAFF — HF79 GROUP MEMBER BUILDER RESTORE
+   ============================================================ */
+.th-hf79-group-builder{border:1px solid rgba(181,158,75,.30);background:#fffdf8;border-radius:22px;padding:16px;margin:0 0 18px;box-shadow:0 12px 28px rgba(10,10,10,.045)}
+.th-hf79-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.th-hf79-head span,.th-hf79-review-members>span,.th-hf79-payment-box>span{display:block;color:#8a7a35;font-size:.68rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px}.th-hf79-head h4{margin:0;color:#111;font-size:1.05rem}.th-hf79-head p{margin:5px 0 0;color:#666;font-size:.84rem;line-height:1.45}.th-hf79-total{border:1px solid rgba(0,0,0,.08);border-radius:16px;background:#111;color:#fff;padding:12px 16px;min-width:160px;text-align:right}.th-hf79-total span{color:#ddd;margin:0}.th-hf79-total strong{font-size:1.12rem}.th-hf79-members{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.th-hf79-member{border:1px solid rgba(0,0,0,.08);border-radius:18px;background:#fff;padding:12px;display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:start}.th-hf79-member.active{border-color:#111;box-shadow:0 12px 26px rgba(10,10,10,.08)}.th-hf79-member-tab{grid-row:span 3;border:1px solid rgba(0,0,0,.08)!important;border-radius:16px!important;background:#fafafa!important;color:#111!important;padding:12px!important;text-align:left!important;width:100%!important;min-height:78px!important}.th-hf79-member.active .th-hf79-member-tab{background:#111!important;color:#fff!important}.th-hf79-member-tab strong{display:block;font-weight:900}.th-hf79-member-tab small{display:block;margin-top:5px;opacity:.72}.th-hf79-member input{width:100%;min-height:42px;border-radius:12px!important}.th-hf79-member-services{display:flex;flex-wrap:wrap;gap:6px}.th-hf79-member-services span{display:inline-flex;border-radius:999px;background:#f3f4f6;color:#333;font-weight:800;font-size:.72rem;padding:5px 8px}.th-hf79-empty{color:#999!important;background:#fff4d8!important}.th-hf79-member-money{display:flex;justify-content:space-between;gap:8px;color:#666;font-size:.8rem}.th-hf79-member-money strong{color:#111}.th-hf79-active-note{margin-top:12px;border:1px dashed rgba(181,158,75,.5);border-radius:14px;padding:10px 12px;background:#fff;color:#6b6258;font-weight:800}.th-hf79-review-members{border:1px solid rgba(0,0,0,.08);border-radius:18px;background:#fafafa;padding:14px;margin:14px 0}.th-hf79-review-member{border-top:1px solid rgba(0,0,0,.08);padding:12px 0}.th-hf79-review-member:first-of-type{border-top:0}.th-hf79-review-member strong{display:block;color:#111}.th-hf79-review-member small{display:block;color:#777;margin-top:2px}.th-hf79-review-member p{margin:8px 0 0;color:#333;font-weight:700;line-height:1.45}.th-hf79-payment-box{border:1px solid rgba(181,158,75,.30);border-radius:18px;background:#fffdf8;padding:14px;margin-top:14px}.th-hf79-payment-box label{display:flex;align-items:center;gap:10px;margin:8px 0;color:#111;font-weight:800}.th-hf79-payment-box input{width:18px!important;height:18px!important;accent-color:#111}
+@media(max-width:860px){.th-hf79-members{grid-template-columns:1fr}.th-hf79-member{grid-template-columns:1fr}.th-hf79-member-tab{grid-row:auto}.th-hf79-total{text-align:left;width:100%}}
+/* === END THURAYA STAFF — HF79 GROUP MEMBER BUILDER RESTORE === */
+
+/* ============================================================
+   THURAYA STAFF — HF81 GROUP MEMBER NAME INPUT HARD LOCK UI
+   ============================================================ */
+#thHF79GroupBuilder input[id^="thHF79MemberName_"]{
+  pointer-events:auto!important;
+  user-select:text!important;
+  -webkit-user-select:text!important;
+  position:relative!important;
+  z-index:5!important;
+  background:#fff!important;
+  color:#111!important;
+  cursor:text!important;
+}
+#thHF79GroupBuilder input[id^="thHF79MemberName_"]:not([readonly]){
+  border-color:rgba(10,10,10,.22)!important;
+  box-shadow:none!important;
+}
+#thHF79GroupBuilder input[id^="thHF79MemberName_"]:not([readonly]):focus{
+  border-color:#111!important;
+  box-shadow:0 0 0 3px rgba(10,10,10,.08)!important;
+}

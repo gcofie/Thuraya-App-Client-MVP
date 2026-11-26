@@ -1,0 +1,21 @@
+--- /mnt/data/staff_current/booking-hf85f.css	2026-05-13 02:48:58.000000000 +0000
++++ /mnt/data/HF90B_v4_REAL_UI_changes/booking-hf85f.css	2026-05-13 03:01:19.299727723 +0000
+@@ -224,3 +224,18 @@
+   .th-hf90b-choice-card{padding:20px 14px;}
+   .th-hf90b-cta{min-width:0;width:100%;}
+ }
++
++
++/* HF90B-v4 Booking Entry UI Polish — UI only, preserves existing IDs/events */
++.th-hf90b-entry-hero-compact{padding:18px 22px!important;min-height:0!important;}
++.th-hf90b-entry-hero-compact .th-hf90b-entry-copy p{display:none!important;}
++.th-hf90b-choice-primary-group{border-width:2px!important;box-shadow:0 16px 34px rgba(0,0,0,.10)!important;}
++.th-hf90b-choice-primary-group .th-hf90b-cta{font-weight:900!important;}
++.hf90b-schedule-choice-card{background:#fff;border:1.5px solid rgba(17,17,17,.16);border-radius:16px;padding:16px 18px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 12px 28px rgba(0,0,0,.06);}
++.hf90b-schedule-choice-copy{display:flex;flex-direction:column;gap:4px;min-width:210px;}
++.hf90b-schedule-kicker{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#777;font-weight:800;}
++.hf90b-schedule-choice-copy strong{font-size:1rem;color:#111;}
++.hf90b-schedule-choice-copy small{font-size:.78rem;color:#666;line-height:1.35;}
++.hf90b-group-size-select{width:auto;min-width:230px;padding:11px 14px;font-size:.9rem;border:1px solid rgba(17,17,17,.22);border-radius:999px;background:#111;color:#fff;font-weight:800;cursor:pointer;}
++.hf90b-group-size-note{font-size:.82rem;color:#111;background:#f7f7f7;border:1px solid rgba(17,17,17,.12);border-radius:12px;padding:10px 13px;margin-bottom:15px;}
++@media(max-width:720px){.hf90b-schedule-choice-card{align-items:stretch;flex-direction:column}.hf90b-group-size-select{width:100%;min-width:0}.th-hf90b-entry-hero-compact{padding:16px!important}}

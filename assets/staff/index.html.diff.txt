@@ -1,0 +1,57 @@
+--- /mnt/data/staff_current/index.html	2026-05-13 02:48:58.000000000 +0000
++++ /mnt/data/HF90B_v4_REAL_UI_changes/index.html	2026-05-13 03:01:19.295314351 +0000
+@@ -9,7 +9,7 @@
+ 
+     
+   <link rel="stylesheet" href="brand.css?v=hf70-final-category-pipeline-20260511">
+-    <link rel="stylesheet" href="booking-hf85f.css?v=hf90b-booking-entry-ui-polish-20260513">
++    <link rel="stylesheet" href="booking-hf85f.css?v=hf90b-v4-booking-entry-ui-polish-20260513">
+     <link rel="stylesheet" href="booking-hf87-group.css?v=hf89a-menu-consumer-audit-20260512"><style id="myProfileEnterpriseStyles">
+         .my-profile-shell {
+             max-width: 1180px;
+@@ -1031,20 +1031,24 @@
+                                 <button type="button" id="btnClearScheduleClient" style="float:right; background:transparent; border:none; color:var(--error); cursor:pointer; font-weight:bold; font-size:1rem;" onclick="clearScheduleClient()">✕</button>
+                             </div>
+ 
+-                            <!-- Group Booking -->
+-                            <div style="background:#f9f7f4; border:1px solid var(--border); border-radius:6px; padding:12px 16px; margin-bottom:5px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+-                                <label style="font-weight:700; color:var(--primary); margin:0; font-size:0.9rem;">👥 Group Booking?</label>
+-                                <select id="sched_groupSize" onchange="onGroupSizeChange()" style="width:auto; padding:6px 10px; font-size:0.875rem; border:1px solid var(--border); border-radius:4px;">
+-                                    <option value="1">No — Individual</option>
+-                                    <option value="2">Yes — 2 people</option>
+-                                    <option value="3">3 people</option>
+-                                    <option value="4">4 people</option>
+-                                    <option value="5">5 people</option>
+-                                    <option value="6">6 people</option>
++                            <!-- Booking Type / Group Entry (HF90B-v4 UI polish only; IDs and logic preserved) -->
++                            <div class="hf90b-schedule-choice-card">
++                                <div class="hf90b-schedule-choice-copy">
++                                    <span class="hf90b-schedule-kicker">Booking Type</span>
++                                    <strong>Individual or Group Booking</strong>
++                                    <small>Select group size only when booking more than one client.</small>
++                                </div>
++                                <select id="sched_groupSize" class="hf90b-group-size-select" onchange="onGroupSizeChange()">
++                                    <option value="1">Individual Booking</option>
++                                    <option value="2">Group Booking — 2 people</option>
++                                    <option value="3">Group Booking — 3 people</option>
++                                    <option value="4">Group Booking — 4 people</option>
++                                    <option value="5">Group Booking — 5 people</option>
++                                    <option value="6">Group Booking — 6 people</option>
+                                 </select>
+                             </div>
+-                            <div id="groupSizeNote" style="font-size:0.8rem; color:var(--primary); background:#fff8e1; border:1px solid var(--accent); border-radius:4px; padding:8px 12px; margin-bottom:15px; display:none;">
+-                                ℹ️ System will find a slot where <strong id="groupSizeNoteCount">2</strong> technicians are free simultaneously.
++                            <div id="groupSizeNote" class="hf90b-group-size-note" style="display:none;">
++                                <strong id="groupSizeNoteCount">2</strong> technicians required for this group slot.
+                             </div>
+                             <input type="hidden" id="sched_groupId" value="">
+                         </div>
+@@ -2563,7 +2567,7 @@
+     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+ <script src="firebase-config.js"></script>
+ <script src="app.js?v=staff-menu-settings-dept-guard-hf30-20260510"></script>
+-<script src="booking-hf85f-core.js?v=hf90b-booking-entry-ui-polish-20260513"></script>
++<script src="booking-hf85f-core.js?v=hf90b-v4-booking-entry-ui-polish-20260513"></script>
+ <script src="booking-hf87-group.js?v=hf90b-booking-entry-ui-polish-20260513"></script>
+ <script src="menu-v2-csv-importer.js?v=clean-v2-csv-importer-20260508"></script>
+ 
