@@ -1,0 +1,58 @@
+THURAYA STAFF APP — STAGE REPO CLEANUP REPORT
+Generated: 2026-05-13
+Scope: STAFF APP ONLY
+
+No live code logic was changed.
+No Client App files were touched.
+Firebase structure was preserved.
+Current index.html references were preserved.
+
+ACTIVE ROOT FILES PRESERVED BECAUSE index.html REFERENCES THEM:
+- styles.css
+- brand.css
+- booking-hf85f.css
+- booking-hf87-group.css
+- firebase-config.js
+- app.js
+- booking-hf85f-core.js
+- booking-hf87-group.js
+- menu-v2-csv-importer.js
+- reports-v2.js
+- attendance.js
+- commissions-v1.js
+- commissions-tab-rescue.js
+- sales-promo-v1.js
+- my-profile-tabfix.js
+- clock-system-stability.js
+- attendance-identity-sync.js
+- intelligence-engine-v1.js
+
+OTHER ROOT FILES PRESERVED:
+- .gitattributes
+- PRODUCTION_SAFE_MANIFEST.txt
+- STAFF_STAGE_CLEANUP_REPORT.txt
+
+MOVED TO _archive_legacy_staff/ BECAUSE THEY ARE NOT DIRECTLY REFERENCED BY index.html:
+- app.backup-live-before-v3.js.js
+- app.expected-today-quick-edit.js
+- app.group-checkin-modal.js
+- booking-hf84.css
+- booking-hf84c.css
+- booking-hf84c-core.js
+- booking-hf84-core.js
+- booking-hf84d.css
+- booking-hf84d-core.js
+- booking-hf85-client-port.css
+- booking-hf85-client-port.js
+- booking-hf85d.css
+- booking-hf85d-core.js
+- booking-hf85e.css
+- booking-hf85e-core.js
+- booking-hf85g.css
+- booking-hf85g-core.js
+- HF83_README.txt
+- HF89A_README.txt
+
+IMPORTANT:
+This is a safe stage cleanup only. The archived files are retained for rollback/reference.
+Do not delete _archive_legacy_staff/ until booking, group booking, check-in/edit, reports, commissions, lunch/prep, and Today Operations have passed validation.

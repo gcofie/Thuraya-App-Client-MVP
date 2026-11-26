@@ -1,0 +1,11 @@
+[build]
+  command = "node production-renderer.cjs . client PRODUCTION-BROWSER.ADMITTED.json 0cac16d306b710c2ec188e79f7d52e2088423d54e14f345b5f8f37dfa38e1933 7a415599abce5cb86e5b60bca2b6547ed417cb2f75f54ea44425f234276e914a public"
+  publish = "public"
+  functions = "empty-functions"
+[build.environment]
+  NODE_VERSION = "22"
+[build.processing]
+  skip_processing = true
+
+[context.deploy-preview.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyBTZOVjppINaVyYslRnAkC04EjJyMt40j8,AIzaSyDuQtIiyWmLSOYrjRwuxG7XBWBT4OCsHPc"

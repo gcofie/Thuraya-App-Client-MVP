@@ -1,0 +1,40 @@
+.hubtel-diagnostics { padding: 20px; color: #26332e; background: #fff; letter-spacing: 0; }
+.hubtel-diagnostics h2 { margin: 0 0 12px; font-size: 22px; }
+.hubtel-diagnostics p { overflow-wrap: anywhere; }
+.hd-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.hd-actions button { min-height: 42px; padding: 8px 14px; border: 1px solid #547968; border-radius: 4px; background: #eff6f2; color: #183d2d; font: inherit; }
+.hd-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.hd-actions button:focus-visible { outline: 2px solid #1560a1; outline-offset: 3px; }
+.hd-actions button { max-width: 100%; overflow-wrap: anywhere; }
+.hd-targets { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(180px, 2fr) minmax(110px, 1fr); gap: 12px; align-items: end; }
+.hd-field { min-width: 0; }
+.hd-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.hd-field input, .hd-field select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 8px; font: inherit; border: 1px solid #85988c; border-radius: 4px; color: #26332e; background: #fff; }
+.hd-consent { display: flex; align-items: center; gap: 8px; grid-column: 1 / -1; min-height: 32px; }
+.hd-consent input { width: 18px; height: 18px; }
+.hd-targets [hidden] { display: none; }
+.hd-scope { font-size: 13px; color: #526159; }
+.hd-caution { padding: 12px 0; border-block: 1px solid #e3cfa1; color: #674c0d; }
+.hd-message { min-height: 24px; }
+.hd-metadata { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 16px 0; margin: 0; }
+.hd-metadata dt { font-size: 12px; font-weight: 700; color: #526159; }
+.hd-metadata dd { margin: 4px 0 0; overflow-wrap: anywhere; font-size: 14px; }
+.hubtel-diagnostics table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+.hubtel-diagnostics caption { text-align: left; font-weight: 700; padding: 16px 0; }
+.hubtel-diagnostics th, .hubtel-diagnostics td { padding: 10px 8px; border-bottom: 1px solid #d9e3dd; vertical-align: top; text-align: left; overflow-wrap: anywhere; white-space: pre-line; }
+.hubtel-diagnostics th { background: #eff3f5; }
+@media (max-width: 900px) {
+    .hd-targets { grid-template-columns: minmax(0, 1fr); }
+    .hubtel-diagnostics caption { display: block; width: auto; }
+    .hd-metadata { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hubtel-diagnostics thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .hubtel-diagnostics table, .hubtel-diagnostics tbody, .hubtel-diagnostics tr, .hubtel-diagnostics td { display: block; width: auto; }
+    .hubtel-diagnostics tr { border-top: 2px solid #6b8b7a; margin: 12px 0 24px; }
+    .hubtel-diagnostics td { display: grid; grid-template-columns: minmax(100px, .7fr) minmax(0, 1.3fr); gap: 12px; }
+    .hubtel-diagnostics td::before { content: attr(data-label); font-weight: 700; color: #526159; }
+}
+@media (max-width: 450px) {
+    .hubtel-diagnostics { padding: 12px; }
+    .hd-metadata { grid-template-columns: minmax(0, 1fr); }
+    .hd-actions button { flex: 1 1 100%; }
+}

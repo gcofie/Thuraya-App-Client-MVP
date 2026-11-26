@@ -1,0 +1,42 @@
+THURAYA Staff App — Production-Safe Files
+Baseline: Hotfix 8 stable state. Hotfix 9 group routing is excluded.
+
+Included:
+- index.html
+- app.js
+- brand.css
+- styles.css
+- firebase-config.js
+- attendance.js
+- attendance-identity-sync.js
+- clock-system-stability.js
+- commissions-tab-rescue.js
+- commissions-v1.js
+- intelligence-engine-v1.js
+- my-profile-tabfix.js
+- reports-v2.js
+- sales-promo-v1.js
+- README.md
+- .gitattributes
+
+Excluded:
+- app_before_* rollback files
+- brand_before_* rollback files
+- index_before_* rollback files
+- app_fixed_menu_settings.js
+- app_menu_delete_fix.js
+- app.html
+- CLEANUP_MANIFEST.txt
+- README_BOOKING_* patch notes
+- Staff App Full Package 562026200
+
+Final test before merge:
+1. Staff login
+2. New Booking
+3. Availability
+4. Confirm booking
+5. Today Operations check-in
+6. Start service
+7. Complete job / Ready for Payment
+8. Checkout
+9. Client App availability and booking confirmation
