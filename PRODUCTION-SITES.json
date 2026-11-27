@@ -1,0 +1,12 @@
+{
+  "staff": {
+    "siteId": "5979dc75-41dd-4538-a1b6-6293c359956b",
+    "siteName": "thuraya-app",
+    "canonical": "https://thuraya-app.netlify.app"
+  },
+  "client": {
+    "siteId": "67278e0e-2924-4556-ba05-be91e505ec36",
+    "siteName": "youbookingthuraya",
+    "canonical": "https://book.thurayanailbar.com"
+  }
+}

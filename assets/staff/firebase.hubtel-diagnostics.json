@@ -1,0 +1,7 @@
+{
+  "functions": [{
+    "source": "hubtel-diagnostics-backend",
+    "codebase": "hubtel-diagnostics",
+    "ignore": ["node_modules", ".git", "*.log", "*.local"]
+  }]
+}

@@ -1,0 +1,4 @@
+{
+  "functions": { "source": "functions", "runtime": "nodejs20" },
+  "firestore": { "rules": "firestore.staging-noshow.rules" }
+}

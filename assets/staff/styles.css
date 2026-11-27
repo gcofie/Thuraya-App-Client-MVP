@@ -1,0 +1,685 @@
+:root {
+    --primary: #2c3e50;
+    --accent: #b59e4b;
+    --bg: #f9f7f4;
+    --card-bg: #ffffff;
+    --border: #e0e0e0;
+    --text: #333333;
+    --error: #e74c3c;
+    --success: #27ae60;
+    --admin: #8e44ad;
+    --manager: #2980b9;
+    --supply: #d35400;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
+body { background-color: var(--bg); color: var(--text); line-height: 1.6; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+.header { text-align: center; padding: 40px 20px 20px; width: 100%; }
+.header h1 { font-size: 2.5rem; color: var(--primary); letter-spacing: 4px; margin-bottom: 5px; text-transform: uppercase;}
+.header p { font-size: 0.9rem; color: #666; font-style: italic; letter-spacing: 1px; text-transform: uppercase;}
+
+.container { width: 100%; max-width: 1000px; padding: 20px; overflow: hidden; }
+
+/* Login Card Styles */
+#loginScreen { max-width: 400px; margin: 40px auto; text-align: center; }
+.card { background-color: var(--card-bg); border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.login-card { border-top: 4px solid var(--accent); padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+.btn-google { background-color: white; color: #444; border: 1px solid var(--border); padding: 15px; font-size: 1.1rem; border-radius: 4px; cursor: pointer; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; font-weight: bold; transition: background 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.btn-google:hover { background-color: #f1f1f1; }
+.btn-logout { background-color: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: 0.3s; }
+.btn-logout:hover { background-color: var(--primary); color: white; }
+
+.error-msg { color: var(--error); font-size: 0.9rem; margin-top: 15px; font-weight: bold; display: none; }
+
+/* Dashboard Styles */
+#appDashboard { display: none; width: 100%; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 10px; flex-wrap: wrap; gap: 15px;}
+.user-badge { background: #eef5f9; padding: 10px 15px; border-radius: 4px; border: 1px solid #b8cddb; color: var(--primary); font-weight: bold; }
+.role-tag { background: var(--primary); color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 10px; text-transform: uppercase; }
+
+/* Dynamic Navigation Tabs */
+#topNavMenu { display: none; justify-content: flex-start; gap: 10px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); flex-wrap: wrap; }
+.nav-tab { display: none; }
+.nav-tab label { background: #f1f1f1; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; color: #555; transition: 0.3s; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.9rem;}
+.nav-tab input[type="radio"] { display: none; }
+.nav-tab input[type="radio"]:checked + label { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+/* Role-Specific Views */
+.app-module { display: none; width: 100%; max-width: 100%; overflow: hidden; }
+.module-box { background: var(--card-bg); padding: 25px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; overflow: hidden; }
+.module-box h3 { color: var(--primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--accent); padding-bottom: 10px;}
+
+/* Responsive grids */
+.grid-2, .grid-3 { min-width: 0; }
+.grid-2 > *, .grid-3 > * { min-width: 0; overflow: hidden; }
+
+/* Form Elements */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;}
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+@media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 15px; text-align: left; position: relative; }
+label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; color: var(--primary);}
+.required-star { color: #e74c3c; font-weight: bold; }
+input[type="text"], input[type="email"], input[type="number"], input[type="tel"], input[type="date"], input[type="time"], input[type="password"], select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; transition: border-color 0.3s; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+
+.search-box { display: flex; gap: 10px; margin-top: 10px; align-items: stretch; width: 100%; position: relative; z-index: 999; }
+.search-box input { flex: 1; }
+.btn { background-color: var(--primary); color: white; border: none; padding: 12px 25px; font-size: 1rem; border-radius: 4px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; transition: background 0.3s; width: 100%;}
+.btn:hover { background-color: #1a252f; }
+.btn-secondary { background-color: transparent; border: 1px solid var(--primary); color: var(--primary); }
+.btn-secondary:hover { background-color: var(--primary); color: white; }
+
+.dropdown-results { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); z-index: 1000; max-height: 250px; overflow-y: auto; }
+.search-result-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; display: block; width: 100%; text-align: left; border-left: none; border-right: none; border-top: none; background: white; font-size: 1rem;}
+.search-result-item:hover { background-color: #f1f1f1; outline: none; }
+
+/* Premium Dept Toggles */
+.dept-tabs { display: flex; justify-content: center; gap: 20px; padding: 15px; background: #f9f7f4; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px;}
+.dept-tabs label { font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--primary); margin:0;}
+.dept-tabs input[type="radio"] { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer;}
+
+/* Premium Tap-to-Book UI Cards */
+.menu-col { display: flex; flex-direction: column; gap: 20px; }
+.menu-section-title { color: var(--accent); font-size: 1.1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--accent); padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end;}
+
+.service-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px; transition: 0.2s; cursor: pointer; display: flex; align-items: flex-start; gap: 15px;}
+.service-card:hover { border-color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.service-card.selected { border: 2px solid var(--accent); background-color: #fffdfa; }
+.service-card input[type="radio"], .service-card input[type="checkbox"] { width: 18px; height: 18px; margin-top: 4px; accent-color: var(--accent); cursor: pointer; pointer-events: none;}
+.service-card label { cursor: pointer; display: flex; flex-direction: column; pointer-events: none; margin: 0; flex-grow: 1;}
+.service-card label strong { color: #222; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;}
+
+.counter-box { display: flex; align-items: center; gap: 10px; justify-content: flex-end; width: 100px; flex-shrink: 0;}
+.counter-box input { width: 60px; text-align: center; padding: 5px; font-weight: bold; border: 1px solid var(--border); border-radius: 4px;}
+
+/* Cost Breakdown Box */
+#sched_breakdown { margin-top: 15px; padding: 20px; background: #fff; border: 2px dashed var(--accent); border-radius: 8px; display: none; }
+.breakdown-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; color: #444; border-bottom: 1px solid #f1f1f1; padding-bottom: 5px;}
+
+/* Time Slots UI */
+.time-slot-btn { background: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: var(--primary); transition: 0.2s; flex-grow: 1; text-align: center; }
+.time-slot-btn:hover { border-color: var(--accent); color: var(--accent); }
+.time-slot-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+.breakdown-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.breakdown-table th, .breakdown-table td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: middle;}
+.breakdown-table th { background-color: #f1f1f1; font-size: 0.9rem; }
+
+.ticket { border: 2px solid var(--accent); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #fffaf0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.ticket-badge { background: #f39c12; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; display: inline-block; }
+
+.roster-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+.status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.status-available { background-color: var(--success); }
+.status-busy { background-color: var(--error); }
+
+.metric-card { background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; flex: 1; }
+.metric-value { font-size: 2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
+
+.category-tabs { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; padding: 15px; background: #f1f1f1; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;}
+.category-tabs label { font-size: 1.1rem; font-weight: bold; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--primary); }
+.category-tabs input[type="radio"] { width: 22px; height: 22px; accent-color: var(--accent); }
+
+/* Consultation Modal Styles */
+.consult-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100000; display: none; overflow-y: auto; padding: 20px; }
+.consult-modal { background: white; max-width: 800px; margin: 20px auto; padding: 30px; border-radius: 8px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.consult-close { position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; transition: 0.2s; }
+.consult-close:hover { color: var(--error); }
+.consult-section-title { border-bottom: 2px solid var(--accent); color: var(--primary); padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; font-size: 1rem; font-weight: bold; letter-spacing: 1px;}
+.checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
+.checkbox-grid label { font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #444; }
+.checkbox-grid input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.radio-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;}
+.radio-group label { font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #444; }
+.radio-group input[type="radio"] { width: 16px; height: 16px; accent-color: var(--accent); }
+
+/* ── GROUP BOOKING ──────────────────────────────────── */
+.group-badge {
+    background: var(--manager);
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-left: 6px;
+}
+.group-member-list {
+    background: #f0f7ff;
+    border: 1px solid #b8cddb;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    font-size: 0.82rem;
+    color: var(--primary);
+}
+.group-member-list p { margin: 3px 0; }
+
+/* ── ATTENDANCE MODULE ───────────────────────────────── */
+.att-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+.att-badge--working {
+    background: rgba(39,174,96,0.12);
+    color: var(--success);
+    border: 1px solid rgba(39,174,96,0.3);
+}
+.att-badge--leave {
+    background: rgba(41,128,185,0.12);
+    color: var(--manager);
+    border: 1px solid rgba(41,128,185,0.3);
+}
+.att-badge--off {
+    background: rgba(122,122,122,0.1);
+    color: #888;
+    border: 1px solid rgba(122,122,122,0.2);
+}
+.att-day-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--primary);
+    transition: all 0.15s;
+    user-select: none;
+}
+.att-day-label:hover { border-color: var(--accent); }
+.att-day-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--manager);
+    cursor: pointer;
+}
+.att-day-label:has(input:checked) {
+    background: rgba(41,128,185,0.08);
+    border-color: var(--manager);
+    color: var(--manager);
+}
+
+/* ── CLIENT INTELLIGENCE PANEL ───────────────────────── */
+.cip-metric {
+    flex: 1;
+    min-width: min(100%, 8rem);
+    background: #f9f7f4;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+}
+.cip-metric-val {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Keep Client Intel amounts readable without changing other metric values. */
+.cip-metric:has(> :is(#cip_totalSpend, #cip_avgSpend, #cip_thisYear)) {
+    flex: 1 1 12rem;
+    min-width: min(100%, 12rem);
+    max-width: 100%;
+}
+:is(#cip_totalSpend, #cip_avgSpend, #cip_thisYear) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+}
+.cip-metric-lbl {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #7a7060;
+}
+.cip-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #888;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+}
+.cip-tab:hover { color: var(--primary); }
+.cip-tab--active {
+    color: var(--primary);
+    border-bottom-color: var(--accent);
+}
+
+
+/* ============================================================
+   THURAYA BASE LAYOUT RECOVERY + BOOK APPOINTMENT SINGLE COLUMN
+   Added to prevent raw/wide layout and keep booking page vertical.
+   ============================================================ */
+
+/* Base safety reset */
+html, body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+    line-height: 1.6;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Header should be centered and polished */
+.header {
+    text-align: center !important;
+    width: 100% !important;
+    padding: 40px 20px 20px !important;
+}
+
+.header h1 {
+    font-size: 2.5rem !important;
+    color: var(--primary) !important;
+    letter-spacing: 4px !important;
+    margin-bottom: 5px !important;
+    text-transform: uppercase !important;
+}
+
+/* Core app frame */
+.container {
+    width: 100% !important;
+    max-width: 1100px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
+
+/* Login remains compact */
+#loginScreen {
+    max-width: 400px !important;
+    margin: 40px auto !important;
+    text-align: center !important;
+}
+
+/* Dashboard frame */
+#appDashboard.container {
+    width: 100% !important;
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+}
+
+/* Prevent hidden modules from becoming visible due to override */
+.app-module {
+    width: 100% !important;
+    max-width: 1120px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow: visible !important;
+}
+
+.app-module[style*="display: none"] {
+    display: none !important;
+}
+
+/* Cards/panels */
+.card,
+.module-box {
+    background: var(--card-bg) !important;
+    padding: 25px !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border) !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}
+
+/* Dashboard header and navigation */
+.dashboard-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding-bottom: 15px !important;
+    margin-bottom: 10px !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+}
+
+#topNavMenu {
+    display: flex;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    margin-bottom: 25px !important;
+    padding-bottom: 15px !important;
+    border-bottom: 2px solid var(--border) !important;
+    flex-wrap: wrap !important;
+}
+
+.nav-tab label {
+    background: #f1f1f1 !important;
+    padding: 10px 15px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: bold !important;
+    color: #555 !important;
+    border: 1px solid var(--border) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    font-size: 0.9rem !important;
+}
+
+.nav-tab input[type="radio"] {
+    display: none !important;
+}
+
+.nav-tab input[type="radio"]:checked + label {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+}
+
+/* Tab rows */
+.category-tabs,
+.dept-tabs {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 20px !important;
+    margin-bottom: 20px !important;
+    padding: 15px !important;
+    background: #f1f1f1 !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border) !important;
+    flex-wrap: wrap !important;
+}
+
+.category-tabs label,
+.dept-tabs label {
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    color: var(--primary) !important;
+    margin: 0 !important;
+}
+
+/* Grids */
+.grid-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    align-items: start !important;
+}
+
+.grid-3 {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 15px !important;
+}
+
+.grid-2 > *,
+.grid-3 > * {
+    min-width: 0 !important;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 15px !important;
+    text-align: left !important;
+    position: relative !important;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: var(--primary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="password"],
+select,
+textarea {
+    width: 100% !important;
+    padding: 10px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+    font-size: 1rem !important;
+    box-sizing: border-box !important;
+}
+
+/* Buttons */
+.btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.btn-secondary {
+    background-color: transparent !important;
+    border: 1px solid var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+.search-box {
+    display: flex !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    position: relative !important;
+    z-index: 999 !important;
+}
+
+.search-box input {
+    flex: 1 !important;
+}
+
+/* Keep main admin-style pages from looking too wide */
+#menuSettingsView,
+#hrView,
+#adminView,
+#attendanceView,
+#supplyView,
+#reportsView,
+#clientIntelView,
+#activeAteliersView,
+#menuView {
+    max-width: 1040px !important;
+}
+
+/* ============================================================
+   BOOK APPOINTMENT PAGE — SINGLE COLUMN
+   ============================================================ */
+
+#subView_Schedule > .grid-2 {
+    grid-template-columns: 1fr !important;
+}
+
+#subView_Schedule > .grid-2 > * {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+#subView_Schedule .module-box .grid-2 {
+    grid-template-columns: 1fr !important;
+}
+
+#subView_Schedule .module-box {
+    margin-bottom: 20px !important;
+}
+
+/* Keep Check-In page looking balanced */
+#subView_Checkin > .grid-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr) !important;
+}
+
+/* Billing and Ops can stay balanced */
+#subView_Billing > .grid-2,
+#subView_Ops > .grid-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr) !important;
+}
+
+/* Tables and wide content should scroll inside panels */
+.module-box table,
+.module-box .breakdown-table {
+    width: 100% !important;
+}
+
+.module-box [style*="overflow-x: auto"] {
+    max-width: 100% !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    #appDashboard.container,
+    .container {
+        max-width: 100% !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    .grid-2,
+    .grid-3,
+    #subView_Checkin > .grid-2,
+    #subView_Billing > .grid-2,
+    #subView_Ops > .grid-2,
+    #subView_Schedule > .grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .module-box,
+    .card {
+        padding: 18px !important;
+    }
+
+    .category-tabs,
+    .dept-tabs {
+        justify-content: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .search-box {
+        flex-direction: column !important;
+    }
+
+    .search-box .btn,
+    .search-box button {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .header h1 {
+        font-size: 2rem !important;
+    }
+
+    .module-box,
+    .card {
+        padding: 16px !important;
+    }
+}
+
+/* Expected Today actions: size to the card, not the viewport. */
+#expectedTodayList {
+    container-type: inline-size;
+    container-name: expected-today;
+}
+#expectedTodayList > .ticket:has([data-checkin-appointment-id]) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 13.5rem;
+    align-items: start !important;
+    gap: 14px;
+}
+#expectedTodayList > .ticket > div:has(> h4) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+#expectedTodayList > .ticket:has([data-checkin-appointment-id]) .group-badge {
+    white-space: nowrap;
+    max-width: 100%;
+}
+#expectedTodayList > .ticket > div:has(> [data-checkin-appointment-id]) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0;
+}
+#expectedTodayList > .ticket > div:has(> [data-checkin-appointment-id]) > button {
+    min-width: 0;
+    min-height: 38px;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    line-height: 1.3;
+    letter-spacing: 0;
+    white-space: normal !important;
+    overflow-wrap: normal;
+}
+#expectedTodayList [data-checkin-appointment-id] {
+    grid-column: 1 / -1;
+    min-height: 42px !important;
+    background: var(--th-black, #111) !important;
+    color: #fff !important;
+}
+#expectedTodayList > .ticket:has([data-checkin-appointment-id]) button[onclick^="cancelAppointment("] {
+    color: #854b44 !important;
+}
+#expectedTodayList .th-noshow-action {
+    grid-column: 1 / -1;
+    background: #fff4f3 !important;
+    border-color: #e6bdbc !important;
+    color: #9f2929 !important;
+}
+#expectedTodayList .th-noshow-action:hover {
+    background: #fbe5e3 !important;
+    border-color: #c97d79 !important;
+}
+@container expected-today (max-width: 704px) {
+    #expectedTodayList > .ticket:has([data-checkin-appointment-id]) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

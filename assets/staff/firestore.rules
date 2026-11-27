@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /Clients/{docId} {
+      allow read, create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    match /Appointments/{docId} {
+      allow read, create: if true;
+      allow update, delete: if request.auth != null;
+    }
+
+    match /Bookings/{docId} {
+      allow read, create: if true;
+      allow update, delete: if request.auth != null;
+    }
+
+    match /Approval_Pin_Secrets/{docId} {
+      allow read, write: if false;
+    }
+
+    match /Approval_Audit/{docId} {
+      allow read, write: if false;
+    }
+
+    // Commission configuration and payable snapshots use the trusted callable.
+    match /Commission_Rules/{document=**} {
+      allow read, write: if false;
+    }
+    match /Commission_Locks/{document=**} {
+      allow read, write: if false;
+    }
+    match /Commission_Records/{document=**} {
+      allow read, write: if false;
+    }
+    function legacyCommissionSetting(docId, data) {
+      return !docId.matches('v2_.*')
+        && data.get('schemaVersion', 0) != 2
+        && !(data.get('recordType', '') in ['commission_person', 'commission_identity_binding', 'commission_control', 'commission_command_receipt']);
+    }
+    match /Commission_Settings/{docId} {
+      allow read: if legacyCommissionSetting(docId, resource.data);
+      allow create: if request.auth != null && legacyCommissionSetting(docId, request.resource.data);
+      allow update: if request.auth != null
+        && legacyCommissionSetting(docId, resource.data)
+        && legacyCommissionSetting(docId, request.resource.data);
+      allow delete: if request.auth != null && legacyCommissionSetting(docId, resource.data);
+    }
+
+    match /{collection}/{document=**} {
+      allow read: if collection != "Approval_Pin_Secrets"
+        && collection != "Approval_Audit"
+        && !(collection in ["Commission_Rules", "Commission_Settings", "Commission_Locks", "Commission_Records"]);
+      allow write: if request.auth != null
+        && collection != "Approval_Pin_Secrets"
+        && collection != "Approval_Audit"
+        && !(collection in ["Commission_Rules", "Commission_Settings", "Commission_Locks", "Commission_Records"]);
+    }
+  }
+}
