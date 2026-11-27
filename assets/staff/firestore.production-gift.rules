@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /Clients/{docId} {
+      allow read, create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    match /Appointments/{docId} {
+      allow read: if true;
+      allow create: if !hasGiftEvidence(request.resource.data);
+      allow update: if request.auth != null && giftSafeUpdate();
+      allow delete: if request.auth != null && !hasGiftEvidence(resource.data);
+    }
+
+    match /Bookings/{docId} {
+      allow read, create: if true;
+      allow update, delete: if request.auth != null;
+    }
+
+    // Commission configuration and payable snapshots use the trusted callable.
+    match /Commission_Rules/{document=**} {
+      allow read, write: if false;
+    }
+    match /Commission_Locks/{document=**} {
+      allow read, write: if false;
+    }
+    match /Commission_Records/{document=**} {
+      allow read, write: if false;
+    }
+    function legacyCommissionSetting(docId, data) {
+      return !docId.matches('v2_.*')
+        && data.get('schemaVersion', 0) != 2
+        && !(data.get('recordType', '') in ['commission_person', 'commission_identity_binding', 'commission_control', 'commission_command_receipt']);
+    }
+    match /Commission_Settings/{docId} {
+      allow read: if legacyCommissionSetting(docId, resource.data);
+      allow create: if request.auth != null && legacyCommissionSetting(docId, request.resource.data);
+      allow update: if request.auth != null
+        && legacyCommissionSetting(docId, resource.data)
+        && legacyCommissionSetting(docId, request.resource.data);
+      allow delete: if request.auth != null && legacyCommissionSetting(docId, resource.data);
+    }
+
+    // Gift credentials, private ledgers and command receipts are server-only.
+    match /Gift_Cards/{document=**} { allow read, write: if false; }
+    match /Gift_Card_Redemptions/{document=**} { allow read, write: if false; }
+    match /Gift_Checkouts/{document=**} { allow read, write: if false; }
+
+    function giftMethod(method) {
+      return method is string && method.lower().matches('.*(gift|voucher).*');
+    }
+    function nongiftSplit(rows, index) {
+      return rows.size() <= index || (!giftMethod(rows[index].get('method', ''))
+        && rows[index].get('giftCardCode', '') == '' && rows[index].get('code', '') == ''
+        && rows[index].get('redemptionId', '') == '');
+    }
+    function noGiftSplits(rows) {
+      return rows is list && rows.size() <= 20
+        && nongiftSplit(rows, 0) && nongiftSplit(rows, 1) && nongiftSplit(rows, 2) && nongiftSplit(rows, 3)
+        && nongiftSplit(rows, 4) && nongiftSplit(rows, 5) && nongiftSplit(rows, 6) && nongiftSplit(rows, 7)
+        && nongiftSplit(rows, 8) && nongiftSplit(rows, 9) && nongiftSplit(rows, 10) && nongiftSplit(rows, 11)
+        && nongiftSplit(rows, 12) && nongiftSplit(rows, 13) && nongiftSplit(rows, 14) && nongiftSplit(rows, 15)
+        && nongiftSplit(rows, 16) && nongiftSplit(rows, 17) && nongiftSplit(rows, 18) && nongiftSplit(rows, 19);
+    }
+    function hasGiftEvidence(data) {
+      return data.get('hasGiftCardApplied', false) == true || data.get('giftCheckoutId', '') != ''
+        || data.get('giftCheckoutVersion', 0) != 0 || data.get('giftCardCode', '') != ''
+        || data.get('giftCardCodes', []).size() > 0 || data.get('giftCardAppliedAmount', 0) != 0
+        || data.get('giftCardRedemptionId', '') != '' || data.get('giftCardRedemptionIds', []).size() > 0
+        || data.get('giftCardRedemptions', []).size() > 0 || giftMethod(data.get('paymentMethod', ''))
+        || !noGiftSplits(data.get('paymentSplits', []));
+    }
+    function giftEvidenceUnchanged() {
+      // Settled Gift evidence cannot gain a new competing financial field later.
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes', 'internalNotes', 'updatedAt']);
+    }
+    function giftSafeUpdate() {
+      return hasGiftEvidence(resource.data) ? giftEvidenceUnchanged() : !hasGiftEvidence(request.resource.data);
+    }
+    match /Active_Jobs/{docId} {
+      allow read: if true;
+      allow create: if request.auth != null && !hasGiftEvidence(request.resource.data);
+      allow update: if request.auth != null && giftSafeUpdate();
+      allow delete: if request.auth != null && !hasGiftEvidence(resource.data);
+    }
+    // Preserve unrelated nested access without reopening root settlement documents.
+    match /Active_Jobs/{docId}/{subcollection}/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /Appointments/{docId}/{subcollection}/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /{collection}/{document=**} {
+      allow read: if !(collection in ["Commission_Rules", "Commission_Settings", "Commission_Locks", "Commission_Records", "Gift_Cards", "Gift_Card_Redemptions", "Gift_Checkouts", "Active_Jobs", "Appointments"]);
+      allow write: if request.auth != null
+        && !(collection in ["Commission_Rules", "Commission_Settings", "Commission_Locks", "Commission_Records", "Gift_Cards", "Gift_Card_Redemptions", "Gift_Checkouts", "Active_Jobs", "Appointments"]);
+    }
+  }
+}

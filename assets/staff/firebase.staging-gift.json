@@ -1,0 +1,8 @@
+{
+  "functions": [{
+    "source": "functions",
+    "codebase": "default",
+    "predeploy": ["node gift-backend-build.cjs --check", "node gift-rules-build.cjs --check"]
+  }],
+  "firestore": { "rules": "firestore.staging-gift.rules" }
+}
