@@ -1,0 +1,1072 @@
+{
+  "kind": "QUALIFIED_PRODUCTION_TEMPLATE_ASSEMBLY",
+  "certifiedParent": "1decab0c31b8cf1a506250756048a6401a1fa586",
+  "files": [
+    {
+      "path": "client/app.js",
+      "sha256": "d6def2ab2fca3a3f89265256df9c95bb2e46b6c23a4130dd737a016541e020bc",
+      "bytes": 285285
+    },
+    {
+      "path": "client/availability-effective-schedule.js",
+      "sha256": "bf0aecf951c15ccfd03c57cccc72ba32658a53bd49c1553593b6f63be92285e3",
+      "bytes": 1148
+    },
+    {
+      "path": "client/availability-schedule-policy.js",
+      "sha256": "366bfaeb04622c602af9443ab773ec8de4b68f99d039d80344f160671cd0de04",
+      "bytes": 5839
+    },
+    {
+      "path": "client/availability.js",
+      "sha256": "b517db60f054776f9f250f608dd9b30691fb732ce1d249779afecab14a0b391b",
+      "bytes": 36140
+    },
+    {
+      "path": "client/booking-transport.local.js",
+      "sha256": "b249d97a23807204ddd2a763383520fc02cb3b58c4770eee9043b16b4f890617",
+      "bytes": 2834
+    },
+    {
+      "path": "client/brand.css",
+      "sha256": "7a267868d67e78e68fd48bf49f152233a8d433b41d01a67b83036473b35af690",
+      "bytes": 173953
+    },
+    {
+      "path": "client/client-engagement.js",
+      "sha256": "751653d54b82592d90b01e878364f818bdb60e2d39bdf9474da8b06617281876",
+      "bytes": 1107
+    },
+    {
+      "path": "client/firebase-config.js",
+      "sha256": "1a2e723fc272ef8dde2c2b1e704b43dff7d9d2f8cb44e1f7a61b12563b6ebf6f",
+      "bytes": 2529
+    },
+    {
+      "path": "client/group-booking.js",
+      "sha256": "2ef049de3a41cc67f9d2603108ab51a96fe06fb5c74709f791ce017031e4ac15",
+      "bytes": 131256
+    },
+    {
+      "path": "client/index.html",
+      "sha256": "8e48fb64a2591d6c9eccebf1a3961d6a6320ed52781eae4adcd89eb6189a21ae",
+      "bytes": 73080
+    },
+    {
+      "path": "client/ordinary-bootstrap.js",
+      "sha256": "18ded3a07c3dd990ba07368c30e8f65aae61ebf1ad4e94fac079094aebeafe41",
+      "bytes": 308
+    },
+    {
+      "path": "client/ordinary-request-recovery.js",
+      "sha256": "bc0039974af2b6203ac0b4085f157e72a00baf1de9a95a73fd74dba1ea581c84",
+      "bytes": 4105
+    },
+    {
+      "path": "client/phase-9a-soft-login-gate.js",
+      "sha256": "b01d70d6cfce5c0a00e63eae22bfb7b4053e81a47e2a0d1d22c316b030f75b94",
+      "bytes": 13318
+    },
+    {
+      "path": "client/phase-9b-email-password-auth.js",
+      "sha256": "535139f0b71938017156cd43b64579f4c58e71844b46a0236ba69d2b79889262",
+      "bytes": 13105
+    },
+    {
+      "path": "client/released-schedule-v2-compat.js",
+      "sha256": "ac47e6d1989a00feb6a8994d477867b1b0064a941587be7e3660db34527f5597",
+      "bytes": 14835
+    },
+    {
+      "path": "client/schedule-policy.js",
+      "sha256": "f2695e9534c5a49416ce858b059409bb328d8b20a76deea1013f2d770fb26fd4",
+      "bytes": 5078
+    },
+    {
+      "path": "client/sdk/firebase-app.js",
+      "sha256": "7928369a406440002cb4b79ce79e2374bb580a6f189a16db2e400cdfa80e3130",
+      "bytes": 22121
+    },
+    {
+      "path": "client/sdk/firebase-auth.js",
+      "sha256": "0a99665d77fbb2a8996da55c9dee2f8df31fb163a4ea3aa612042c9dfbd7d7dc",
+      "bytes": 177250
+    },
+    {
+      "path": "client/sdk/firebase-firestore.js",
+      "sha256": "6a6e4bd119563f63bc6fffae1c397bc6494063f4785ad774a98bbf5d065844ff",
+      "bytes": 336946
+    },
+    {
+      "path": "client/sdk/firebase-functions.js",
+      "sha256": "780f9bd5066b006891dd558c8cfa5910644553ead5f997cf9974fe0f4e55af5b",
+      "bytes": 10857
+    },
+    {
+      "path": "client/styles.css",
+      "sha256": "105bef79005e769bd2a40106da92c9f1a155ee4126d6f9f67def0acd54baaf59",
+      "bytes": 13880
+    },
+    {
+      "path": "client/tax-policy.js",
+      "sha256": "7bd2c37e85c3ec6116d2c6f13073cdd077a9fd1a09d2f57ac95c84d98e925e66",
+      "bytes": 7393
+    },
+    {
+      "path": "client/thuraya-monogram.jpg",
+      "sha256": "0556eb99cde6591215a4ce16e625e5005601f5900233edb9c982eed51f484dcc",
+      "bytes": 27836
+    },
+    {
+      "path": "staff/app.js",
+      "sha256": "39f94093f398873667940159e62da054590f824e2d9e0da88cce3dfdeccbc6d0",
+      "bytes": 2013879
+    },
+    {
+      "path": "staff/archive-manifest-generator.js",
+      "sha256": "784b0e98e002d26022b8127a1c6d3bf49d91141f7a614943610346471e4c9595",
+      "bytes": 20874
+    },
+    {
+      "path": "staff/attendance-aggregator.js",
+      "sha256": "5e648fa4278eca9465c035be6eedbb6e37c0ea1105d79803babe4f53ab5a77e7",
+      "bytes": 26271
+    },
+    {
+      "path": "staff/attendance-aggregator.test.cjs",
+      "sha256": "c9e8524d05baf084688f0e11e718b1e5da27f8f067d0ea99964df1325447b16d",
+      "bytes": 9411
+    },
+    {
+      "path": "staff/attendance-identity-sync.js",
+      "sha256": "ad1202305b5f75fa55473151d055a16904f848f1a9cab4ad395d5566c402861c",
+      "bytes": 10887
+    },
+    {
+      "path": "staff/attendance-policy-compat.js",
+      "sha256": "ac47e6d1989a00feb6a8994d477867b1b0064a941587be7e3660db34527f5597",
+      "bytes": 14835
+    },
+    {
+      "path": "staff/attendance-roster-runtime.test.cjs",
+      "sha256": "b899db266d37d60ff6466cede71104541262af8fe8cc1cd8016bad4022b13c4e",
+      "bytes": 6889
+    },
+    {
+      "path": "staff/attendance.js",
+      "sha256": "5c3fec3bc7ff304944d603eeb49509fc2eea7623c07dfa620045f6aab1f0f4fe",
+      "bytes": 67853
+    },
+    {
+      "path": "staff/availability-effective-schedule.js",
+      "sha256": "bf0aecf951c15ccfd03c57cccc72ba32658a53bd49c1553593b6f63be92285e3",
+      "bytes": 1148
+    },
+    {
+      "path": "staff/availability-schedule-policy.js",
+      "sha256": "366bfaeb04622c602af9443ab773ec8de4b68f99d039d80344f160671cd0de04",
+      "bytes": 5839
+    },
+    {
+      "path": "staff/availability-sources.js",
+      "sha256": "5568f681fae04935b2be465203eecfc9ffa66762a01f4f28d03df26d836a5655",
+      "bytes": 1937
+    },
+    {
+      "path": "staff/booking-allocation-transport.local.js",
+      "sha256": "66652885c4e936da7778a0b303d7e1c431ed0f039d317cf129ae4fab8c46a251",
+      "bytes": 6436
+    },
+    {
+      "path": "staff/booking-hf85f-core.js",
+      "sha256": "dd90a270101afd570b762a85d1d6c01d7c815dcef3448e47e039c6dd907d9012",
+      "bytes": 35485
+    },
+    {
+      "path": "staff/booking-hf85f-core.js.diff.txt",
+      "sha256": "38d50fe4c8674e63824d23837b92f7f1461dbb11cdfe94cc56108114ac42f660",
+      "bytes": 1879
+    },
+    {
+      "path": "staff/booking-hf85f.css",
+      "sha256": "0792ee875af92df3ef1ba5573cbd27f5b507c29a0a852c6d9aa7b35d1a307105",
+      "bytes": 13040
+    },
+    {
+      "path": "staff/booking-hf85f.css.diff.txt",
+      "sha256": "e3d4adccdd2ef4f35c96ce7eec6d462736cde63b757f44f771a8c4c9207a5e45",
+      "bytes": 1883
+    },
+    {
+      "path": "staff/booking-hf87-group.css",
+      "sha256": "e62da352dca598fe7834dbcf44b27e070e8ab15d837ffe559fe88a4258554923",
+      "bytes": 25053
+    },
+    {
+      "path": "staff/booking-hf87-group.js",
+      "sha256": "4ae394e84a1397d61b121026fde826663e5c066810e3381b887f7042beb3a943",
+      "bytes": 63323
+    },
+    {
+      "path": "staff/brand.css",
+      "sha256": "41cb213b8e5c3d4a8ff453a2381dc6535f9f524c591b16d7411464ede049884d",
+      "bytes": 54280
+    },
+    {
+      "path": "staff/catalogue-legacy-governance.js",
+      "sha256": "c27090f56e32dc9ec0456ca89008bf1947945ca00adf109115855027cd199d2e",
+      "bytes": 15564
+    },
+    {
+      "path": "staff/catalogue-metadata-adapter.js",
+      "sha256": "58e2ac774bf55fc5ccee637c5c1c73f5f55323da9eca455a784be73e1b1be4cb",
+      "bytes": 9731
+    },
+    {
+      "path": "staff/catalogue-metadata-bootstrap.js",
+      "sha256": "6575f25b10f549ce5edad971ee499ec96b42d30b530337b2031f13fe331b35fe",
+      "bytes": 702
+    },
+    {
+      "path": "staff/clock-system-stability.js",
+      "sha256": "abb656cde03a9f5f1d0b3c361052ff54a5a815b8b40890fa60cb42d113b03e7b",
+      "bytes": 19467
+    },
+    {
+      "path": "staff/commission-deployment-check.cjs",
+      "sha256": "bc3ff2552c92427e091a14cc819fe348a24ea1fe6f5eec864e7a5ec0efd6d6bc",
+      "bytes": 1281
+    },
+    {
+      "path": "staff/commission-deployment.test.cjs",
+      "sha256": "48bfd60d43ef39e23807da2e44dce8f11d084e0afe7127498a49e331fad91243",
+      "bytes": 3460
+    },
+    {
+      "path": "staff/commission-engine.test.cjs",
+      "sha256": "27ccb564470f6d3cca6db9f839e97b5d42d7ff42b4da3fb964dc602d1d21ccfc",
+      "bytes": 9614
+    },
+    {
+      "path": "staff/commission-evidence.test.cjs",
+      "sha256": "71144df4e4092bbd2e4b713d366100920a18945ed6f9e79a16328a897ab71ba4",
+      "bytes": 2696
+    },
+    {
+      "path": "staff/commission-integration.test.cjs",
+      "sha256": "703d2fd78a878160ef9e6c084c2ec5a3c0b232b320eaa055515d696ab1baa569",
+      "bytes": 15100
+    },
+    {
+      "path": "staff/commission-legacy-reader.test.cjs",
+      "sha256": "e8b46bb9c044f8bc3d476bf249467a88883c57e515eb2c5437a1b86b53ceef67",
+      "bytes": 9593
+    },
+    {
+      "path": "staff/commission-materiality.test.cjs",
+      "sha256": "015331d3b4c814ff1c2c1b809d01423800702a2ae428b8d018675ed6fd6f0ffd",
+      "bytes": 22616
+    },
+    {
+      "path": "staff/commission-presentation.js",
+      "sha256": "d52acb0a1aefe4d3e8f90bb5ca19388b2c088bce49dc2a04c988b687c0c1e310",
+      "bytes": 14352
+    },
+    {
+      "path": "staff/commission-presentation.test.cjs",
+      "sha256": "56c4d5c1c8cc631aab7573ae476737d96c05c1b5ecf72111957e07a992a11d7f",
+      "bytes": 3947
+    },
+    {
+      "path": "staff/commission-production-compatibility.md",
+      "sha256": "e9a4a0b2bab5e8afbf6d7b3ccdbc7a3fa74b3497b7df74ce8d25ea89d0805547",
+      "bytes": 8243
+    },
+    {
+      "path": "staff/commission-representation.test.cjs",
+      "sha256": "93bdf598b77db4d151197ee22f492b1db64ba4548c8ac923e407b4799c7c808a",
+      "bytes": 7088
+    },
+    {
+      "path": "staff/commission-rule-ux.test.cjs",
+      "sha256": "0ee9ee36e7d97573120b1d1345c37f77a1493db9c9630739eda191a91e088054",
+      "bytes": 17431
+    },
+    {
+      "path": "staff/commission-security-cases.cjs",
+      "sha256": "b7d9d7b2a51401c30290c50617a296a6bb85cbde79aa4383021f52b82460cf35",
+      "bytes": 3950
+    },
+    {
+      "path": "staff/commission-service.test.cjs",
+      "sha256": "6de4925a0f560f910817924e4091165fc52f1bdd382223eba94c698fc14ca766",
+      "bytes": 46501
+    },
+    {
+      "path": "staff/commission-target-ui.js",
+      "sha256": "88f8db16cd5e053268e37abda9eb1c8372f0ad62339303d244a7e98cb43cbfe6",
+      "bytes": 57103
+    },
+    {
+      "path": "staff/commission-tax-precision.test.cjs",
+      "sha256": "d5537181502b9fe5c61b399da1106fe0085d30a20abe7583837bb2178c52f95f",
+      "bytes": 4584
+    },
+    {
+      "path": "staff/commission-test-fixtures.cjs",
+      "sha256": "19cff27eb27208a13c8fd3ab264f2dc24f68d72863ea57b402b331a7914e05b4",
+      "bytes": 2237
+    },
+    {
+      "path": "staff/commissions-tab-rescue.js",
+      "sha256": "383cbc40c1140a39e47064fd9c44c0117542aa976e3277e3005ec1f51c1d1632",
+      "bytes": 3565
+    },
+    {
+      "path": "staff/commissions-v1.js",
+      "sha256": "1d90390afcb72e87fe88c88469973f6fe1571485935d50883d2dfd92b3b4e10b",
+      "bytes": 78483
+    },
+    {
+      "path": "staff/complimentary-approval-ui.js",
+      "sha256": "ca18c5c2eb75b74453b35ebc2450de5b86cc330be86ce65c5e53e20ea38c72bb",
+      "bytes": 43078
+    },
+    {
+      "path": "staff/expected-today-actions.test.cjs",
+      "sha256": "8e5d93d8c6273e1968c9cc16d113447d395559ca105f5e53cfe50800dbda8873",
+      "bytes": 15198
+    },
+    {
+      "path": "staff/firebase-config.js",
+      "sha256": "bc1ebe5a9fb8d315e9e8e29ce8e9bbe95f9301f348c131f5e9e36f95ab0b7a8e",
+      "bytes": 3278
+    },
+    {
+      "path": "staff/firebase.hubtel-diagnostics.json",
+      "sha256": "2bd61db7447a8b679b86b9e55f8b8ffa18fd5aeb7628e7e0613043876407543b",
+      "bytes": 168
+    },
+    {
+      "path": "staff/firebase.json",
+      "sha256": "6013d3b9e95719961a4966c869180de03c493a94b728043cdcb182b85ff52ad0",
+      "bytes": 361
+    },
+    {
+      "path": "staff/firebase.production-commission.json",
+      "sha256": "4df3846a16c8d89cabe003b9c1f38540f5508a4039352883416c10b6fee30af6",
+      "bytes": 148
+    },
+    {
+      "path": "staff/firebase.staging-gift.json",
+      "sha256": "00dd88c07682b1a65a073a026e456161eebb99d16078db816bd553809c666c10",
+      "bytes": 235
+    },
+    {
+      "path": "staff/firebase.staging-noshow.json",
+      "sha256": "c1bf68d228b03a4f5ec568a27485cf1edd18152a080c537490a527b5efb28f51",
+      "bytes": 130
+    },
+    {
+      "path": "staff/firestore.production-commission.rules",
+      "sha256": "4558f3c1a39745123c42819a8423fe1e949d012a3a0419ad46f7a33c55826d9b",
+      "bytes": 1910
+    },
+    {
+      "path": "staff/firestore.production-gift.rules",
+      "sha256": "84b76de6591fd1db8d5f39ae850a7d4ce8d73b407442e39966d60d4916b50d92",
+      "bytes": 5224
+    },
+    {
+      "path": "staff/firestore.production-noshow.rules",
+      "sha256": "9bf237802747970420e021b7c0fcdec6b70a2a660380a07ef69ed6402f0a01a5",
+      "bytes": 6424
+    },
+    {
+      "path": "staff/firestore.rules",
+      "sha256": "4cfe1b208e206dc17bc3e0b529c24d8cbe307d99279b386ba99ee08d9fc89abc",
+      "bytes": 2252
+    },
+    {
+      "path": "staff/firestore.staging-gift.rules",
+      "sha256": "8e3ea67a0a2992aa4bb4ba78ff12ce96381447c53386d7be2a9b385335978f8c",
+      "bytes": 5566
+    },
+    {
+      "path": "staff/firestore.staging-noshow.rules",
+      "sha256": "2a82fad559e474345400e76f5874eff73671ce1b274f29b5f7655641e67b8d44",
+      "bytes": 6766
+    },
+    {
+      "path": "staff/functions/canonical-financial-core.js",
+      "sha256": "b922d4c1cb6651a78cef485f6ab27dbb1fc377454e375e830bce22802aadd37d",
+      "bytes": 11672
+    },
+    {
+      "path": "staff/functions/canonical-financial-core.parity.test.js",
+      "sha256": "04e4c35536d179678f990b7fa003013de9c2407cec2fb728d2702be1836e37f2",
+      "bytes": 5247
+    },
+    {
+      "path": "staff/functions/commission-authorization.js",
+      "sha256": "b33204125ab7b260e0926abf9a0c0967c6d6fb5ced3f17c6083bb2619ca68024",
+      "bytes": 2933
+    },
+    {
+      "path": "staff/functions/commission-engine.js",
+      "sha256": "a6cab93ec5e46de4064802f5c8b2f7485df0b167526cbaffaabd08cdf43f26d4",
+      "bytes": 31256
+    },
+    {
+      "path": "staff/functions/commission-enrollment.js",
+      "sha256": "7e2938acafe087d5fa9ac2a3dbf4b523130d873bf6b77f3bc261ae03a9b43a72",
+      "bytes": 12681
+    },
+    {
+      "path": "staff/functions/commission-legacy-menu.js",
+      "sha256": "3eb8233bcb1f681a126a74538afbe4cef4082f83ae54c386537fd8607348867b",
+      "bytes": 14072
+    },
+    {
+      "path": "staff/functions/commission-legacy.js",
+      "sha256": "ef7853a242f81c0e32034cb0932cb5d3862233e6b303e96a6030ed8329da31a0",
+      "bytes": 36862
+    },
+    {
+      "path": "staff/functions/commission-materiality-policy.js",
+      "sha256": "88aa33a70ca3ea667861a2cd706432b2c638a9e0c828fb2d127e1a4cfb040180",
+      "bytes": 19024
+    },
+    {
+      "path": "staff/functions/commission-v2-service.js",
+      "sha256": "b5371e9b24820fc7c1ef1a91f1ab942687de2a3040a94c87f19240aa1ed9d906",
+      "bytes": 59242
+    },
+    {
+      "path": "staff/functions/complimentary-canonical-migration.test.js",
+      "sha256": "2a6da6b09746b321873a5f6c7230ccda3be540bd23d69dcf8a78d1a7ae49004d",
+      "bytes": 10688
+    },
+    {
+      "path": "staff/functions/complimentary-service-line-normalization.test.js",
+      "sha256": "e6d565e699a4580bbbe296d504aaaa792bc2305d3faf3d4061dc84cde8204409",
+      "bytes": 8665
+    },
+    {
+      "path": "staff/functions/gift-authorization.js",
+      "sha256": "0358b29de541261122c355fd82001e4530b26f61d413404699d921afdd97c8ad",
+      "bytes": 3280
+    },
+    {
+      "path": "staff/functions/gift-card-model.generated.js",
+      "sha256": "c040af52cc889c4bebcb7acd4180eedd39955bdec7f74d285d89c29026976a75",
+      "bytes": 8036
+    },
+    {
+      "path": "staff/functions/gift-checkout-policy.generated.js",
+      "sha256": "8e35379013f1f5597f5e4ea1df97bf5355510c041708f114fe0f6653f1c4b634",
+      "bytes": 68135
+    },
+    {
+      "path": "staff/functions/gift-service.js",
+      "sha256": "c0dbebafefda27048863b0a44a86c390e8c34d5a079d8efd419d36f5259f8f77",
+      "bytes": 26264
+    },
+    {
+      "path": "staff/functions/index.js",
+      "sha256": "008cde06b72fcb693474dc9430b147641389954db6ae1306a1d5b40f933d6d46",
+      "bytes": 245232
+    },
+    {
+      "path": "staff/functions/no-show-authorization.js",
+      "sha256": "49906827ca051104db2336a6e0138c7f3e086c0a7d3b608d89c732274507848f",
+      "bytes": 2486
+    },
+    {
+      "path": "staff/functions/no-show-individual.generated.js",
+      "sha256": "0e5bde3ef49290f2d58d115384a959c9ebe2645edb3b4d60392851e9239b6fc2",
+      "bytes": 6600
+    },
+    {
+      "path": "staff/functions/no-show-model.generated.js",
+      "sha256": "6ac986b76750c8bbfe15be3e2064c7574c5facf906dc1a89bafd73d3c68418da",
+      "bytes": 6234
+    },
+    {
+      "path": "staff/functions/no-show-service.js",
+      "sha256": "ac0916b58e99ba4e797522f3fc6fb10b93b9747cff0768cab81fb25d99bedbb2",
+      "bytes": 12374
+    },
+    {
+      "path": "staff/functions/package.json",
+      "sha256": "d2099137a057a41dfe387ed3b79b47d04c0609f875f1d73545974fbc6e280572",
+      "bytes": 267
+    },
+    {
+      "path": "staff/functions/readme.md",
+      "sha256": "82c3ecd3652396d5ce6d54729ef2a1068ea74a7bc650327b96a6d38eff5bcd46",
+      "bytes": 3334
+    },
+    {
+      "path": "staff/functions/vendor/decimal-licence.md",
+      "sha256": "a0df2307b32880324fc5f42def582b5c1fa2058a30bbab90731c948241a5c7c2",
+      "bytes": 1081
+    },
+    {
+      "path": "staff/functions/vendor/decimal.js",
+      "sha256": "0bc0d6920e8852b4a2bb0cf9963b101c22f7029b42c8b12c9e27fd24021dff04",
+      "bytes": 131722
+    },
+    {
+      "path": "staff/gift_card_security.md",
+      "sha256": "f83dfd70c48ceb8d1742749a30ef899ecf16135cd7692e7705ee4975f5a7126f",
+      "bytes": 7029
+    },
+    {
+      "path": "staff/gift-backend-build.cjs",
+      "sha256": "61ca942ffaebaccf2d5a73c88b13b4c4f33ad3f0f02e2d781f63230bef5610ef",
+      "bytes": 2168
+    },
+    {
+      "path": "staff/gift-card-api.js",
+      "sha256": "68a7862ca8b6850b87a3881ffd846d9c6b6a471cccaa95fbac384824d06bc543",
+      "bytes": 3523
+    },
+    {
+      "path": "staff/gift-card-model.js",
+      "sha256": "c040af52cc889c4bebcb7acd4180eedd39955bdec7f74d285d89c29026976a75",
+      "bytes": 8036
+    },
+    {
+      "path": "staff/gift-card-sales-hf92b.js",
+      "sha256": "76d78a7a17c4eb9d3cb7a61468dd831fac382eb72fa11681a8d30e038e56f036",
+      "bytes": 19751
+    },
+    {
+      "path": "staff/gift-card-ui.test.cjs",
+      "sha256": "19e9046ca6ee9ffb667fd398e7a4a525c3e9643d0c128e8a8c7ddbab7d49e47f",
+      "bytes": 13286
+    },
+    {
+      "path": "staff/gift-card.test.cjs",
+      "sha256": "2d6d20291f8f6376277b613daecd3458b25e45d876503bd32b89e2eca833e9a6",
+      "bytes": 11639
+    },
+    {
+      "path": "staff/gift-rules-build.cjs",
+      "sha256": "db90bde5cb8158dcd5bbff5e744675b4abdf2e70a89e9e00e05b97fd0e1904e0",
+      "bytes": 1913
+    },
+    {
+      "path": "staff/gift-security-cases.cjs",
+      "sha256": "8d91a4d7e630016fdd3f5db0a5858a8136a6bb36c91532ce845cf5bd7dfafe67",
+      "bytes": 4167
+    },
+    {
+      "path": "staff/gift-security-rules.fragment",
+      "sha256": "477f4d6c0fff52ca7772115f1ab2b0fd8c4ef10f15b8c2b1d6964b730336626b",
+      "bytes": 2989
+    },
+    {
+      "path": "staff/gift-security.test.cjs",
+      "sha256": "c425a4ef41fbd3aac17bb1ab472d85babc321f90ec311263e26eaff283594609",
+      "bytes": 15382
+    },
+    {
+      "path": "staff/gift-test-fixtures.cjs",
+      "sha256": "600b20c60bc759c016ac5f2576329cc925bef99758327ec536349cef523c378f",
+      "bytes": 5807
+    },
+    {
+      "path": "staff/group-appointment-review.js",
+      "sha256": "7a76c8da7afafbbf575b7818fa1f326cfe96e504e35cb7252f2d6120d4ecd4b4",
+      "bytes": 38381
+    },
+    {
+      "path": "staff/group-appointment-review.local.js",
+      "sha256": "22c2f0ca00e0e49aaafb0c3718f4acab04c5dcc99281b6e9a62316ae7f64abcd",
+      "bytes": 40941
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/index.js",
+      "sha256": "a66180b525ddfbcba73e4fdc535c6d8668c9764d6ba6f1750c914b3d86ebe6fe",
+      "bytes": 1521
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/network-engine.js",
+      "sha256": "a4f539d7cbbc055f962be012998a64bd8478774a64b17320a1083d614287da55",
+      "bytes": 12570
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/network.js",
+      "sha256": "f22e419b405a8fbf928608403030e2139baecc27f1b96b857f390a6f9a0ae173",
+      "bytes": 610
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/package.json",
+      "sha256": "c1839b152dd2b7ec2c7c84bdcd589a9a4ea42f36d85b001a4619973192e53939",
+      "bytes": 305
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/pnpm-lock.yaml",
+      "sha256": "a511abde80fc86ebe9a29f21387471f374b31ae3446f3a11bf2bc381c84bd725",
+      "bytes": 75951
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/pnpm-workspace.yaml",
+      "sha256": "44a51b82e5124dbad629f18683ee522f8acee9c40c67ae30d68211a7c082cfc7",
+      "bytes": 60
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/profiles.js",
+      "sha256": "a827f7f571423bc08f9a6a5c3ef0a14c89a6c99ebcb2380e4e087276762af001",
+      "bytes": 580
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/service.js",
+      "sha256": "3003eeeb4ba360bd41b32f54ddba1e1a161a4027814c8b9ded1ee8349b38f766",
+      "bytes": 6940
+    },
+    {
+      "path": "staff/hubtel-diagnostics-backend/target-policy.js",
+      "sha256": "6fe7f49c9f8d0006ac7340d2097ec2154ea3c2b7c962aada3498f30813373a52",
+      "bytes": 5035
+    },
+    {
+      "path": "staff/hubtel-diagnostics-packaging.test.cjs",
+      "sha256": "7e598adb0984706df430e93e673f358c92795ff708de27d89210ecb53ddc2ae1",
+      "bytes": 18927
+    },
+    {
+      "path": "staff/hubtel-diagnostics-production-parity.cjs",
+      "sha256": "f7ee93e517f9d2df63860f548a5e1b9d1f9ee3ac83581c279d2f4ab1a42f2ea9",
+      "bytes": 4589
+    },
+    {
+      "path": "staff/hubtel-diagnostics-production.test.cjs",
+      "sha256": "bcd774d8be215c2c37b101f92dbce462557b2a318bae31e4acb14803863348dd",
+      "bytes": 6728
+    },
+    {
+      "path": "staff/hubtel-diagnostics-source-parity.cjs",
+      "sha256": "d4f8ef5b00863c03aabcd7300ff530c465823437b8e0c2bf57282864521e6123",
+      "bytes": 1066
+    },
+    {
+      "path": "staff/hubtel-diagnostics.css",
+      "sha256": "4b886a6ca3ea492b3ece25dceb6702f9d5467554f748d2e9787db3e6c657e32e",
+      "bytes": 3149
+    },
+    {
+      "path": "staff/hubtel-diagnostics.js",
+      "sha256": "57359dfe9a70ee7cced34884447e4c83989404ca6f601704afa5004868b5714d",
+      "bytes": 14755
+    },
+    {
+      "path": "staff/hubtel-diagnostics.test.cjs",
+      "sha256": "705c4299be9be1b503c7f28096a61b1380abfe75b7829fb8d4bae4dace2855de",
+      "bytes": 28274
+    },
+    {
+      "path": "staff/hubtel-network-diagnostics.md",
+      "sha256": "c1630812f67f72c142bcf3ea4b7e7327d7b09cf50549556f1bb6f40fcdd346a4",
+      "bytes": 5444
+    },
+    {
+      "path": "staff/index.html",
+      "sha256": "012161e1bd877bd250130a94bde176d6fada149e45658275b76e3c1fe0085998",
+      "bytes": 208535
+    },
+    {
+      "path": "staff/index.html.diff.txt",
+      "sha256": "d361d35d386ae252be724cd481baf1963de032727f104bbeeada6bf4cc6f9d72",
+      "bytes": 4732
+    },
+    {
+      "path": "staff/intelligence-ai-period-browser.test.cjs",
+      "sha256": "7536043ccc90b88029e5f9e1d73b8abc570a50c9e9dcd629b7871e71a9c0a4a7",
+      "bytes": 11150
+    },
+    {
+      "path": "staff/intelligence-ai-period.test.cjs",
+      "sha256": "4ef91be172dff2298bd9dc69e0c2e206b4469efa3a3858daec6f3ee64531a06a",
+      "bytes": 12431
+    },
+    {
+      "path": "staff/intelligence-canonicalization.test.cjs",
+      "sha256": "98ee55a5aaf56456982215c5d0fb79e5e9751dd3eb89d6653d55b0efd82dd48a",
+      "bytes": 9678
+    },
+    {
+      "path": "staff/intelligence-client-period-label.test.cjs",
+      "sha256": "9c846346ed737cbb5b8dc95a9674aaca48e19e0c1fdeb3bd21d10dadc6a8f30a",
+      "bytes": 9229
+    },
+    {
+      "path": "staff/intelligence-client-value-responsive.test.cjs",
+      "sha256": "2ae6bec34a4436ec7160ad0961e3a18d9bf15a1600e776bda4fac09926fdb4cf",
+      "bytes": 13502
+    },
+    {
+      "path": "staff/intelligence-engine-v1.js",
+      "sha256": "9efc26738a2af1f744c82260a7aea3de500e492e9e87992a837853f4b13d682e",
+      "bytes": 28274
+    },
+    {
+      "path": "staff/intelligence-global-period.test.cjs",
+      "sha256": "02086e7b128aaae6c2ae7a37951ccf6577c6f1acb73801aaa9bf1961d6e7af5e",
+      "bytes": 12341
+    },
+    {
+      "path": "staff/intelligence-global-source-parity.cjs",
+      "sha256": "84f176b0026f03462b3d3bee8a8382483f3de0d7e0e104074c096b9eee870a91",
+      "bytes": 1870
+    },
+    {
+      "path": "staff/intelligence-global-test-harness.cjs",
+      "sha256": "fa35e383bbbdf69d8c06d5ca2d2065bb5d67415beb28a29a6d947386fc47d105",
+      "bytes": 8696
+    },
+    {
+      "path": "staff/intelligence-kpi-stability.test.cjs",
+      "sha256": "d8409f4e7b1cf3798077d97d2dc928ad6867c30814a137b081303c2f264d17f3",
+      "bytes": 9605
+    },
+    {
+      "path": "staff/intelligence-ranking.test.cjs",
+      "sha256": "06987cf66024d688ea1f6b006d3817b8ac07ae803f70a1879a6686d692f960ea",
+      "bytes": 9684
+    },
+    {
+      "path": "staff/intelligence-refresh.test.cjs",
+      "sha256": "558055bc8f030bdc41599862005d04f542d73fb168c4a8eac390af8f59a85464",
+      "bytes": 17262
+    },
+    {
+      "path": "staff/managed-staff-operations.js",
+      "sha256": "2d07e58075b02b86b1062487ff40d5ec6936a130051789f0b67bf0f18dc32e97",
+      "bytes": 8590
+    },
+    {
+      "path": "staff/menu-builder-pricing-ui.js",
+      "sha256": "232f1f2b3821d75e3e443dee193ec614dd183c421ac8fc8a71d10f912a81b7a5",
+      "bytes": 35953
+    },
+    {
+      "path": "staff/menu-builder-pricing.css",
+      "sha256": "13f560b3b93830c1bbf4f75c1224d2ec0169a4f5dc5e51bf0e6fac2e170866a2",
+      "bytes": 2753
+    },
+    {
+      "path": "staff/menu-pricing-callable.js",
+      "sha256": "3147c8c4101e0020457f9b4d213051c8e2b041b0cb34d9c02a6cf2f5efa825aa",
+      "bytes": 2644
+    },
+    {
+      "path": "staff/menu-pricing-core.js",
+      "sha256": "a005d161f9403eba33d08e9b23086eeb5100ae812970d6ec238245d353a21a23",
+      "bytes": 12414
+    },
+    {
+      "path": "staff/menu-v2-csv-importer.js",
+      "sha256": "867c895ba0bb486df68b8e4a9e8cb278ce8b85d1b7d66cf6f61dac6deca4d266",
+      "bytes": 11572
+    },
+    {
+      "path": "staff/menu-v2-normalizer.js",
+      "sha256": "52c1f0bfc84d832cc323a4d00afd417f7bf2e827143b07b5eaaca9ec7e7b4e3a",
+      "bytes": 2820
+    },
+    {
+      "path": "staff/my-profile-tabfix.js",
+      "sha256": "9758ab803bd39eab9abe81ee41100163084508cf65aec2310edfc98510acf46e",
+      "bytes": 5079
+    },
+    {
+      "path": "staff/network-diagnostics-architecture.md",
+      "sha256": "07fb3778983979f16cd8a46591fcf688205521e8ebcc82a00c2b222eb3689e4c",
+      "bytes": 5079
+    },
+    {
+      "path": "staff/network-diagnostics-certification.md",
+      "sha256": "6305bbc2503b63bfd5e0d49e6fb1337e9a87c88c3948c7a7255011067587e482",
+      "bytes": 2080
+    },
+    {
+      "path": "staff/network-diagnostics-manifest.json",
+      "sha256": "1660e185b175462585d194f3816c30a58097311c0c77bd404836bddb8beb83bd",
+      "bytes": 969
+    },
+    {
+      "path": "staff/network-diagnostics-ui.test.cjs",
+      "sha256": "ef21b4cf8f557a31ac58a5202bfb882985cc945874f60cbadd4904aca7b602d7",
+      "bytes": 9272
+    },
+    {
+      "path": "staff/network-diagnostics.test.cjs",
+      "sha256": "35539b2baf3727fd86841986c47833a2939ec1b95653d20f901582537fdeed1e",
+      "bytes": 16528
+    },
+    {
+      "path": "staff/no_show_lifecycle.md",
+      "sha256": "fadcbbe8b9bbb8ac9ef712f8d548c25e40071b26b9a28e1abd90b21c3d2d752e",
+      "bytes": 4581
+    },
+    {
+      "path": "staff/no-show-build.cjs",
+      "sha256": "363372e375c217fc3f34003b594df5c6ca45b70788239b6c2c0087df4fb3a663",
+      "bytes": 1196
+    },
+    {
+      "path": "staff/no-show-commission-boundary.test.cjs",
+      "sha256": "70bcf34497e6c500cfc6adf5029de3a8b3af761a8a0af65fe317c9b1f0eeeee2",
+      "bytes": 8559
+    },
+    {
+      "path": "staff/no-show-commission-service-boundary.test.cjs",
+      "sha256": "c59d3f682abd6f7def5a10cce81c6429016ed817a8c5461c9785022662e18a6a",
+      "bytes": 4686
+    },
+    {
+      "path": "staff/no-show-model.js",
+      "sha256": "6ac986b76750c8bbfe15be3e2064c7574c5facf906dc1a89bafd73d3c68418da",
+      "bytes": 6234
+    },
+    {
+      "path": "staff/no-show-parity.test.cjs",
+      "sha256": "add950c8126490fc258829c0fbafc200f7a49bdcd15410df78e52096d16f38a5",
+      "bytes": 1109
+    },
+    {
+      "path": "staff/no-show-reporting.test.cjs",
+      "sha256": "165010c951a2b87a7f2947dfabd341816937e51f4aa28357ee448ffb4bb02ba5",
+      "bytes": 2552
+    },
+    {
+      "path": "staff/no-show-rules-build.cjs",
+      "sha256": "8fdc3806df0f5db38b5850009b2d3b95f0c94ad36badf1b55126b64759909f7f",
+      "bytes": 2588
+    },
+    {
+      "path": "staff/no-show-security-cases.cjs",
+      "sha256": "2752facc74b6cb2597fe4594bda984a122881e21a511b9f35c8a7cf4b0742ec1",
+      "bytes": 2250
+    },
+    {
+      "path": "staff/no-show-source-parity.cjs",
+      "sha256": "77c724c35cc63ce1a87bbd3e1710ce0f9309dbfbef749bea11fa69f74ef37745",
+      "bytes": 5059
+    },
+    {
+      "path": "staff/no-show-ui.js",
+      "sha256": "1d407cb0236277fe243a051d714bca27bcf2ce5107a9f6dd47e09f66bb9412bf",
+      "bytes": 8236
+    },
+    {
+      "path": "staff/no-show-ui.test.cjs",
+      "sha256": "968eb1e1fb7d13f16e4eb3003e04176fe801226452a364f473253b11cd13dabd",
+      "bytes": 2244
+    },
+    {
+      "path": "staff/no-show.test.cjs",
+      "sha256": "b1b8c46dd96a9bb68de28841a325470da6211c8ff7b3dfcdfe9b30bb0f81ee13",
+      "bytes": 15356
+    },
+    {
+      "path": "staff/ordinary-bootstrap.js",
+      "sha256": "18ded3a07c3dd990ba07368c30e8f65aae61ebf1ad4e94fac079094aebeafe41",
+      "bytes": 308
+    },
+    {
+      "path": "staff/ordinary-first-worker.js",
+      "sha256": "f79a49abfcb9c5af72edf1cd9a27c7ce68239c69e3a7f85e8e4b8958bb789325",
+      "bytes": 2638
+    },
+    {
+      "path": "staff/ordinary-request-recovery.js",
+      "sha256": "0647d2e0ecdc94756b57683de5213c7de4395076967e4a8685c4d1109d53937f",
+      "bytes": 4595
+    },
+    {
+      "path": "staff/production_safe_manifest.txt",
+      "sha256": "0bcb798f5c096dc98ec4a5bb4b9c8dd16b74b4774284bee8fbed44351b368a98",
+      "bytes": 926
+    },
+    {
+      "path": "staff/quick-edit-service-edit-fixture.cjs",
+      "sha256": "18b5864183727cecec017c0c0115405fc4c1dd7087618a613b4a1f32ee6972e0",
+      "bytes": 5766
+    },
+    {
+      "path": "staff/quick-edit-service-edit-parity.cjs",
+      "sha256": "7e8f9a386599403b21980b312514aaa4263fcaaacdc15232e0d3cc59d58fba1b",
+      "bytes": 2806
+    },
+    {
+      "path": "staff/quick-edit-service-edit-parity.test.cjs",
+      "sha256": "33e2de9f76110a4857d74e6d6a544cacc6e269bc9512c9a72a43ee70437515d8",
+      "bytes": 1553
+    },
+    {
+      "path": "staff/quick-edit-service-edit-preview.cjs",
+      "sha256": "5f7511ef22d357c36d711512784193417949b0c8439599ec9ba86367ce6902c5",
+      "bytes": 1988
+    },
+    {
+      "path": "staff/quick-edit-service-edit.test.cjs",
+      "sha256": "48a9be15417ad9ff7e1d2852bbbca1610916eaf98fa440170e2d7ddf12a23917",
+      "bytes": 12716
+    },
+    {
+      "path": "staff/quick-edit-v4-duration.test.cjs",
+      "sha256": "bda686999fcd4c60b328543010285a4f03694f53874ce3a47987206e097b77b6",
+      "bytes": 7465
+    },
+    {
+      "path": "staff/quick-edit-v4-financial.test.cjs",
+      "sha256": "87766eb98871537d0c47581debbe106707a0ff7739908810b428a727f3c17071",
+      "bytes": 21719
+    },
+    {
+      "path": "staff/quick-edit-v4-service-browser.test.cjs",
+      "sha256": "2b4d2b03d51fc7e48c2cfe7c37324ad2e15bce915e425d99aac2bf579c097e69",
+      "bytes": 4359
+    },
+    {
+      "path": "staff/quick-edit-v4-service-search.test.cjs",
+      "sha256": "90c6d9a60135fb1e8f9e28f3ece0f69c3e8fb05ef972bf573df92a58964c7cc3",
+      "bytes": 6733
+    },
+    {
+      "path": "staff/rc2-quickedit-service-edit-certification.md",
+      "sha256": "30bb29454c318e7a56af50cfc36b1574ba397f28903f047238562a82ec483235",
+      "bytes": 10950
+    },
+    {
+      "path": "staff/rc2-scheduling-quickedit-certification.md",
+      "sha256": "4869affe594450cb4665e7fa7ec80e896989ec6970482bc42d55a07969d633b5",
+      "bytes": 9239
+    },
+    {
+      "path": "staff/reports-v2.js",
+      "sha256": "45d9ad14a29f91a2521e28a830e2a87b8a9a36149e892d53d258285a3d421b79",
+      "bytes": 61868
+    },
+    {
+      "path": "staff/reviewed-edit-bootstrap.local.js",
+      "sha256": "afb9e37e5daba41149d25fc5595af8682042f07805cbae0979085f87c9693313",
+      "bytes": 507
+    },
+    {
+      "path": "staff/sales-promo-v1.js",
+      "sha256": "049c492d54262002bb85a62c31655e771be8054bcef9cde432217af3969ee3b6",
+      "bytes": 126719
+    },
+    {
+      "path": "staff/schedule-policy.js",
+      "sha256": "9eb097106dc88df233d6cbe326ab9a7b4a1231d7e5c77320e89371729830c314",
+      "bytes": 5827
+    },
+    {
+      "path": "staff/schedule-policy.test.cjs",
+      "sha256": "03cce475ef1a4ba8c5639d9b533f91feb35b96bf64a213a2b9fd32331f956536",
+      "bytes": 2594
+    },
+    {
+      "path": "staff/schedule-staff-browser.test.cjs",
+      "sha256": "f015ec522505dec2c77b17fcdad49877ea8bf2a6a9aef1fb56798ef8d548af67",
+      "bytes": 4970
+    },
+    {
+      "path": "staff/schedule-staff-fixture.cjs",
+      "sha256": "e07b866e8f2004f91c418122665515150e8ff458fc9ea92e6971608f199ed620",
+      "bytes": 6391
+    },
+    {
+      "path": "staff/schedule-staff.test.cjs",
+      "sha256": "c5407a99a7522f081fe3dbc1d9c1e46dd6eab17c56e67fa49b4d1d250e0030c0",
+      "bytes": 6639
+    },
+    {
+      "path": "staff/schedule-test-vectors.json",
+      "sha256": "c292faa1a101109e61cb42c843d2cca2721aa5c78f28b51ba1b062b16deb8661",
+      "bytes": 2426
+    },
+    {
+      "path": "staff/scheduling-protected-boundary.test.cjs",
+      "sha256": "f57dfae29fe704251841afb8e91b43a833cbb4cbcce71179737e6b2e514b11c9",
+      "bytes": 4444
+    },
+    {
+      "path": "staff/scheduling-source-parity.cjs",
+      "sha256": "c37fb2855a1e79ee553965f696985ccaaa32ea327339b97b00cdf95fd5c9ade3",
+      "bytes": 1989
+    },
+    {
+      "path": "staff/sdk/firebase-app.js",
+      "sha256": "7928369a406440002cb4b79ce79e2374bb580a6f189a16db2e400cdfa80e3130",
+      "bytes": 22121
+    },
+    {
+      "path": "staff/sdk/firebase-auth.js",
+      "sha256": "0a99665d77fbb2a8996da55c9dee2f8df31fb163a4ea3aa612042c9dfbd7d7dc",
+      "bytes": 177250
+    },
+    {
+      "path": "staff/sdk/firebase-firestore.js",
+      "sha256": "6a6e4bd119563f63bc6fffae1c397bc6494063f4785ad774a98bbf5d065844ff",
+      "bytes": 336946
+    },
+    {
+      "path": "staff/sdk/firebase-functions.js",
+      "sha256": "780f9bd5066b006891dd558c8cfa5910644553ead5f997cf9974fe0f4e55af5b",
+      "bytes": 10857
+    },
+    {
+      "path": "staff/sdk/firebase-storage.js",
+      "sha256": "394611f0ab712194e471cfff9d83d78380fcb7bfd8913d90e0d78046eaf567c6",
+      "bytes": 44966
+    },
+    {
+      "path": "staff/staff_stage_cleanup_report.txt",
+      "sha256": "cfce5808c747e67e3c638b18c0180221e9322b350a5c9b4f8172957b63d9d6af",
+      "bytes": 1608
+    },
+    {
+      "path": "staff/staff-booking-transport.local.js",
+      "sha256": "d480a96283fd7882215cd349b63164b7b130027570c5e3eb27a1f97dc8786cee",
+      "bytes": 3374
+    },
+    {
+      "path": "staff/styles.css",
+      "sha256": "9793886ba2b1ac1c2bc59702eb7f6bce4cc7ad838f6b03dbb87ea8a3c676ac67",
+      "bytes": 25293
+    },
+    {
+      "path": "staff/tech-expected-today-hf91c2.js",
+      "sha256": "34df1c3aecc24b470a9f29b061696152d797b871e789a53e3503a3a4dd7fb901",
+      "bytes": 10306
+    },
+    {
+      "path": "staff/tech-expected-today-hf91c3.js",
+      "sha256": "5aeeaa28d64513844bcf46facd05a680b3ad7c105361c3eba0780a5c037109b8",
+      "bytes": 12567
+    },
+    {
+      "path": "staff/tech-my-clients-today.js",
+      "sha256": "0b095965b1556708abe3de2f49c589e314891236431a52bde82ff2e8ca44b95d",
+      "bytes": 13751
+    },
+    {
+      "path": "staff/technician-availability.css",
+      "sha256": "1927ce5ae5bb1cf21939dafd1841e016e1b1ee771b3b3715e44474313a235568",
+      "bytes": 933
+    },
+    {
+      "path": "staff/technician-availability.js",
+      "sha256": "8d69b17fc3942c5dab6bb3ccba60e3ca649089ff2490825e5691643c9a7a9598",
+      "bytes": 20503
+    }
+  ],
+  "runtimeTemplateSha256": "b1de7ed6e53eaa0b9769acfd250f79a76f472ac02bc7aba2b01ba62d4f55326e"
+}
