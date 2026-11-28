@@ -33,7 +33,7 @@ function av_currentMins() {
 
 // ── Helper: get day-of-week abbreviation from YYYY-MM-DD ─────
 function av_dayAbbr(dateStr) {
-    return window.ThurayaSchedulePolicy.weekday(dateStr);
+    return window.ThurayaAvailabilitySchedulePolicy.weekday(dateStr);
 }
 
 function av_scheduleDateValue(value) {
@@ -97,11 +97,11 @@ function av_bookingWindowFromSettings(data) {
 }
 
 function av_scheduleRecordsFromData(data) {
-    return window.ThurayaSchedulePolicy.records(data);
+    return window.ThurayaAvailabilitySchedulePolicy.records(data);
 }
 
 function av_resolveScheduleFromRecords(records, dateStr) {
-    return window.ThurayaSchedulePolicy.resolve(records, dateStr);
+    return window.ThurayaAvailabilitySchedulePolicy.resolve(records, dateStr);
 }
 
 function av_resolveScheduleFromData(data, dateStr) {
@@ -123,20 +123,19 @@ async function av_scheduleHistoryRecords(email) {
 }
 
 async function av_buildScheduleMapForDate(schedSnap, techEmails, dateStr) {
-    const current = {};
-    schedSnap.forEach(doc => { current[doc.id] = doc.data() || {}; });
-
-    const entries = await Promise.all((techEmails || []).map(async email => {
-        const records = [];
-        if (current[email]) records.push(...av_scheduleRecordsFromData(current[email]));
-        records.push(...await av_scheduleHistoryRecords(email));
-        return [email, av_resolveScheduleFromRecords(records, dateStr)];
-    }));
-
-    return entries.reduce((map, [email, schedule]) => {
-        map[email] = schedule || { worksToday: false };
-        return map;
-    }, {});
+    if(schedSnap.metadata?.fromCache || schedSnap.metadata?.hasPendingWrites)throw new Error('Fresh working schedules could not be verified.');
+    const current={};schedSnap.forEach(doc=>{current[doc.id]=doc.data()||{};});
+    const selector=window.ThurayaEffectiveSchedule.create({legacy:window.ThurayaAvailabilitySchedulePolicy,v2:window.ThurayaSchedulePolicy});
+    const result={};
+    for(const email of [...new Set(techEmails||[])]){
+        const ref=db.collection('Staff_Schedules').doc(email);
+        const [history,versions]=await Promise.all([ref.collection('history').limit(1001).get({source:'server'}),ref.collection('versions').limit(1001).get({source:'server'})]);
+        if([history,versions].some(snap=>snap.metadata?.fromCache||snap.metadata?.hasPendingWrites||snap.size>1000))throw new Error('Complete fresh working schedules could not be verified.');
+        const data=current[email]||null,legacy=window.ThurayaAvailabilitySchedulePolicy;
+        const legacyRows=[...legacy.records(data?.workingDays||data?.scheduleSegments?data:null),...history.docs.flatMap(doc=>legacy.records(doc.data(),1))];
+        result[email]=selector.resolve({root:data,legacyRows,versions:versions.docs.map(doc=>({...doc.data(),versionId:doc.id}))},dateStr,email);
+    }
+    return result;
 }
 
 
@@ -299,7 +298,7 @@ function av_renderSlots(slotMap, container, onSelect, smartOptions = {}) {
 //  Layer 3 — Appointments:    existing bookings
 // ============================================================
 async function av_getSlotMap(dateStr, techEmails, totalMins) {
-    dateStr = window.ThurayaSchedulePolicy.calendarDate(dateStr);
+    dateStr = window.ThurayaAvailabilitySchedulePolicy.calendarDate(dateStr);
     if (!dateStr || !Number.isInteger(Number(totalMins)) || Number(totalMins) <= 0) throw new Error('Invalid appointment date or duration.');
     techEmails = (techEmails || []).filter(Boolean);
     totalMins = parseInt(totalMins || 0, 10);
@@ -367,7 +366,9 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
 
     // ── Build schedule map: techEmail → { startMins, endMins, worksToday } ──
     const scheduleMap = await av_buildScheduleMapForDate(schedSnap, techEmails, dateStr);
-    const bookingWindow = av_bookingWindowFromSettings(opsSnap && opsSnap.exists ? (opsSnap.data() || {}) : {});
+    if(!opsSnap?.exists)throw Error('Booking policy unavailable');
+    const settings=opsSnap.data(),prep=settings.applyPrepTimeToAvailability===false?0:Number(settings.prepTimeMinutes??10);if(!Number.isInteger(prep)||prep<0)throw Error('Booking policy invalid');
+    const bookingWindow = av_bookingWindowFromSettings(settings);
 
     // Missing schedules cannot establish availability.
     techEmails.forEach(email => {
@@ -406,7 +407,7 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         if (!busyMap[email]) busyMap[email] = [];
         busyMap[email].push({
             start: startMins,
-            end:   startMins + duration
+            end:   startMins + duration + prep
         });
     });
 
@@ -430,11 +431,12 @@ async function av_getSlotMap(dateStr, techEmails, totalMins) {
         const closeTime = Math.min(sched.endMins, bookingWindow.endMins);
         if (openTime >= closeTime) return;
 
-        for (let t = openTime; t + totalMins <= closeTime; t += 30) {
+        for (let t = openTime; t + totalMins + prep <= closeTime; t += 30) {
             // Skip past slots for today
             if (isToday && t <= nowMins) continue;
 
-            const slotEnd = t + totalMins;
+            if(!window.ThurayaAvailabilitySchedulePolicy.check(sched,dateStr,`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`,totalMins+prep).ok)continue;
+            const slotEnd = t + totalMins + prep;
 
             // Layer 0b: skip if any time range block covers this slot
             const blockedByTimeRange = timeBlocks.some(b => {
@@ -749,7 +751,7 @@ function av_mergeSlotMaps(maps) {
 
 // Re-read authoritative availability at confirmation; selection-time results are not a save permit.
 window.av_validateBookingAssignments = async function(assignments) {
-    const policy = window.ThurayaSchedulePolicy;
+    const policy = window.ThurayaAvailabilitySchedulePolicy;
     if (!Array.isArray(assignments) || !assignments.length) throw new Error('Please choose a technician and time.');
     const checked = [];
     for (const row of assignments) {

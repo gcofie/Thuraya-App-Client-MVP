@@ -7821,7 +7821,11 @@ function startTechQueueListener() {
                         btn.innerText = 'Complete Job';
                         btn.style.background = 'var(--success)';
                         btn.addEventListener('click', async () => { 
-                            try { await window.ThurayaManagedStaffOperations.update('ready_queue',job.id,db.collection('Active_Jobs').doc(job.id),{ status: 'Ready for Payment' }); }
+                            try {
+                                const saved = window.ThurayaManagedStaffOperations.pending().find(p => p.kind === 'ready_queue' && p.target === job.id);
+                                if (saved) await window.ThurayaOrdinaryRequestRecovery.resumeManaged(saved.key);
+                                else await window.ThurayaManagedStaffOperations.update('ready_queue',job.id,db.collection('Active_Jobs').doc(job.id),{ status: 'Ready for Payment' });
+                            }
                             catch(e) { alert("Error: " + e.message); }
                         });
                         
@@ -8310,6 +8314,7 @@ window.loadStaffDirectory = function() {
     const listDiv = document.getElementById('adminStaffList');
     if (!listDiv) return;
 
+    window.ThurayaSessionResources.dispose('staff-directory');
     listDiv.innerHTML = '<p style="color: #000; font-weight:bold;">Loading directory... Please wait.</p>';
 
     window.ThurayaSessionResources.listen('staff-directory', db.collection('Users'), (snap) => {
@@ -27652,14 +27657,21 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const oldAaMarkReady = window.aa_markReady;
     window.aa_markReady = async function(jobId){
-        if (!confirm('Mark this job as Ready for Payment? The technician will be released for availability immediately.')) return;
         try {
-            await window.ThurayaManagedStaffOperations.set('ready_atelier',jobId,db.collection('Active_Jobs').doc(jobId),{
-                status: 'Ready for Payment',
-                serviceCompletedAt: window.ThurayaManagedStaffOperations.FieldValue.serverTimestamp(),
-                availabilityReleasedAt: window.ThurayaManagedStaffOperations.FieldValue.serverTimestamp(),
-                updatedAt: window.ThurayaManagedStaffOperations.FieldValue.serverTimestamp()
-            }, { merge:true });
+            const saved = window.ThurayaManagedStaffOperations.pending().find(p => p.kind === 'ready_atelier' && p.target === jobId);
+            if (saved) {
+                const result = await window.ThurayaOrdinaryRequestRecovery.resumeManaged(saved.key);
+                if (!result) return;
+            } else {
+                if (!confirm('Mark this job as Ready for Payment? The technician will be released for availability immediately.')) return;
+                // jobId is an Active_Jobs document ID — update it directly
+                await window.ThurayaManagedStaffOperations.set('ready_atelier',jobId,db.collection('Active_Jobs').doc(jobId),{
+                    status: 'Ready for Payment',
+                    serviceCompletedAt: window.ThurayaManagedStaffOperations.FieldValue.serverTimestamp(),
+                    availabilityReleasedAt: window.ThurayaManagedStaffOperations.FieldValue.serverTimestamp(),
+                    updatedAt: window.ThurayaManagedStaffOperations.FieldValue.serverTimestamp()
+                }, { merge:true });
+            }
             window.ThurayaSessionResources.timeout(() => { try { window.generateTimeSlots?.(); } catch(e){} }, 250);
         } catch(e) { alert('Error: ' + e.message); }
     };
@@ -33989,7 +34001,25 @@ ${receiptItemsHtml(payload)}
                 adminList.innerHTML = renderAll(treeAll,'admin',window.thurayaMenuV2EditAccess);
                 try { toggleAdminDeptView(); } catch(e) {}
             }
-            if (booking) booking.innerHTML = renderAll(treeActive,'booking',false);
+            if (booking && window.__thurayaAvailabilityBooking && typeof window.thurayaHasAppointmentEdit === 'function' && !window.thurayaHasAppointmentEdit()) {
+                // Preserve only a new Availability-origin draft. Ordinary/group
+                // booking and existing appointment edits keep their prior path.
+                const checked = new Set(Array.from(booking.querySelectorAll('.sched-service-item:checked'), el => el.id));
+                const quantities = new Map(Array.from(booking.querySelectorAll('.sched-service-counter'), el => [el.id, el.value]));
+                booking.innerHTML = renderAll(treeActive,'booking',false);
+                booking.querySelectorAll('.sched-service-item').forEach(el => {
+                    if (!checked.has(el.id)) return;
+                    el.checked = true;
+                    el.closest('.service-card')?.classList.add('selected');
+                });
+                booking.querySelectorAll('.sched-service-counter').forEach(el => {
+                    if (!quantities.has(el.id)) return;
+                    const quantity = Math.max(0, parseInt(quantities.get(el.id), 10) || 0);
+                    el.value = String(quantity);
+                    el.setAttribute('value', String(quantity));
+                });
+                if (typeof calculateScheduleTotals === 'function') calculateScheduleTotals();
+            } else if (booking) booking.innerHTML = renderAll(treeActive,'booking',false);
             if (readOnly) readOnly.innerHTML = renderAll(treeActive,'view',false).replace(/id="menu_dept_/g,'id="menu_view_dept_').replace(/name="sched_base_/g,'name="view_base_');
             const uSel=q('consultUpsellSelect');
             if (uSel) {
@@ -36557,29 +36587,12 @@ ${receiptItemsHtml(payload)}
     }
   }
   async function scheduleMapFor(dateStr, emails){
-    const currentSession = window.ThurayaSessionResources.capture();
-    if (!currentSession()) throw new Error('Authenticated session ended.');
-    const cleanEmails = [...new Set((emails || []).filter(Boolean))];
-    const current = {};
-    try {
-      const snap = await db.collection('Staff_Schedules').get({ source: 'server' });
-      if (!currentSession()) throw new Error('Authenticated session ended.');
-      snap.forEach(doc => { if (cleanEmails.includes(doc.id)) current[doc.id] = doc.data() || {}; });
-    } catch(e) {
-      console.warn('Staff booking schedules skipped:', e);
-      throw new Error('Working schedule could not be verified. Please retry before saving.');
-    }
-    const entries = await Promise.all(cleanEmails.map(async email => {
-      const records = [];
-      if (current[email]) records.push(...scheduleRecordsFromData(current[email], 2));
-      records.push(...await historyRecords(email));
-      if (!currentSession()) throw new Error('Authenticated session ended.');
-      return [norm(email), resolveSchedule(records, dateStr)];
-    }));
-    return entries.reduce((map, [email, schedule]) => {
-      map[email] = schedule || { worksToday: false };
-      return map;
-    }, {});
+    const currentSession=window.ThurayaSessionResources.capture();
+    if(!currentSession())throw new Error('Authenticated session ended.');
+    if(typeof window.thurayaAvailabilitySources?.schedules!=='function')throw new Error('Working schedule could not be verified. Please retry.');
+    const result=await window.thurayaAvailabilitySources.schedules(dateStr,[...new Set((emails||[]).filter(Boolean))]);
+    if(!currentSession())throw new Error('Authenticated session ended.');
+    return result;
   }
   function ensureAnyOption(){
     const sel = q('sched_techSelect');
@@ -36676,7 +36689,7 @@ ${receiptItemsHtml(payload)}
 
     let busy, schedules;
     try { [busy, schedules] = await Promise.all([
-      (window.thurayaBuildAvailabilityBusyMap || window.thurayaBuildAvailabilityBusyMapHF22 || window.thurayaBuildAvailabilityBusyMapHF17)?.(date, { ignoreAppointmentId: window.editingApptId || '' }) || new Map(),
+      (window.__thurayaAvailabilityBooking && !window.thurayaHasAppointmentEdit() ? window.thurayaAvailabilitySources.busy(date,{prepMinutes:prep}) : (window.thurayaBuildAvailabilityBusyMap || window.thurayaBuildAvailabilityBusyMapHF22 || window.thurayaBuildAvailabilityBusyMapHF17)?.(date, { ignoreAppointmentId: window.editingApptId || '' })) || new Map(),
       scheduleMapFor(date, pool.map(t => t.email))
     ]); } catch(e) {
       if (!currentSession()) return;

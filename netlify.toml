@@ -1,5 +1,5 @@
 [build]
-  command = "node production-renderer.cjs . client PRODUCTION-BROWSER.ADMITTED.json 8e37bcf20938daa12b8979b664ddf3095e90102101ee71afd0cdd31196446920 7a415599abce5cb86e5b60bca2b6547ed417cb2f75f54ea44425f234276e914a public"
+  command = "node production-renderer.cjs . client PRODUCTION-BROWSER.ADMITTED.json 8e37bcf20938daa12b8979b664ddf3095e90102101ee71afd0cdd31196446920 d6fbfc5299f875ecc3880f14e3585ea2dc768e813933a078174d797f007dbcfc public"
   publish = "public"
   functions = "empty-functions"
 [build.environment]

@@ -8,9 +8,19 @@
       "bytes": 285285
     },
     {
+      "path": "client/availability-effective-schedule.js",
+      "sha256": "bf0aecf951c15ccfd03c57cccc72ba32658a53bd49c1553593b6f63be92285e3",
+      "bytes": 1148
+    },
+    {
+      "path": "client/availability-schedule-policy.js",
+      "sha256": "366bfaeb04622c602af9443ab773ec8de4b68f99d039d80344f160671cd0de04",
+      "bytes": 5839
+    },
+    {
       "path": "client/availability.js",
-      "sha256": "aad37fc0c53d3024c138fb0e2764f179c5fb2aee37c3adeab3e04a28c20074ff",
-      "bytes": 34949
+      "sha256": "b517db60f054776f9f250f608dd9b30691fb732ce1d249779afecab14a0b391b",
+      "bytes": 36140
     },
     {
       "path": "client/booking-transport.local.js",
@@ -39,8 +49,8 @@
     },
     {
       "path": "client/index.html",
-      "sha256": "9e7e3683ff8430ae8990f4642c45de2dfc1653a969f5f48c8d90c4138c685a8f",
-      "bytes": 72913
+      "sha256": "8e48fb64a2591d6c9eccebf1a3961d6a6320ed52781eae4adcd89eb6189a21ae",
+      "bytes": 73080
     },
     {
       "path": "client/ordinary-bootstrap.js",
@@ -61,6 +71,11 @@
       "path": "client/phase-9b-email-password-auth.js",
       "sha256": "535139f0b71938017156cd43b64579f4c58e71844b46a0236ba69d2b79889262",
       "bytes": 13105
+    },
+    {
+      "path": "client/released-schedule-v2-compat.js",
+      "sha256": "ac47e6d1989a00feb6a8994d477867b1b0064a941587be7e3660db34527f5597",
+      "bytes": 14835
     },
     {
       "path": "client/schedule-policy.js",
@@ -104,8 +119,8 @@
     },
     {
       "path": "staff/app.js",
-      "sha256": "4fdf872c6cd76238434735eea69baeca3af8882ea880c51271805df17be613d9",
-      "bytes": 2012260
+      "sha256": "39f94093f398873667940159e62da054590f824e2d9e0da88cce3dfdeccbc6d0",
+      "bytes": 2013879
     },
     {
       "path": "staff/archive-manifest-generator.js",
@@ -141,6 +156,21 @@
       "path": "staff/attendance.js",
       "sha256": "5c3fec3bc7ff304944d603eeb49509fc2eea7623c07dfa620045f6aab1f0f4fe",
       "bytes": 67853
+    },
+    {
+      "path": "staff/availability-effective-schedule.js",
+      "sha256": "bf0aecf951c15ccfd03c57cccc72ba32658a53bd49c1553593b6f63be92285e3",
+      "bytes": 1148
+    },
+    {
+      "path": "staff/availability-schedule-policy.js",
+      "sha256": "366bfaeb04622c602af9443ab773ec8de4b68f99d039d80344f160671cd0de04",
+      "bytes": 5839
+    },
+    {
+      "path": "staff/availability-sources.js",
+      "sha256": "5568f681fae04935b2be465203eecfc9ffa66762a01f4f28d03df26d836a5655",
+      "bytes": 1937
     },
     {
       "path": "staff/booking-allocation-transport.local.js",
@@ -644,8 +674,8 @@
     },
     {
       "path": "staff/index.html",
-      "sha256": "ddd2e5ffd36d0a955df12c026dcbcff8317b4e9560a3a604925c7e300f02d598",
-      "bytes": 208260
+      "sha256": "012161e1bd877bd250130a94bde176d6fada149e45658275b76e3c1fe0085998",
+      "bytes": 208535
     },
     {
       "path": "staff/index.html.diff.txt",
@@ -1026,6 +1056,16 @@
       "path": "staff/tech-my-clients-today.js",
       "sha256": "0b095965b1556708abe3de2f49c589e314891236431a52bde82ff2e8ca44b95d",
       "bytes": 13751
+    },
+    {
+      "path": "staff/technician-availability.css",
+      "sha256": "1927ce5ae5bb1cf21939dafd1841e016e1b1ee771b3b3715e44474313a235568",
+      "bytes": 933
+    },
+    {
+      "path": "staff/technician-availability.js",
+      "sha256": "8d69b17fc3942c5dab6bb3ccba60e3ca649089ff2490825e5691643c9a7a9598",
+      "bytes": 20503
     }
   ],
   "runtimeTemplateSha256": "b1de7ed6e53eaa0b9769acfd250f79a76f472ac02bc7aba2b01ba62d4f55326e"
